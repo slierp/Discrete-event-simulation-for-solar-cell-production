@@ -3,8 +3,8 @@ Discrete-event-simulation-for-solar-cell-production
 
 <b>This program is not yet ready for use.</b>
 
-The intention for this program is to become a utility for analyzing silicon solar cell production lines.
-It uses Simpy package for its discrete event simulation capability.
+The intention for this Python program is to become a utility for analyzing silicon solar cell production lines.
+It uses the Simpy package for its discrete event simulation capability.
 
 <b>Sought after features</b>
 - A set of production tools to select and configure into a production line
