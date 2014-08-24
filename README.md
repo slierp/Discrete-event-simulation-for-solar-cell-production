@@ -1,7 +1,7 @@
 Discrete-event-simulation-for-solar-cell-production
 ===================================================
 
-This program is not ready for use yet.
+<b>This program is not yet ready for use.</b>
 
 The intention for this program is to become a utility for analyzing silicon solar cell production lines.
 It uses Simpy package for its discrete event simulation capability.
