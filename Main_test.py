@@ -46,12 +46,12 @@ if __name__ == "__main__":
     env = simpy.Environment()
 
     batchlocations = {}
-    batchlocations[0] = WaferSource(env,"wafersource")#,time_limit=9000)
+    batchlocations[0] = WaferSource(env,"wafersource") #,time_limit=1000)
     #batchlocations[1] = WaferUnstacker(env,"waferunstacker1")
     #batchlocations[1] = BatchTex(env,"texture")
-    #batchlocations[1] = TubeFurnace(env,"furnace")
+    batchlocations[1] = TubeFurnace(env,"furnace")
     #batchlocations[1] = SingleSideEtch(env,"sse")
-    batchlocations[1] = TubePECVD(env,"pecvd")
+    #batchlocations[1] = TubePECVD(env,"pecvd")
     batchlocations[2] = WaferBin(env,"waferbin")
     
     operators = {}    
@@ -64,8 +64,8 @@ if __name__ == "__main__":
     batchconnections[0] = [batchlocations[1],batchlocations[2],90]
     operators[1] = Operator(env,batchconnections,"operator1")
 
-    #time_limit = 10000
-    time_limit = 60*60*24 # 1 day
+    time_limit = 6000
+    #time_limit = 60*60*24 # 1 day
     #time_limit = 60*60*24*7 # 1 week
     #time_limit = 60*60*24*7*30 # 1 month
     #time_limit = 60*60*24*365 # 1 year

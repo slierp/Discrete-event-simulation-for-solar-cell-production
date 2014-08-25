@@ -111,9 +111,9 @@ if __name__ == "__main__":
     #time_limit = 10000
     time_limit = 60*60*24 # 1 day
     #time_limit = 60*60*24*7 # 1 week
-    #time_limit = 60*60*24*30.5 # 1 month
-    #time_limit = 60*60*24*365.25 # 1 year
-    print "0% progress: 0 minutes (0 hours)"
+    #time_limit = 60*60*24*30 # 1 month
+    #time_limit = 60*60*24*365 # 1 year
+    print "0% progress: 0 hours"
     for i in np.arange(1,11):        
         env.run(until=time_limit*i/10) # or perhaps do daily updates?
         if (i < 10):            

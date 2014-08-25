@@ -15,7 +15,7 @@ import numpy as np
 class BatchTex(object):
 
     def __init__(self, env, name="", process_batch_size=400, cassette_size=100, max_cassette_no=8, process_time=20*60,
-                 rinse_time=5*60, neutr_time=5*60, dry_time=20*60):    
+                 rinse_time=5*60, neutr_time=5*60, dry_time=20*60, transfer_time = 60):    
         
         self.env = env
         self.name = name
@@ -26,7 +26,7 @@ class BatchTex(object):
         self.rinse_time = rinse_time
         self.neutr_time = neutr_time
         self.dry_time = dry_time
-        self.transfer_time = 60
+        self.transfer_time = transfer_time
         print str(self.env.now) + " - [BatchTex][" + self.name + "] Added a batch texture machine"
         
         self.input = BatchContainer(self.env,"input",self.cassette_size,self.max_cassette_no)

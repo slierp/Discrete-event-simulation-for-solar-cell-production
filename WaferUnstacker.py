@@ -18,7 +18,8 @@ class WaferUnstacker(object):
     #WaferUnstacker accepts a number of stacks of wafers
     #pick and place machine puts wafers one by one on a belt; belt loads it into one of four cassettes
 
-    def __init__(self, env, name="", stack_size=400, max_stack_no=3, cassette_size=100, max_cassette_no=4):    
+    def __init__(self, env, name="", stack_size=400, max_stack_no=3, cassette_size=100, max_cassette_no=4,
+                 units_on_belt = 5, time_step = 1):    
         
         self.env = env
         self.name = name
@@ -27,8 +28,8 @@ class WaferUnstacker(object):
         self.cassette_size = cassette_size
         self.max_cassette_no = max_cassette_no
         self.wait_time = 60
-        self.units_on_belt = 5
-        self.time_step = 1 # numer of seconds for one unit to progress one position
+        self.units_on_belt = units_on_belt # how many units fit on the belt
+        self.time_step = time_step # numer of seconds for one unit to progress one position
         self.next_step = env.event()
         print str(self.env.now) + " - [WaferUnstacker][" + self.name + "] Added a wafer unstacker"
         

@@ -19,10 +19,9 @@ class TubeFurnace(object):
     # transport2: from boat-load-unload to tube process to cool-down to boat-load-unload
     # transport2 triggers transport1 when to do something (load or unload)
     # number of batches in the system is limited by the no_of_boats variable
-    # the ideal number of boats will vary according to the process_time and others
     # unloading has priority as this enables you to start a new process - less idle time
     def __init__(self, env, name="", process_batch_size=500, process_time=60*60, cool_time=10*60,
-                 no_of_processes=4, cassette_size=100, max_cassette_no=5, no_of_boats=6):
+                 no_of_processes=4, cassette_size=100, max_cassette_no=5, no_of_boats=6, transfer_time = 10*60):
         
         self.env = env
         self.name = name
@@ -33,7 +32,7 @@ class TubeFurnace(object):
         self.cassette_size = cassette_size
         self.max_cassette_no = max_cassette_no
         self.no_of_boats = no_of_boats
-        self.transfer_time = 10*60
+        self.transfer_time = transfer_time
         self.wait_time = 60
         self.transport_counter = 0
         self.batches_loaded = 0
@@ -51,6 +50,8 @@ class TubeFurnace(object):
         for i in np.arange(self.no_of_processes):
             process_name = "furnace" + str(i)
             self.batchprocesses[i] = BatchProcess(self.env,process_name,self.process_batch_size,self.process_time)
+            
+        for i in np.arange(self.no_of_processes-1): # always one cool-down location less than the number of tubes
             process_name = "cooldown" + str(i)
             self.coolprocesses[i] = BatchProcess(self.env,process_name,self.process_batch_size,self.cool_time)
                
@@ -68,8 +69,14 @@ class TubeFurnace(object):
     def run_transport(self):
         
         batchconnections = {}
-        for i in np.arange(self.no_of_processes):
-            batchconnections[i] = [self.batchprocesses[i],self.coolprocesses[i]]        
+        j = 0
+        for i in np.arange(self.no_of_processes*(self.no_of_processes-1)):
+            # always one cool-down location less than the number of tubes
+            if (i%self.no_of_processes == 0) & (i > 0):
+                j += 1
+                
+            batchconnections[i] = [self.batchprocesses[i%self.no_of_processes],self.coolprocesses[j]]
+
         
         while True:
             for i in batchconnections:
@@ -160,7 +167,7 @@ class TubeFurnace(object):
                 yield self.env.timeout(30) # very critical for throughput
                 yield self.boat_load_unload.container.get(self.cassette_size) 
                 yield self.output.container.put(self.cassette_size)
-            self.transport_counter += self.process_batch_size
+                self.transport_counter += self.cassette_size
             self.batches_loaded -= 1
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event            
