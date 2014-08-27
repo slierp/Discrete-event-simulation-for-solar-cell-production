@@ -3,6 +3,14 @@
 Created on Sun Aug 17 14:55:31 2014
 
 @author: rnaber
+
+TODO
+Add functionaity for planned down-time
+- Down-time after a time-limit could be done in a separate process that
+locks up the resource
+- Down-time after a certain number of process runs will have to be done
+in the same process I think
+
 """        
 
 from __future__ import division
