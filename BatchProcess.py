@@ -3,14 +3,6 @@
 Created on Sun Aug 17 14:55:31 2014
 
 @author: rnaber
-
-TODO
-Add functionaity for planned down-time
-- Down-time after a time-limit could be done in a separate process that
-locks up the resource
-- Down-time after a certain number of process runs will have to be done
-in the same process I think
-
 """        
 
 from __future__ import division
@@ -39,14 +31,13 @@ class BatchProcess(object):
         while True:
             yield self.start
             if (self.container.level >= self.batch_size) & (not self.process_finished):
-                request = self.resource.request()
-                yield request
-                #print str(self.env.now) + " - [BatchProcess][" + self.name + "] Start process"
-                yield self.env.timeout(self.process_time) 
-                #print str(self.env.now) + " - [BatchProcess][" + self.name + "] End process "
-                yield self.resource.release(request)
-                self.process_finished = 1
-                self.process_time_counter += self.process_time                     
+                with self.resource.request() as request:
+                    yield request
+                    #print str(self.env.now) + " - [BatchProcess][" + self.name + "] Start process"
+                    yield self.env.timeout(self.process_time) 
+                    #print str(self.env.now) + " - [BatchProcess][" + self.name + "] End process "
+                    self.process_finished = 1
+                    self.process_time_counter += self.process_time                     
             
     def space_available(self,_batch_size):
         if ((self.container.level+_batch_size) <= (self.batch_size)):

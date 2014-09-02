@@ -35,8 +35,6 @@ So with ever-present wafer supply and removal.
 """
 
 from __future__ import division
-from BatchTransport import BatchTransport
-from BatchProcess import BatchProcess
 from WaferSource import WaferSource
 from WaferUnstacker import WaferUnstacker
 from Operator import Operator
@@ -64,16 +62,16 @@ if __name__ == "__main__":
     #env = simpy.rt.RealtimeEnvironment(factor=1)
     
     batchlocations = {}
-    batchlocations[0] = WaferSource(env,"0")
-    batchlocations[1] = WaferUnstacker(env,"0")
-    batchlocations[2] = WaferUnstacker(env,"1")
-    batchlocations[3] = BatchTex(env,"0")
-    batchlocations[4] = TubeFurnace(env,"0")
-    batchlocations[5] = TubeFurnace(env,"1")
-    batchlocations[6] = SingleSideEtch(env,"0")
-    batchlocations[7] = TubePECVD(env,"0")
-    batchlocations[8] = TubePECVD(env,"1")
-    batchlocations[9] = WaferBin(env,"0")
+    batchlocations[0] = WaferSource(env,{'name' : '0'})
+    batchlocations[1] = WaferUnstacker(env,{'name' : '0'})
+    batchlocations[2] = WaferUnstacker(env,{'name' : '1'})
+    batchlocations[3] = BatchTex(env,{'name' : '0'})
+    batchlocations[4] = TubeFurnace(env,{'name' : '0'})
+    batchlocations[5] = TubeFurnace(env,{'name' : '1'})
+    batchlocations[6] = SingleSideEtch(env,{'name' : '0'})
+    batchlocations[7] = TubePECVD(env,{'name' : '0'})
+    batchlocations[8] = TubePECVD(env,{'name' : '1'})
+    batchlocations[9] = WaferBin(env) #,"0")
     
     operators = {}    
     

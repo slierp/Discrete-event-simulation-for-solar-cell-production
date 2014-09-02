@@ -6,36 +6,38 @@ Created on Mon Aug 18 11:56:44 2014
 """
 
 from __future__ import division
-#from BatchTransport import BatchTransport
-#from BatchProcess import BatchProcess
 from BatchContainer import BatchContainer
 import simpy
 
 class WaferBin(object):
-
-    def __init__(self, env, name="", batch_size=100, max_batch_no=4):    
+        
+    def __init__(self, env, _params = {}):   
         
         self.env = env
-        self.name = name
-        self.batch_size = batch_size
-        self.max_batch_no = max_batch_no
-        self.wait_time = 60
-        print str(self.env.now) + " - [WaferBin][" + self.name + "] Added a wafer bin"        
         
-        self.input = BatchContainer(self.env,"input",self.batch_size,self.max_batch_no)
+        self.params = {}
+        self.params['name'] = ""
+        self.params['batch_size'] = 100
+        self.params['max_batch_no'] = 4
+        self.params['wait_time'] = 60
+        self.params.update(_params)
+             
+        print str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin"
+        
+        self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")
         
         self.env.process(self.run())
 
     def report(self):
-        print "[WaferBin][" + self.name + "] Current level: " + str(self.output.container.level)
+        print "[WaferBin][" + self.params['name'] + "] Current level: " + str(self.output.container.level)
 
     def run(self):
-        while True:            
-            if (self.input.container.level >= self.batch_size):
-                yield self.input.container.get(self.batch_size)
-                yield self.output.container.put(self.batch_size)
-            yield self.env.timeout(self.wait_time)    
+        while True:
+            if (self.input.container.level >= self.params['batch_size']):
+                yield self.input.container.get(self.params['batch_size'])
+                yield self.output.container.put(self.params['batch_size'])                
+            yield self.env.timeout(self.params['wait_time'])    
         
 class InfiniteContainer(object):
     

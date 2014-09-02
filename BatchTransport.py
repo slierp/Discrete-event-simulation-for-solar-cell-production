@@ -31,16 +31,15 @@ class BatchTransport(object):
                     # load-in from BatchContainer to BatchProcess
                     if (self.batchconnections[i][0].container.level >= self.batch_size) & \
                             self.batchconnections[i][1].space_available(self.batch_size):
-                                
-                        request_output = self.batchconnections[i][1].resource.request()                    
-                        yield request_output
+                                                  
+                        with self.batchconnections[i][1].resource.request() as request_output:
+                            yield request_output
                         
-                        yield self.batchconnections[i][0].container.get(self.batch_size)
-                        yield self.env.timeout(self.batchconnections[i][2])
-                        self.transport_counter += self.batch_size
-                        yield self.batchconnections[i][1].container.put(self.batch_size)
-                        yield self.batchconnections[i][1].resource.release(request_output)
-                        self.batchconnections[i][1].start_process()
+                            yield self.batchconnections[i][0].container.get(self.batch_size)
+                            yield self.env.timeout(self.batchconnections[i][2])
+                            self.transport_counter += self.batch_size
+                            yield self.batchconnections[i][1].container.put(self.batch_size)
+                            self.batchconnections[i][1].start_process()
 
                 elif isinstance(self.batchconnections[i][1],BatchContainer):
                     # load-out into BatchContainer to BatchProcess
@@ -48,15 +47,14 @@ class BatchTransport(object):
                             self.batchconnections[i][1].space_available(self.batch_size) & \
                             self.batchconnections[i][0].process_finished:
 
-                        request_input = self.batchconnections[i][0].resource.request()
-                        yield request_input
+                        with self.batchconnections[i][0].resource.request() as request_input:
+                            yield request_input
                         
-                        yield self.batchconnections[i][0].container.get(self.batch_size)
-                        yield self.env.timeout(self.batchconnections[i][2])
-                        self.transport_counter += self.batch_size
-                        yield self.batchconnections[i][1].container.put(self.batch_size)                  
-                        yield self.batchconnections[i][0].resource.release(request_input)
-                        self.batchconnections[i][0].process_finished = 0
+                            yield self.batchconnections[i][0].container.get(self.batch_size)
+                            yield self.env.timeout(self.batchconnections[i][2])
+                            self.transport_counter += self.batch_size
+                            yield self.batchconnections[i][1].container.put(self.batch_size)
+                            self.batchconnections[i][0].process_finished = 0
                                 
                 elif (isinstance(self.batchconnections[i][0],BatchProcess)) & \
                         (isinstance(self.batchconnections[i][1],BatchProcess)):
@@ -67,27 +65,21 @@ class BatchTransport(object):
                             self.batchconnections[i][0].process_finished:                           
                         #parentheses are crucial
                     
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Requesting lock for transport from input"
-                        request_input = self.batchconnections[i][0].resource.request()
-                        yield request_input
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Got lock for transport from input"                   
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Requesting lock for transport from output"
-                        request_output = self.batchconnections[i][1].resource.request()                    
-                        yield request_output
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Got lock for transport from output"
+                        with self.batchconnections[i][0].resource.request() as request_input, \
+                            self.batchconnections[i][1].resource.request() as request_output:
+                            yield request_input
+                            #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Got lock for transport from input"                                     
+                            yield request_output
+                            #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Got lock for transport from output"
                             
-                        yield self.batchconnections[i][0].container.get(self.batch_size)
-                        yield self.env.timeout(self.batchconnections[i][2])
-                        self.transport_counter += self.batch_size
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] End transport"
-                        yield self.batchconnections[i][1].container.put(self.batch_size)                  
+                            yield self.batchconnections[i][0].container.get(self.batch_size)
+                            yield self.env.timeout(self.batchconnections[i][2])
+                            self.transport_counter += self.batch_size
+                            #print str(self.env.now) + " - [BatchTransport][" + self.name + "] End transport"
+                            yield self.batchconnections[i][1].container.put(self.batch_size)                  
 
-                        yield self.batchconnections[i][0].resource.release(request_input)
-                        self.batchconnections[i][0].process_finished = 0                    
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Released lock on input"
-                        yield self.batchconnections[i][1].resource.release(request_output)
-                        #print str(self.env.now) + " - [BatchTransport][" + self.name + "] Released lock on output"
-                        self.batchconnections[i][1].start_process()
+                            self.batchconnections[i][0].process_finished = 0                    
+                            self.batchconnections[i][1].start_process()
                     
             #print str(self.env.now) + " - [BatchTransport][" + self.name + "] No transport possible"
             yield self.env.timeout(self.wait_time)

@@ -11,32 +11,36 @@ import simpy
 
 class WaferSource(object):
 
-    def __init__(self, env, name="", batch_size=400, time_limit=0):    
+    def __init__(self, env, _params = {}):   
         
         self.env = env
-        self.name = name
-        self.batch_size = batch_size
-        self.time_limit = time_limit
+        
+        self.params = {}
+        self.params['name'] = ""
+        self.params['batch_size'] = 400
+        self.params['time_limit'] = 0
+        self.params['wait_time'] = 60
+        self.params.update(_params)
+        self.batch_size = self.params['batch_size'] # temporary solution while converting to dict format
         self.process_counter = 0
-        self.wait_time = 60
-        print str(self.env.now) + " - [WaferSource][" + self.name + "] Added a wafer source"        
+       
+        print str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"
         
         self.output = BatchContainer(self.env,"output",self.batch_size,1)
         self.env.process(self.run())
 
     def report(self):
-        print "[WaferSource][" + self.name + "] Units sourced: " + str(self.output.process_counter - self.output.container.level)
+        print "[WaferSource][" + self.params['name'] + "] Units sourced: " + str(self.output.process_counter - self.output.container.level)
         
     def run(self):
         while True:
             
-            if (self.time_limit > 0) & (self.env.now >= self.time_limit):
-                print str(self.env.now) + " - [WaferSource][" + self.name + "] Time limit reached"
+            if (self.params['time_limit'] > 0) & (self.env.now >= self.params['time_limit']):                
+                print str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Time limit reached"
                 break
             
             if (not self.output.container.level):
-                #print str(self.env.now) + " - [BatchProcess][" + self.name + "] Start refill"
-                yield self.output.container.put(self.batch_size)
-                #print str(self.env.now) + " - [BatchProcess][" + self.name + "] End refill"
-                self.output.process_counter += self.batch_size
-            yield self.env.timeout(self.wait_time)        
+                yield self.output.container.put(self.params['batch_size'])
+                #print str(self.env.now) + " - [BatchProcess][" + self.params['name'] + "] End refill"
+                self.output.process_counter += self.params['batch_size']
+            yield self.env.timeout(self.params['wait_time'])        
