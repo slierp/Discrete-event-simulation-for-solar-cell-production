@@ -14,7 +14,7 @@ import numpy as np
 class TubePECVD(object):
     # a copy of TubeFurnace mostly
     # different batch size and process_time only
-    # more custom pecvd adjustments may be needed later
+    # more custom pecvd adjustments are to be implemented
 
     def __init__(self, env, _params = {}):   
         

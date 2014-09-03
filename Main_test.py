@@ -31,6 +31,7 @@ from BatchTex import BatchTex
 from TubeFurnace import TubeFurnace
 from SingleSideEtch import SingleSideEtch
 from TubePECVD import TubePECVD
+from PrintLine import PrintLine
 import simpy
 import numpy as np
 
@@ -46,13 +47,14 @@ if __name__ == "__main__":
     env = simpy.Environment()
 
     batchlocations = {}
-    batchlocations[0] = WaferSource(env,"wafersource") #,time_limit=1000)
-    #batchlocations[1] = WaferUnstacker(env,"waferunstacker1")
-    #batchlocations[1] = BatchTex(env,"texture")
-    batchlocations[1] = TubeFurnace(env,"furnace")
-    #batchlocations[1] = SingleSideEtch(env,"sse")
-    #batchlocations[1] = TubePECVD(env,"pecvd")
-    batchlocations[2] = WaferBin(env,"waferbin")
+    batchlocations[0] = WaferSource(env) #,{'time_limit' : 1000})
+    #batchlocations[1] = WaferUnstacker(env)
+    #batchlocations[1] = BatchTex(env)
+    #batchlocations[1] = TubeFurnace(env)
+    #batchlocations[1] = SingleSideEtch(env)
+    #batchlocations[1] = TubePECVD(env)
+    batchlocations[1] = PrintLine(env)
+    #batchlocations[2] = WaferBin(env)
     
     operators = {}    
     
@@ -60,12 +62,12 @@ if __name__ == "__main__":
     batchconnections[0] = [batchlocations[0],batchlocations[1],90]  
     operators[0] = Operator(env,batchconnections,"operator0")
 
-    batchconnections = {}
-    batchconnections[0] = [batchlocations[1],batchlocations[2],90]
-    operators[1] = Operator(env,batchconnections,"operator1")
+    #batchconnections = {}
+    #batchconnections[0] = [batchlocations[1],batchlocations[2],90]
+    #operators[1] = Operator(env,batchconnections,"operator1")
 
-    time_limit = 6000
-    #time_limit = 60*60*24 # 1 day
+    #time_limit = 6000
+    time_limit = 60*60*24 # 1 day
     #time_limit = 60*60*24*7 # 1 week
     #time_limit = 60*60*24*7*30 # 1 month
     #time_limit = 60*60*24*365 # 1 year

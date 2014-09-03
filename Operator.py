@@ -8,7 +8,7 @@ TODO
 
 Implement in a more detailed way
 Operator should have a particular location at any time
-- time to walk to other location should be defined (with some randomness)
+- time to walk to other location should be defined (with some randomness perhaps)
 - time to perform work at each location should be defined
 - have the time also increase with the number of units
 - implement shift changes, breaks, factory shut-downs...
@@ -40,13 +40,13 @@ class Operator(object):
                 else:
                     units_for_transport = units_needed
                 
-                if (units_for_transport > 0):                     
-                    #print str(self.env.now) + " - [Operator][" + self.name + "] Moving " + str(units_for_transport) + " units"
-                    yield self.batchconnections[i][0].output.container.get(units_for_transport)
-                    yield self.env.timeout(self.batchconnections[i][2])
-                    self.transport_counter += units_for_transport
-                    #print str(self.env.now) + " - [Operator][" + self.name + "] End transport"
-                    yield self.batchconnections[i][1].input.container.put(units_for_transport)
+                if (units_for_transport >= self.batchconnections[i][0].output.batch_size):
+                    no_batches_for_transport = units_for_transport // self.batchconnections[i][0].output.batch_size
+                    yield self.batchconnections[i][0].output.container.get(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
+                    yield self.env.timeout(self.batchconnections[i][2]) # still need to let time increase for more batches
+                    self.transport_counter += no_batches_for_transport*self.batchconnections[i][0].output.batch_size
+                    yield self.batchconnections[i][1].input.container.put(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
+                    #print str(self.env.now) + " - [Operator][" + self.name + "] Moved " + str(no_batches_for_transport) + " batches"                    
                     
             yield self.env.timeout(self.wait_time)
 

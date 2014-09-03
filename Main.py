@@ -43,6 +43,7 @@ from BatchTex import BatchTex
 from TubeFurnace import TubeFurnace
 from SingleSideEtch import SingleSideEtch
 from TubePECVD import TubePECVD
+from PrintLine import PrintLine
 import simpy
 import numpy as np
 
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     #env = simpy.rt.RealtimeEnvironment(factor=1)
     
     batchlocations = {}
-    batchlocations[0] = WaferSource(env,{'name' : '0'})
+    batchlocations[0] = WaferSource(env,{'name' : '0'}) #, 'time_limit' : 10000})
     batchlocations[1] = WaferUnstacker(env,{'name' : '0'})
     batchlocations[2] = WaferUnstacker(env,{'name' : '1'})
     batchlocations[3] = BatchTex(env,{'name' : '0'})
@@ -71,7 +72,9 @@ if __name__ == "__main__":
     batchlocations[6] = SingleSideEtch(env,{'name' : '0'})
     batchlocations[7] = TubePECVD(env,{'name' : '0'})
     batchlocations[8] = TubePECVD(env,{'name' : '1'})
-    batchlocations[9] = WaferBin(env) #,"0")
+    batchlocations[9] = PrintLine(env,{'name' : '0'})
+    batchlocations[10] = PrintLine(env,{'name' : '1'})
+    #batchlocations[11] = WaferBin(env,{'name' : '0'})
     
     operators = {}    
     
@@ -103,7 +106,9 @@ if __name__ == "__main__":
 
     batchconnections = {}
     batchconnections[0] = [batchlocations[7],batchlocations[9],transport_time]
-    batchconnections[1] = [batchlocations[8],batchlocations[9],transport_time]
+    batchconnections[1] = [batchlocations[7],batchlocations[10],transport_time]
+    batchconnections[2] = [batchlocations[8],batchlocations[9],transport_time]
+    batchconnections[3] = [batchlocations[8],batchlocations[10],transport_time]
     operators[5] = Operator(env,batchconnections,"operator5")
 
     #time_limit = 10000
@@ -125,6 +130,9 @@ if __name__ == "__main__":
     for i in operators:
         operators[i].report()
 
-    print "Production volume: " + str(batchlocations[len(batchlocations)-1].output.container.level)
-    print "Average throughput (WPH): " + str(np.round(3600*batchlocations[len(batchlocations)-1].output.container.level/time_limit))
+    #print "Production volume: " + str(batchlocations[len(batchlocations)-1].output.container.level)
+    #print "Average throughput (WPH): " + str(np.round(3600*batchlocations[len(batchlocations)-1].output.container.level/time_limit))
+    
+    print "Production volume: " + str(batchlocations[len(batchlocations)-1].output.container.level + batchlocations[len(batchlocations)-2].output.container.level)
+    print "Average throughput (WPH): " + str(np.round(3600*(batchlocations[len(batchlocations)-1].output.container.level + batchlocations[len(batchlocations)-2].output.container.level)/time_limit))
         

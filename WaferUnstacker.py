@@ -25,19 +25,20 @@ class WaferUnstacker(object):
         self.params['stack_size'] = 400
         self.params['max_stack_no'] = 3
         self.params['cassette_size'] = 100
-        self.params['max_cassette_no'] = 4
+        self.params['max_cassette_no'] = 4 # number of output cassette positions
         self.params['units_on_belt'] = 5 # how many units fit on the belt
         self.params['time_step'] = 1 # number of seconds for one unit to progress one position
         self.params['time_new_cassette'] = 10 # number of seconds for putting empty cassette into position
         self.params['time_new_stack'] = 10 # number of seconds for putting a new stack in position
+        self.params['time_pick_and_place'] = 1 # number of seconds for putting a new wafer on the belt
         self.params.update(_params)
         
         self.next_step = env.event()
         print str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"        
 
-        self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_cassette_no'])
+        self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
-        self.output = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())
@@ -49,37 +50,42 @@ class WaferUnstacker(object):
         unit_counter = 0
         
         while True:
+            # currently ignores time delay for loading stack after being empty
             yield self.next_step
-            #print str(self.env.now) +" Trigger received"
+            #print str(self.env.now) + " Trigger received"
             
-            if (self.input.container.level > 0):
-                yield self.input.container.get(1)
-                yield self.env.timeout(1) # time to pick and place a wafer
-                yield self.belt.container.put(1)
-                unit_counter += 1
-                #print str(self.env.now) +" Put wafer on belt"
-
-            if (unit_counter == self.params['stack_size']):                
+            yield self.input.container.get(1)
+            yield self.env.timeout(self.params['time_pick_and_place'])
+            yield self.belt.container.put(1)
+            unit_counter += 1
+            #print str(self.env.now) +" Put wafer on belt"
+            
+            if (unit_counter == self.params['stack_size']):
+                # if current stack is empty, delay to load a new stack                
                 yield self.env.timeout(self.params['time_new_stack'])
                 unit_counter = 0
-                #print str(self.env.now) +" New stack loaded"
+                #print str(self.env.now) +" New stack loaded"            
             
     def run_cassette_loader(self):
         current_load = 0
         
-        while True:          
-            if (current_load < self.params['cassette_size']) & (self.input.container.level > 0):    
-                #print str(self.env.now) + " Triggering event"
+        while True:
+            if (self.belt.space_available(1)) & (self.input.container.level > 0):
+                # trigger new pick and place event if possible
                 yield self.next_step.succeed()
                 self.next_step = self.env.event() # make new event
 
-            if (self.belt.container.level > 0):
-                # belt may be empty because a new stack is being loaded, or because there are no new stacks
+            if (not self.belt.space_available(1)) & (self.output.space_available(1)):
+                # if belt is full and there is space in the output, load one wafer into cassette
                 yield self.belt.container.get(1)
                 current_load += 1
+            elif (self.input.container.level == 0) & (self.belt.container.level > 0) & (self.output.space_available(1)):
+                # if the input is empty, but there are wafers on the belt and there is space in the output, continue loading
+                yield self.belt.container.get(1)
+                current_load += 1                
             
             if (current_load == self.params['cassette_size']):                
-                # whole machine is paused when the output container is full
+                # put one cassette into output at a time
                 yield self.output.container.put(self.params['cassette_size'])
                 self.output.process_counter += self.params['cassette_size']
                 current_load = 0                
