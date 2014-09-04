@@ -31,6 +31,7 @@ class WaferUnstacker(object):
         self.params['time_new_cassette'] = 10 # number of seconds for putting empty cassette into position
         self.params['time_new_stack'] = 10 # number of seconds for putting a new stack in position
         self.params['time_pick_and_place'] = 1 # number of seconds for putting a new wafer on the belt
+        self.params['verbose'] = False
         self.params.update(_params)
         
         self.next_step = env.event()
@@ -48,23 +49,37 @@ class WaferUnstacker(object):
 
     def run_pick_and_place(self):
         unit_counter = 0
+        restart = True
         
-        while True:
-            # currently ignores time delay for loading stack after being empty
+        while True:            
             yield self.next_step
-            #print str(self.env.now) + " Trigger received"
+
+            if (restart):
+                # time delay for loading stack after being empty
+                yield self.env.timeout(self.params['time_new_stack'])
+                restart = False
+                
+                if (self.params['verbose']):
+                    print str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] (Re-)starting unstacker"
             
             yield self.input.container.get(1)
             yield self.env.timeout(self.params['time_pick_and_place'])
             yield self.belt.container.put(1)
             unit_counter += 1
-            #print str(self.env.now) +" Put wafer on belt"
+            
+            #if (self.params['verbose']):
+            #    print str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer on belt"
             
             if (unit_counter == self.params['stack_size']):
                 # if current stack is empty, delay to load a new stack                
                 yield self.env.timeout(self.params['time_new_stack'])
                 unit_counter = 0
-                #print str(self.env.now) +" New stack loaded"            
+                
+                if (self.params['verbose']):
+                    print str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] New input stack loaded"
+                    
+            if (self.input.container.level == 0):
+                restart = True
             
     def run_cassette_loader(self):
         current_load = 0
@@ -90,6 +105,8 @@ class WaferUnstacker(object):
                 self.output.process_counter += self.params['cassette_size']
                 current_load = 0                
                 yield self.env.timeout(self.params['time_new_cassette']) # load new cassette
-                #print str(self.env.now) + " New output cassette"
+                
+                if (self.params['verbose']):
+                    print str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] New output cassette"
             
             yield self.env.timeout(self.params['time_step']) 

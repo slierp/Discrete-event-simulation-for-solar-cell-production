@@ -20,8 +20,10 @@ class WaferSource(object):
         self.params['batch_size'] = 400
         self.params['time_limit'] = 0
         self.params['wait_time'] = 60
+        self.params['verbose'] = False
         self.params.update(_params)
-        self.batch_size = self.params['batch_size'] # temporary solution while converting to dict format
+        
+        self.batch_size = self.params['batch_size']
         self.process_counter = 0
        
         print str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"
@@ -36,11 +38,14 @@ class WaferSource(object):
         while True:
             
             if (self.params['time_limit'] > 0) & (self.env.now >= self.params['time_limit']):                
-                print str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Time limit reached"
+                print str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Time limit reached"
                 break
             
             if (not self.output.container.level):
                 yield self.output.container.put(self.params['batch_size'])
-                #print str(self.env.now) + " - [BatchProcess][" + self.params['name'] + "] End refill"
                 self.output.process_counter += self.params['batch_size']
+                
+                if (self.params['verbose']):
+                    print str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Performed refill"
+            
             yield self.env.timeout(self.params['wait_time'])        

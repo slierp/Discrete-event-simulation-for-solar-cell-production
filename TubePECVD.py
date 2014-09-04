@@ -22,7 +22,7 @@ class TubePECVD(object):
         
         self.params = {}
         self.params['name'] = ""
-        self.params['process_batch_size'] = 300
+        self.params['batch_size'] = 300
         self.params['process_time'] = 30*60        
         self.params['cool_time'] = 10*60
         self.params['no_of_processes'] = 4
@@ -33,6 +33,7 @@ class TubePECVD(object):
         self.params['transfer_time'] = 90 # time needed to transfer boat between any two locations 
         self.params['load_time_per_cassette'] = 30 # time needed to transfer one cassette in or out of the boat (very critical for throughput)
         self.params['wait_time'] = 60
+        self.params['verbose'] = False        
         self.params.update(_params)        
 
         self.transport_counter = 0
@@ -44,17 +45,17 @@ class TubePECVD(object):
         print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube furnace"        
         
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['process_batch_size'],1)
+        self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['batch_size'],1)
 
         self.batchprocesses = {}
         self.coolprocesses = {}  
         for i in np.arange(self.params['no_of_processes']):
-            process_name = "furnace" + str(i)
-            self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['process_batch_size'],self.params['process_time'])
+            process_name = "pecvd" + str(i)
+            self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['process_time'],self.params['verbose'])
             
         for i in np.arange(self.params['no_of_cooldowns']):
             process_name = "cooldown" + str(i)
-            self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['process_batch_size'],self.params['cool_time'])
+            self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['cool_time'],self.params['verbose'])
                
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])        
      
@@ -90,13 +91,15 @@ class TubePECVD(object):
                         yield request_input                 
                         yield request_output
 
-                        yield batchconnections[i][0].container.get(self.params['process_batch_size'])
+                        yield batchconnections[i][0].container.get(self.params['batch_size'])
                         yield self.env.timeout(self.params['transfer_time'])
-                        yield batchconnections[i][1].container.put(self.params['process_batch_size'])
+                        yield batchconnections[i][1].container.put(self.params['batch_size'])
 
                         batchconnections[i][0].process_finished = 0
                         batchconnections[i][1].start_process()
-                        #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown"                    
+                        
+                        if (self.params['verbose']):
+                            print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown"                    
 
             for i in self.coolprocesses:
                 # check if we can unload a batch (should be followed by a re-load if possible)
@@ -107,10 +110,12 @@ class TubePECVD(object):
                     with self.coolprocesses[i].resource.request() as request_input:
                         yield request_input
 
-                        yield self.coolprocesses[i].container.get(self.params['process_batch_size'])
+                        yield self.coolprocesses[i].container.get(self.params['batch_size'])
                         yield self.env.timeout(self.params['transfer_time'])
-                        yield self.boat_load_unload.container.put(self.params['process_batch_size'])
-                        #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved processed batch for load-out"
+                        yield self.boat_load_unload.container.put(self.params['batch_size'])
+                        
+                        if (self.params['verbose']):
+                            print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved processed batch for load-out"
                     
                         self.coolprocesses[i].process_finished = 0                    
                     
@@ -118,7 +123,7 @@ class TubePECVD(object):
                         yield self.load_in_out_end
                         self.load_out_start = self.env.event()                    
             
-            if (self.batches_loaded < self.params['no_of_boats']) & (self.input.container.level >= self.params['process_batch_size']) & \
+            if (self.batches_loaded < self.params['no_of_boats']) & (self.input.container.level >= self.params['batch_size']) & \
                     (self.boat_load_unload.container.level == 0):
                 # ask for more wafers if there is a boat and wafers available
                 yield self.load_in_start.succeed()
@@ -128,43 +133,47 @@ class TubePECVD(object):
             for i in self.batchprocesses:
                 # check if we can load new wafers into a tube
                 if (self.batchprocesses[i].container.level == 0) & \
-                        (self.boat_load_unload.container.level == self.params['process_batch_size']):
+                        (self.boat_load_unload.container.level == self.params['batch_size']):
 
                     with self.batchprocesses[i].resource.request() as request_output:                  
                         yield request_output
                         
-                        yield self.boat_load_unload.container.get(self.params['process_batch_size'])
+                        yield self.boat_load_unload.container.get(self.params['batch_size'])
                         yield self.env.timeout(self.params['transfer_time'])
-                        yield self.batchprocesses[i].container.put(self.params['process_batch_size'])
+                        yield self.batchprocesses[i].container.put(self.params['batch_size'])
 
                         self.batchprocesses[i].start_process()
-                        #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Started a process"
+                        
+                        if (self.params['verbose']):
+                            print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Started a process"
             
             yield self.env.timeout(self.params['wait_time'])                        
             
     def run_load_in(self):
         while True:
             yield self.load_in_start
-            #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loading trigger received"
-            for i in np.arange(self.params['process_batch_size']/self.params['cassette_size']): # how to ensure it is an integer?
+            for i in np.arange(self.params['batch_size']/self.params['cassette_size']): # how to ensure it is an integer?
                 yield self.env.timeout(self.params['load_time_per_cassette'])
                 yield self.input.container.get(self.params['cassette_size'])            
                 yield self.boat_load_unload.container.put(self.params['cassette_size'])
             self.batches_loaded += 1
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event
-            #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loaded batch"
+            
+            if (self.params['verbose']):
+                print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loaded batch"
 
     def run_load_out(self):
         while True:
             yield self.load_out_start
-            #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloading trigger received"
-            for i in np.arange(self.params['process_batch_size']/self.params['cassette_size']): # how to ensure it is an integer?
+            for i in np.arange(self.params['batch_size']/self.params['cassette_size']): # how to ensure it is an integer?
                 yield self.env.timeout(self.params['load_time_per_cassette']) 
                 yield self.boat_load_unload.container.get(self.params['cassette_size']) 
                 yield self.output.container.put(self.params['cassette_size'])
                 self.transport_counter += self.params['cassette_size']
             self.batches_loaded -= 1
             yield self.load_in_out_end.succeed()
-            self.load_in_out_end = self.env.event() # make new event            
-            #print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloaded batch"          
+            self.load_in_out_end = self.env.event() # make new event
+            
+            if (self.params['verbose']):
+                print str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloaded batch"          

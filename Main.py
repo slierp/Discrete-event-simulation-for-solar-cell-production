@@ -63,7 +63,8 @@ if __name__ == "__main__":
     #env = simpy.rt.RealtimeEnvironment(factor=1)
     
     batchlocations = {}
-    batchlocations[0] = WaferSource(env,{'name' : '0'}) #, 'time_limit' : 10000})
+    batchlocations[0] = WaferSource(env,{'name' : '0'})
+    #batchlocations[0] = WaferSource(env,{'name' : '0', 'time_limit' : 1000})
     batchlocations[1] = WaferUnstacker(env,{'name' : '0'})
     batchlocations[2] = WaferUnstacker(env,{'name' : '1'})
     batchlocations[3] = BatchTex(env,{'name' : '0'})
@@ -82,34 +83,34 @@ if __name__ == "__main__":
     batchconnections = {} #[machine1,machine2,transfer_time]
     batchconnections[0] = [batchlocations[0],batchlocations[1],transport_time]
     batchconnections[1] = [batchlocations[0],batchlocations[2],transport_time]   
-    operators[0] = Operator(env,batchconnections,"operator0")
+    operators[0] = Operator(env,batchconnections,"0")
 
     batchconnections = {}
     batchconnections[0] = [batchlocations[1],batchlocations[3],transport_time]
     batchconnections[1] = [batchlocations[2],batchlocations[3],transport_time]
-    operators[1] = Operator(env,batchconnections,"operator1")
+    operators[1] = Operator(env,batchconnections,"1")
 
     batchconnections = {}
     batchconnections[0] = [batchlocations[3],batchlocations[4],transport_time]
     batchconnections[1] = [batchlocations[3],batchlocations[5],transport_time]
-    operators[2] = Operator(env,batchconnections,"operator2")
+    operators[2] = Operator(env,batchconnections,"2")
 
     batchconnections = {}
     batchconnections[0] = [batchlocations[4],batchlocations[6],transport_time]
     batchconnections[1] = [batchlocations[5],batchlocations[6],transport_time]
-    operators[3] = Operator(env,batchconnections,"operator3")
+    operators[3] = Operator(env,batchconnections,"3")
 
     batchconnections = {}
     batchconnections[0] = [batchlocations[6],batchlocations[7],transport_time]
     batchconnections[1] = [batchlocations[6],batchlocations[8],transport_time]
-    operators[4] = Operator(env,batchconnections,"operator4")
+    operators[4] = Operator(env,batchconnections,"4")
 
     batchconnections = {}
     batchconnections[0] = [batchlocations[7],batchlocations[9],transport_time]
     batchconnections[1] = [batchlocations[7],batchlocations[10],transport_time]
     batchconnections[2] = [batchlocations[8],batchlocations[9],transport_time]
     batchconnections[3] = [batchlocations[8],batchlocations[10],transport_time]
-    operators[5] = Operator(env,batchconnections,"operator5")
+    operators[5] = Operator(env,batchconnections,"5")
 
     #time_limit = 10000
     time_limit = 60*60*24 # 1 day

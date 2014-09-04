@@ -33,6 +33,7 @@ class SingleSideEtch(object):
         self.params['unit_distance'] = 0.2
         self.params['cassette_size'] = 100
         self.params['max_cassette_no'] = 8 # max number of cassettes in the input and output buffers
+        self.params['verbose'] = False
         self.params.update(_params)         
         
         self.transport_counter = 0
@@ -67,4 +68,6 @@ class SingleSideEtch(object):
         yield self.env.timeout(60*self.params['tool_length']/self.params['belt_speed'])
         yield self.output.container.put(1) 
         self.transport_counter += 1
-        #print str(self.env.now) + " - [SingleSideEtch][Lane " + str(lane_number) + "] Processed one unit"
+        
+        if (self.params['verbose']) & ((self.transport_counter % self.params['cassette_size']) == 0):
+            print str(np.around(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "] Processed " + str(self.params['cassette_size']) + " units"
