@@ -79,37 +79,38 @@ if __name__ == "__main__":
     
     operators = {}    
     
-    transport_time = 90
-    batchconnections = {} #[machine1,machine2,transfer_time]
-    batchconnections[0] = [batchlocations[0],batchlocations[1],transport_time]
-    batchconnections[1] = [batchlocations[0],batchlocations[2],transport_time]   
+    transport_time = 90 # time for actual transport of one or more units
+    time_per_unit = 20 # added time per unit for loading/unloading on the machines (combined value for input and output stations)
+    batchconnections = {} #[machine1,machine2,transport_time,time_per_unit]
+    batchconnections[0] = [batchlocations[0],batchlocations[1],transport_time,time_per_unit]
+    batchconnections[1] = [batchlocations[0],batchlocations[2],transport_time,time_per_unit]   
     operators[0] = Operator(env,batchconnections,"0")
 
     batchconnections = {}
-    batchconnections[0] = [batchlocations[1],batchlocations[3],transport_time]
-    batchconnections[1] = [batchlocations[2],batchlocations[3],transport_time]
+    batchconnections[0] = [batchlocations[1],batchlocations[3],transport_time,time_per_unit]
+    batchconnections[1] = [batchlocations[2],batchlocations[3],transport_time,time_per_unit]
     operators[1] = Operator(env,batchconnections,"1")
 
     batchconnections = {}
-    batchconnections[0] = [batchlocations[3],batchlocations[4],transport_time]
-    batchconnections[1] = [batchlocations[3],batchlocations[5],transport_time]
+    batchconnections[0] = [batchlocations[3],batchlocations[4],transport_time,time_per_unit]
+    batchconnections[1] = [batchlocations[3],batchlocations[5],transport_time,time_per_unit]
     operators[2] = Operator(env,batchconnections,"2")
 
     batchconnections = {}
-    batchconnections[0] = [batchlocations[4],batchlocations[6],transport_time]
-    batchconnections[1] = [batchlocations[5],batchlocations[6],transport_time]
+    batchconnections[0] = [batchlocations[4],batchlocations[6],transport_time,time_per_unit]
+    batchconnections[1] = [batchlocations[5],batchlocations[6],transport_time,time_per_unit]
     operators[3] = Operator(env,batchconnections,"3")
 
     batchconnections = {}
-    batchconnections[0] = [batchlocations[6],batchlocations[7],transport_time]
-    batchconnections[1] = [batchlocations[6],batchlocations[8],transport_time]
+    batchconnections[0] = [batchlocations[6],batchlocations[7],transport_time,time_per_unit]
+    batchconnections[1] = [batchlocations[6],batchlocations[8],transport_time,time_per_unit]
     operators[4] = Operator(env,batchconnections,"4")
 
     batchconnections = {}
-    batchconnections[0] = [batchlocations[7],batchlocations[9],transport_time]
-    batchconnections[1] = [batchlocations[7],batchlocations[10],transport_time]
-    batchconnections[2] = [batchlocations[8],batchlocations[9],transport_time]
-    batchconnections[3] = [batchlocations[8],batchlocations[10],transport_time]
+    batchconnections[0] = [batchlocations[7],batchlocations[9],transport_time,time_per_unit]
+    batchconnections[1] = [batchlocations[7],batchlocations[10],transport_time,time_per_unit]
+    batchconnections[2] = [batchlocations[8],batchlocations[9],transport_time,time_per_unit]
+    batchconnections[3] = [batchlocations[8],batchlocations[10],transport_time,time_per_unit]
     operators[5] = Operator(env,batchconnections,"5")
 
     #time_limit = 10000

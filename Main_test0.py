@@ -59,7 +59,7 @@ if __name__ == "__main__":
     operators = {}    
     
     batchconnections = {} #[machine1,machine2,transfer_time]
-    batchconnections[0] = [batchlocations[0],batchlocations[1],90]  
+    batchconnections[0] = [batchlocations[0],batchlocations[1],90,20]  
     operators[0] = Operator(env,batchconnections,"0")
 
     #batchconnections = {}
