@@ -16,15 +16,24 @@ import numpy as np
 class Operator(object):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
         
-    def __init__(self, env, batchconnections, name=""):
+    def __init__(self, env, batchconnections, _params = {}):
+        
         self.env = env
         self.batchconnections = batchconnections
-        self.name = name
+
+        self.params = {}
+        self.params['name'] = ""
+        self.params['min_units'] = 1 # not yet implemented
+        self.params['wait_time'] = 60
+        self.params['verbose'] = False
+        self.params.update(_params)
+        
+        #self.name = name
         self.transport_counter = 0
         self.start_time = self.env.now
         self.idle_time = 0
-        self.wait_time = 60
-        print str(self.env.now) + " - [Operator][" + self.name + "] Added an operator"
+        #self.wait_time = 60
+        print str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
         self.env.process(self.run())        
 
     def run(self):
@@ -52,9 +61,9 @@ class Operator(object):
                 continue_loop = False
                 continue
             
-            yield self.env.timeout(self.wait_time)
-            self.idle_time += self.wait_time
+            yield self.env.timeout(self.params['wait_time'])
+            self.idle_time += self.params['wait_time']
 
     def report(self):
-        print "[Operator][" + self.name + "] Units transported: " + str(self.transport_counter) 
-        print "[Operator][" + self.name + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
+        print "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter) 
+        print "[Operator][" + self.params['name'] + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
