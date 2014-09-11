@@ -14,8 +14,6 @@ Add a function to calculate the number of wafers in the line at certain interval
 Tools/locations to be added
 - cassette to cassette transfer
 - buffers
-- printing line
-- pecvd (to be implemented)
 - wafer inspection tool? Perhaps combined with waferunstacker
 
 Implement STORES instead of more abstract CONTAINERS?

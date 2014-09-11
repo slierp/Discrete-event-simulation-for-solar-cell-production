@@ -18,21 +18,21 @@ from TubePECVD import TubePECVD
 from PrintLine import PrintLine
 import simpy
 import numpy as np
-from copy import deepcopy
+from PyQt4 import QtCore #, QtGui
 
-class RunSimulation(object):
+class SimulationSignal(QtCore.QObject):
+    sig = QtCore.Signal(str)
 
-    def __init__(self, _batchlocations,_locationgroups,_batchconnections,_operators,_params = {}):    
+class RunSimulationThread(QtCore.QThread):
 
-        self.batchlocations = deepcopy(_batchlocations)
-        self.locationgroups = deepcopy(_locationgroups)
-        self.batchconnections = deepcopy(_batchconnections)
-        self.operators = deepcopy(_operators)
+    def __init__(self, parent = None):
+        QtCore.QThread.__init__(self, parent)
+        self.stop_simulation = False
+        self.signal = SimulationSignal()
 
-        self.params = {}
-        self.params['time_limit'] = 1000
-        self.params.update(_params)
-    
+    def run(self):
+        print "Started running"        
+
         self.env = simpy.Environment()    
 
         #import simpy.rt # if you are really patient
@@ -79,7 +79,10 @@ class RunSimulation(object):
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])         
 
         print "0% progress: 0 hours"
-        for i in np.arange(1,11):        
+        for i in np.arange(1,11):
+            if(self.stop_simulation):
+                break
+            
             self.env.run(until=self.params['time_limit']*i/10) # or perhaps do daily updates?
             if (i < 10):            
                 print str(i*10) + "% progress: " + str(np.round(self.params['time_limit']*i/36000,1)) + " hours"
@@ -99,3 +102,5 @@ class RunSimulation(object):
 
         print "Production volume: " + str(prod_vol)
         print "Average throughput (WPH): " + str(np.round(3600*prod_vol/self.params['time_limit']).astype(int))
+        
+        self.signal.sig.emit('Simulation finished')
