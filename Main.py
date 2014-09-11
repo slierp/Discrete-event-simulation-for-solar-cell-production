@@ -32,6 +32,7 @@ So with ever-present wafer supply and removal.
 from __future__ import division
 from PyQt4 import QtCore, QtGui
 from MainGui import MainGui
+import Required_resources
 
 if __name__ == "__main__":      
 
