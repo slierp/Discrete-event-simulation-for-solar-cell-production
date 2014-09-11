@@ -35,7 +35,9 @@ class WaferUnstacker(object):
         self.params.update(_params)
         
         self.next_step = env.event()
-        print str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"        
+        
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"        
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)

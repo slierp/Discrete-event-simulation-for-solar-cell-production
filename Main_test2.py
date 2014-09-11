@@ -10,9 +10,7 @@ For testing a full line
 
 from __future__ import division
 from RunSimulation import RunSimulation
-
-#import pickle
-#import cPickle
+import pickle, sys
 
 if __name__ == "__main__":      
     
@@ -87,10 +85,10 @@ if __name__ == "__main__":
     #params['time_limit'] = 60*60*24*30 # 1 month
     #params['time_limit'] = 60*60*24*365 # 1 year    
 
-    RunSimulation(batchlocations,locationgroups,batchconnections,operators,params)
+    #RunSimulation(batchlocations,locationgroups,batchconnections,operators,params)
 
-    #with open('objs.pickle', 'w') as f:
-    #    pickle.dump([batchlocations,locationgroups,batchconnections,operators], f)
+    with open('Example2.desc', 'w') as f:
+        pickle.dump([batchlocations,locationgroups,batchconnections,operators], f)
 
     #with open('objs.pickle') as f:
     #    batchlocations1,locationgroups1,batchconnections1,operators1 = pickle.load(f)

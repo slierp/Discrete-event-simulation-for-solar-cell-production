@@ -37,8 +37,9 @@ class PrintLine(object):
         self.params['firing_unit_distance'] = 0.2 # in m
         self.params['verbose'] = False
         self.params.update(_params)
-                        
-        print str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"        
+        
+        if (self.params['verbose']):               
+            print str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"        
 
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.output = InfiniteContainer(self.env,"output")

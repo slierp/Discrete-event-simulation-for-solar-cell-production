@@ -47,7 +47,8 @@ class TubeFurnace(object):
         self.load_out_start = self.env.event()
         self.load_in_out_end = self.env.event()
         
-        print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"        
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"        
         
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['batch_size'],1)

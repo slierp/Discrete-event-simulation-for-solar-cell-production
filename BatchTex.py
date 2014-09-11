@@ -31,7 +31,8 @@ class BatchTex(object):
         self.params['verbose'] = False
         self.params.update(_params)        
         
-        print str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
         
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])        
 

@@ -31,6 +31,7 @@ from __future__ import division
 from PyQt4 import QtCore, QtGui
 from MainGui import MainGui
 import Required_resources
+import sys
 
 if __name__ == "__main__":      
 

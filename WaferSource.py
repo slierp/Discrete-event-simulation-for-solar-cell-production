@@ -26,7 +26,8 @@ class WaferSource(object):
         self.batch_size = self.params['batch_size']
         self.process_counter = 0
        
-        print str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"
         
         self.output = BatchContainer(self.env,"output",self.batch_size,1)
         self.env.process(self.run())

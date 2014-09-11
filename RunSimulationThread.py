@@ -18,21 +18,22 @@ from TubePECVD import TubePECVD
 from PrintLine import PrintLine
 import simpy
 import numpy as np
-from PyQt4 import QtCore #, QtGui
+from PyQt4 import QtCore
 
 class SimulationSignal(QtCore.QObject):
     sig = QtCore.Signal(str)
 
 class RunSimulationThread(QtCore.QThread):
 
-    def __init__(self, parent = None):
+    def __init__(self, edit, parent = None):
         QtCore.QThread.__init__(self, parent)
+        self.edit = edit
         self.stop_simulation = False
-        self.signal = SimulationSignal()
+        self.signal = SimulationSignal()        
+        self.output = SimulationSignal()
 
     def run(self):
-        print "Started running"        
-
+        
         self.env = simpy.Environment()    
 
         #import simpy.rt # if you are really patient
@@ -76,31 +77,33 @@ class RunSimulationThread(QtCore.QThread):
             for j in np.arange(len(self.operators[i][0])):
                 tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
 
-            self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])         
+            self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])
 
-        print "0% progress: 0 hours"
+        self.output.sig.emit("0% progress: 0 hours")
         for i in np.arange(1,11):
             if(self.stop_simulation):
                 break
             
             self.env.run(until=self.params['time_limit']*i/10) # or perhaps do daily updates?
-            if (i < 10):            
-                print str(i*10) + "% progress: " + str(np.round(self.params['time_limit']*i/36000,1)) + " hours"
+            if (i < 10):   
+                string = str(i*10) + "% progress: " + str(np.round(self.params['time_limit']*i/36000,1)) + " hours"
+                self.output.sig.emit(string)
             else:
-                print "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
+                string = "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
+                self.output.sig.emit(string)
 
         for i in self.batchlocations:
             self.batchlocations[i].report()
 
         for i in self.operators:
-            self.operators[i].report()
+            self.operators[i].report(self.output)
 
         prod_vol = 0
         l_loc = len(self.locationgroups)
         for i in np.arange(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
 
-        print "Production volume: " + str(prod_vol)
-        print "Average throughput (WPH): " + str(np.round(3600*prod_vol/self.params['time_limit']).astype(int))
+        self.output.sig.emit("Production volume: " + str(prod_vol))
+        self.output.sig.emit("Average throughput (WPH): " + str(np.round(3600*prod_vol/self.params['time_limit']).astype(int)))        
         
         self.signal.sig.emit('Simulation finished')

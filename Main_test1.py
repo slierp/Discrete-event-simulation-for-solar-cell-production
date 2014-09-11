@@ -10,6 +10,7 @@ For measuring maximum throughput of single tools
 
 from __future__ import division
 from RunSimulation import RunSimulation
+import pickle, sys
 
 if __name__ == "__main__":      
     
@@ -22,7 +23,7 @@ if __name__ == "__main__":
 
     batchlocations = {} #tool class name, no of tools, dict with settings
     batchlocations[0] = ["WaferSource", {'name' : '0','batch_size' : 100}]
-    batchlocations[1] = ["WaferUnstacker", {'verbose' : True}]
+    batchlocations[1] = ["WaferUnstacker", {'name' : '0', 'verbose' : True}]
     #batchlocations[1] = ["BatchTex", {'verbose' : True}]
     #batchlocations[1] = ["TubeFurnace", {'verbose' : True}]    
     #batchlocations[1] = ["SingleSideEtch", {'verbose' : True}]    
@@ -55,4 +56,7 @@ if __name__ == "__main__":
     #params['time_limit'] = 60*60*24*30 # 1 month
     #params['time_limit'] = 60*60*24*365 # 1 year    
 
-    RunSimulation(batchlocations,locationgroups,batchconnections,operators,params)
+#    RunSimulation(batchlocations,locationgroups,batchconnections,operators,params)
+    
+    with open('Example1.desc', 'w') as f:
+        pickle.dump([batchlocations,locationgroups,batchconnections,operators], f)

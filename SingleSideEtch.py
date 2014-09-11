@@ -37,8 +37,10 @@ class SingleSideEtch(object):
         self.params.update(_params)         
         
         self.transport_counter = 0
-        self.start_time = self.env.now       
-        print str(self.env.now) + " - [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
+        self.start_time = self.env.now
+        
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
         
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])                  
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])

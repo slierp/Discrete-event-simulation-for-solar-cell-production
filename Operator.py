@@ -28,12 +28,12 @@ class Operator(object):
         self.params['verbose'] = False
         self.params.update(_params)
         
-        #self.name = name
         self.transport_counter = 0
         self.start_time = self.env.now
         self.idle_time = 0
-        #self.wait_time = 60
-        print str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
+        
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
         self.env.process(self.run())        
 
     def run(self):
@@ -64,6 +64,8 @@ class Operator(object):
             yield self.env.timeout(self.params['wait_time'])
             self.idle_time += self.params['wait_time']
 
-    def report(self):
-        print "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter) 
-        print "[Operator][" + self.params['name'] + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
+    def report(self, output):        
+        string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
+        output.sig.emit(string)
+        string = "[Operator][" + self.params['name'] + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
+        output.sig.emit(string)

@@ -10,6 +10,7 @@ For checking whether single units are processed correctly
 
 from __future__ import division
 from RunSimulation import RunSimulation
+import pickle, sys
 
 if __name__ == "__main__":      
     
@@ -21,8 +22,8 @@ if __name__ == "__main__":
             exit()
 
     batchlocations = {} #tool class name, no of tools, dict with settings
-    batchlocations[0] = ["WaferSource", {'batch_size' : 2, 'time_limit' : 1}]
-    batchlocations[1] = ["WaferUnstacker", {'cassette_size' : 1, 'verbose' : True}]
+    batchlocations[0] = ["WaferSource", {'batch_size' : 2, 'time_limit' : 1, 'name' : '0'}]
+    batchlocations[1] = ["WaferUnstacker", {'cassette_size' : 1, 'verbose' : True, 'name' : '0'}]
     #batchlocations[1] = ["BatchTex", {'batch_size' : 1, 'cassette_size' : 1, 'verbose' : True}]
     #batchlocations[1] = ["TubeFurnace", {'batch_size' : 1, 'cassette_size' : 1, 'verbose' : True}]    
     #batchlocations[1] = ["SingleSideEtch", {'cassette_size' : 1, 'verbose' : True}]    
@@ -51,4 +52,7 @@ if __name__ == "__main__":
 
     params['time_limit'] = 10000  
 
-    RunSimulation(batchlocations,locationgroups,batchconnections,operators,params)
+#    RunSimulation(batchlocations,locationgroups,batchconnections,operators,params)
+
+    with open('Example0.desc', 'w') as f:
+        pickle.dump([batchlocations,locationgroups,batchconnections,operators], f)

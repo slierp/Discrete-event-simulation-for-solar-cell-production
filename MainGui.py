@@ -8,9 +8,11 @@ Created on Wed Sep 10 15:19:49 2014
 from __future__ import division
 import numpy as np
 from PyQt4 import QtCore, QtGui
+import os, ntpath, sys
 icon_name = ":Logo_Tempress.ico"
 from RunSimulationThread import RunSimulationThread
 from copy import deepcopy
+import pickle
 
 class MainGui(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -19,16 +21,22 @@ class MainGui(QtGui.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(icon_name))
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
 
-        self.simulation_thread = RunSimulationThread()
-        self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
+        self.edit = QtGui.QTextEdit()
+        self.edit.setReadOnly(True)               
 
-        self.clip = QtGui.QApplication.clipboard()
+        self.simulation_thread = RunSimulationThread(self.edit)
+        self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
+        self.simulation_thread.output.sig.connect(self.simulation_output)
+
+        self.prev_dir_path = ""
+        self.prev_save_path = ""
+
         self.batchlocations_model = QtGui.QStandardItemModel()
         self.batchlocations_view = QtGui.QTreeView()
-        self.locationgroups_model = QtGui.QStandardItemModel()
-        self.batchconnections_model = QtGui.QStandardItemModel()
+        self.batchlocations_view.setAlternatingRowColors(True)
         self.operators_model = QtGui.QStandardItemModel()
         self.operators_view = QtGui.QTreeView()
+        self.operators_view.setAlternatingRowColors(True)
 
         self.batchlocations = {} #tool class name, no of tools, dict with settings
         self.batchlocations[0] = ["WaferSource", {'name' : '0'}]
@@ -54,26 +62,75 @@ class MainGui(QtGui.QMainWindow):
         self.operators[4] = [[8,9],{'name' : '4'}]
         self.operators[5] = [[10,11,12,13],{'name' : '5'}]
 
+        self.sim_time_selection_list = ['1 hour','1 day','1 week','1 month','1 year']
+
         self.params = {}
-        self.params['time_limit'] = 1000
+        self.params['time_limit'] = 60*60
         
         self.create_menu()
         self.create_main_frame()
-        self.load_default_line()
+        self.load_definition()
 
     def open_file(self):
-        pass
+
+        filename = QtGui.QFileDialog.getOpenFileName(self,self.tr("Open file"), self.prev_dir_path, "Description Files (*.desc)")
+        
+        if (not filename):
+            return
+
+        if (not os.path.isfile(filename.toAscii())):
+            msg = self.tr("Filenames with non-ASCII characters were found.\n\nThe application currently only supports ASCII filenames.")
+            QtGui.QMessageBox.about(self, self.tr("Warning"), msg) 
+            return
+        
+        self.prev_save_path = str(filename)
+        self.prev_dir_path = ntpath.dirname(str(filename))
+        
+        with open(str(filename)) as f:
+            self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
+
+        self.load_definition(False)
+            
+        self.statusBar().showMessage(self.tr("New description loaded"))
 
     def save_to_file(self):
-        pass
+        
+        if (not self.prev_save_path):
+            self.save_to_file_as()
+            return
+        
+        with open(self.prev_save_path, 'w') as f:
+            pickle.dump([self.batchlocations,self.locationgroups,self.batchconnections,self.operators], f)
+            
+        self.statusBar().showMessage(self.tr("File saved"))
 
     def save_to_file_as(self):
-        pass
 
-    def load_default_line(self):        
-        self.exec_batchlocations()
-        self.exec_locationgroups()
-        self.exec_batchconnections()
+        filename = QtGui.QFileDialog.getSaveFileName(self,self.tr("Save file"), self.prev_dir_path, "Description Files (*.desc)")
+        
+        if (not filename):
+            return
+        
+        self.prev_save_path = str(filename)
+        self.prev_dir_path = ntpath.dirname(str(filename))
+        
+        with open(str(filename), 'w') as f:
+            pickle.dump([self.batchlocations,self.locationgroups,self.batchconnections,self.operators], f)
+            
+        self.statusBar().showMessage(self.tr("File saved"))            
+
+    def load_definition(self, default=True):
+
+        if (default):        
+            self.exec_batchlocations()
+            self.exec_locationgroups()
+            self.exec_batchconnections()
+
+        self.batchlocations_model.clear()
+        self.operators_model.clear()
+        
+        self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])
+        self.operators_model.setHorizontalHeaderLabels(['Operators'])            
 
         for i in self.locationgroups:
             parent = QtGui.QStandardItem(self.batchlocations[self.locationgroups[i][0]][0])
@@ -177,8 +234,17 @@ class MainGui(QtGui.QMainWindow):
     def edit_operator(self):
         pass    
 
+    def edit_simulation(self):
+        pass
+
     def run_simulation(self):
+        time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
+        for i, value in enumerate(self.sim_time_selection_list):
+            if (value == self.sim_time_combo.currentText()):
+                self.params['time_limit'] = time_limits[i]
+        
         if not self.simulation_thread.isRunning():
+            self.edit.clear()
             self.simulation_thread.batchlocations = deepcopy(self.batchlocations)
             self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
             self.simulation_thread.batchconnections = deepcopy(self.batchconnections)
@@ -192,13 +258,20 @@ class MainGui(QtGui.QMainWindow):
             self.simulation_thread.start()
             self.run_sim_button.setEnabled(False)
             self.stop_sim_button.setEnabled(True)
+            
+            self.statusBar().showMessage(self.tr("Simulation started"))
 
     def stop_simulation(self):
         self.simulation_thread.stop_simulation = True
+        self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
+
+    def simulation_output(self,string):
+        self.edit.insertPlainText(string + '\n')
 
     def simulation_end_signal(self):
         self.run_sim_button.setEnabled(True)
         self.stop_sim_button.setEnabled(False)
+        self.statusBar().showMessage(self.tr("Simulation has ended"))
 
     def on_about(self):
         msg = self.tr("Solar cell manufacturing simulation\n\n- Author: Ronald Naber (rnaber@tempress.nl)\n- License: Public domain")
@@ -302,7 +375,7 @@ class MainGui(QtGui.QMainWindow):
 
         open_file_button = QtGui.QPushButton()
         tip = self.tr("Open file")
-        self.connect(add_operator_button, QtCore.SIGNAL('clicked()'), self.open_file)
+        self.connect(open_file_button, QtCore.SIGNAL('clicked()'), self.open_file)
         open_file_button.setIcon(open_file_button.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)) 
         open_file_button.setToolTip(tip)
         open_file_button.setStatusTip(tip)
@@ -313,6 +386,18 @@ class MainGui(QtGui.QMainWindow):
         save_file_button.setIcon(save_file_button.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton)) 
         save_file_button.setToolTip(tip)
         save_file_button.setStatusTip(tip)
+
+        self.sim_time_combo = QtGui.QComboBox(self)
+        for i in self.sim_time_selection_list:
+            self.sim_time_combo.addItem(i)               
+        #self.param_one_combo.setCurrentIndex(4) 
+
+        #edit_sim_button = QtGui.QPushButton()
+        #tip = self.tr("Edit simulation settings")
+        #self.connect(edit_sim_button, QtCore.SIGNAL('clicked()'), self.edit_simulation)
+        #edit_sim_button.setIcon(edit_sim_button.style().standardIcon(QtGui.QStyle.SP_FileDialogDetailedView)) 
+        #edit_sim_button.setToolTip(tip)
+        #edit_sim_button.setStatusTip(tip)
 
         self.run_sim_button = QtGui.QPushButton()
         tip = self.tr("Run simulation")
@@ -335,8 +420,12 @@ class MainGui(QtGui.QMainWindow):
         top_buttonbox.addButton(self.run_sim_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.stop_sim_button, QtGui.QDialogButtonBox.ActionRole)
         
-        toolbar_hbox = QtGui.QHBoxLayout()                
+        toolbar_hbox = QtGui.QHBoxLayout()
         toolbar_hbox.addWidget(top_buttonbox)
+        toolbar_hbox.addWidget(self.sim_time_combo)        
+        
+        textbox_hbox = QtGui.QHBoxLayout()
+        textbox_hbox.addWidget(self.edit)
         
         ##### Main layout #####
         top_hbox = QtGui.QHBoxLayout()
@@ -344,10 +433,10 @@ class MainGui(QtGui.QMainWindow):
         top_hbox.addLayout(vbox0)
         top_hbox.addLayout(vbox1)
 
-  
         vbox = QtGui.QVBoxLayout()       
         vbox.addLayout(toolbar_hbox)
-        vbox.addLayout(top_hbox) 
+        vbox.addLayout(top_hbox)
+        vbox.addLayout(textbox_hbox)
                                                          
         self.main_frame.setLayout(vbox)
 
@@ -376,7 +465,7 @@ class MainGui(QtGui.QMainWindow):
 
         tip = self.tr("Save to file as...")        
         saveas_action = QtGui.QAction(self.tr("Save as..."), self)
-        self.connect(save_action, QtCore.SIGNAL("triggered()"), self.save_to_file_as)
+        self.connect(saveas_action, QtCore.SIGNAL("triggered()"), self.save_to_file_as)
         saveas_action.setToolTip(tip)
         saveas_action.setStatusTip(tip)        
 

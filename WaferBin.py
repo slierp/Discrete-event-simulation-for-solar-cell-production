@@ -20,9 +20,11 @@ class WaferBin(object):
         self.params['batch_size'] = 100
         self.params['max_batch_no'] = 4
         self.params['wait_time'] = 60
+        self.params['verbose'] = False
         self.params.update(_params)
-             
-        print str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin"
+        
+        if (self.params['verbose']):
+            print str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin"
         
         self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")
