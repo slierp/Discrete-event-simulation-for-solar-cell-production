@@ -18,6 +18,7 @@ from SingleSideEtch import SingleSideEtch
 from TubePECVD import TubePECVD
 from PrintLine import PrintLine
 from RunSimulationThread import RunSimulationThread
+from BatchlocationSettingsDialog import BatchlocationSettingsDialog
 from copy import deepcopy
 import pickle
 
@@ -51,13 +52,14 @@ class MainGui(QtGui.QMainWindow):
 
         self.batchlocations_model = QtGui.QStandardItemModel()
         self.batchlocations_view = QtGui.QTreeView()
+        self.batchlocations_view.doubleClicked.connect(self.edit_batchlocation)
         self.batchlocations_view.setAlternatingRowColors(True)
         self.operators_model = QtGui.QStandardItemModel()
         self.operators_view = QtGui.QTreeView()
         self.operators_view.setAlternatingRowColors(True)
         self.batchlocation_dialog = None
 
-        self.modified_batchlocation_number = None                
+        self.modified_batchlocation_number = None
 
         self.batchlocations = {} #tool class name, no of tools, dict with settings
         self.batchlocations[0] = ["WaferSource", {'name' : '0'}]
@@ -183,6 +185,7 @@ class MainGui(QtGui.QMainWindow):
         elif (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):            
             return
 
+        # find out which batchlocation was selected
         row = self.batchlocations_view.selectedIndexes()[0].parent().row()
         index = self.batchlocations_view.selectedIndexes()[0].row()
         self.modified_batchlocation_number = self.locationgroups[row][index]       
@@ -190,6 +193,7 @@ class MainGui(QtGui.QMainWindow):
 
         env = dummy_env()
         curr_params = {}
+        # load default settings list
         if (batchlocation[0] == "WaferSource"):
             curr_params = WaferSource(env).params
         elif (batchlocation[0] == "WaferUnstacker"):
@@ -209,67 +213,13 @@ class MainGui(QtGui.QMainWindow):
         else:
             return                         
         
+        # update default settings list with currently stored settings
         curr_params.update(batchlocation[1])
 
-        self.batchlocation_dialog = QtGui.QDialog(self)
-        self.batchlocation_dialog.setWindowTitle(self.tr("Available settings"))
-        vbox = QtGui.QVBoxLayout()
-
-        title_label = QtGui.QLabel(self.tr("Edit settings:"))
-        vbox.addWidget(title_label)
-        
-        for i in curr_params:
-            if isinstance(curr_params[i], str):
-                hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
-                line_edit = QtGui.QLineEdit(curr_params[i])
-                line_edit.setObjectName(i)
-                hbox.addWidget(label)
-                hbox.addWidget(line_edit)                
-                vbox.addLayout(hbox)
-        
-        for i in curr_params:
-            if isinstance(curr_params[i], int) & (not i == 'verbose'):
-                hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
-                spinbox = QtGui.QSpinBox()
-                spinbox.setAccelerated(True)
-                spinbox.setMaximum(999999999)
-                spinbox.setValue(curr_params[i])
-                spinbox.setObjectName(i)
-                hbox.addWidget(label)
-                hbox.addWidget(spinbox)                
-                vbox.addLayout(hbox)
-        
-        for i in curr_params:
-            if isinstance(curr_params[i], bool):
-                hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
-                checkbox = QtGui.QCheckBox()
-                checkbox.setCheckState(curr_params[i])
-                checkbox.setObjectName(i)
-                hbox.addWidget(label)
-                hbox.addWidget(checkbox)                
-                vbox.addLayout(hbox)
-
-        buttonbox = QtGui.QDialogButtonBox()
-        okbutton = QtGui.QPushButton("OK")
-        cancelbutton = QtGui.QPushButton("Cancel")
-        self.connect(okbutton, QtCore.SIGNAL('clicked()'), self.batchlocation_dialog.close)
-        self.connect(cancelbutton, QtCore.SIGNAL('clicked()'), self.batchlocation_dialog.close)
-        buttonbox.addButton(okbutton,QtGui.QDialogButtonBox.ActionRole)
-        buttonbox.addButton(cancelbutton,QtGui.QDialogButtonBox.ActionRole)
-        vbox.addWidget(buttonbox)
-
-        self.batchlocation_dialog.setLayout(vbox)         
-        
-        self.batchlocation_dialog.setModal(True)
-        self.batchlocation_dialog.show()        
-
-    #def read_dialog_params(self):
-        # read contents of each widget
-        # update settings in self.batchlocations[self.modified_batchlocation_number]
-    #    self.batchlocation_dialog.close
+        # start dialog to enable user to change settings
+        batchlocation_dialog = BatchlocationSettingsDialog(self,curr_params)
+        batchlocation_dialog.setModal(True)
+        batchlocation_dialog.show()
 
     def up_batchlocation(self):
         pass
