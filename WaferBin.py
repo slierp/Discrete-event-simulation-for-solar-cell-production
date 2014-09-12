@@ -31,8 +31,9 @@ class WaferBin(object):
         
         self.env.process(self.run())
 
-    def report(self):
-        print "[WaferBin][" + self.params['name'] + "] Current level: " + str(self.output.container.level)
+    def report(self,output):
+        string = "[WaferBin][" + self.params['name'] + "] Current level: " + str(self.output.container.level)
+        output.sig.emit(string)
 
     def run(self):
         while True:

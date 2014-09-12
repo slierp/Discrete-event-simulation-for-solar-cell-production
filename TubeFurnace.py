@@ -69,10 +69,12 @@ class TubeFurnace(object):
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())
 
-    def report(self):
-        print "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+    def report(self,output):
+        string = "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+        output.sig.emit(string)
         for i in self.batchprocesses:
-            print "[TubeFurnace][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %" 
+            string = "[TubeFurnace][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %" 
+            output.sig.emit(string)
 
     def run_transport(self):
         

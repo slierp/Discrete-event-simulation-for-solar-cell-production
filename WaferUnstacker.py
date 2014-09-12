@@ -46,8 +46,9 @@ class WaferUnstacker(object):
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())
 
-    def report(self):
-        print "[WaferUnstacker][" + self.params['name'] + "] Units processed: " + str(self.output.process_counter)
+    def report(self,output):
+        string = "[WaferUnstacker][" + self.params['name'] + "] Units processed: " + str(self.output.process_counter)
+        output.sig.emit(string)
 
     def run_pick_and_place(self):
         unit_counter = 0

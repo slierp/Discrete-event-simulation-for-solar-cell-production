@@ -63,11 +63,13 @@ class PrintLine(object):
         self.firing_input = BatchContainer(self.env,"firing_input",1,1)
         self.env.process(self.run_firing_furnace())
 
-    def report(self):
-        print "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
+    def report(self,output):
+        string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
+        output.sig.emit(string)
         for i in self.idle_times:
             idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
-            print "[PrintLine][" + self.params['name'] + "][part" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"        
+            string = "[PrintLine][" + self.params['name'] + "][part" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
+            output.sig.emit(string)
 
     def run_belt(self, num):        
         while True:

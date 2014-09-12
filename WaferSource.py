@@ -32,8 +32,9 @@ class WaferSource(object):
         self.output = BatchContainer(self.env,"output",self.batch_size,1)
         self.env.process(self.run())
 
-    def report(self):
-        print "[WaferSource][" + self.params['name'] + "] Units sourced: " + str(self.output.process_counter - self.output.container.level)
+    def report(self,output):
+        string = "[WaferSource][" + self.params['name'] + "] Units sourced: " + str(self.output.process_counter - self.output.container.level)
+        output.sig.emit(string)
         
     def run(self):
         while True:

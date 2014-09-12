@@ -8,17 +8,35 @@ Created on Wed Sep 10 15:19:49 2014
 from __future__ import division
 import numpy as np
 from PyQt4 import QtCore, QtGui
-import os, ntpath, sys
-icon_name = ":Logo_Tempress.ico"
+import os, ntpath
+from WaferSource import WaferSource
+from WaferUnstacker import WaferUnstacker
+from WaferBin import WaferBin
+from BatchTex import BatchTex
+from TubeFurnace import TubeFurnace
+from SingleSideEtch import SingleSideEtch
+from TubePECVD import TubePECVD
+from PrintLine import PrintLine
 from RunSimulationThread import RunSimulationThread
 from copy import deepcopy
 import pickle
+
+class dummy_env(object):
+    
+    def process(dummy0=None,dummy1=None):
+        pass
+
+    def now(self):
+        pass
+    
+    def event(dummy0=None):
+        pass
 
 class MainGui(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell manufacturing simulation"))
-        self.setWindowIcon(QtGui.QIcon(icon_name))
+        self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
 
         self.edit = QtGui.QTextEdit()
@@ -37,6 +55,9 @@ class MainGui(QtGui.QMainWindow):
         self.operators_model = QtGui.QStandardItemModel()
         self.operators_view = QtGui.QTreeView()
         self.operators_view.setAlternatingRowColors(True)
+        self.batchlocation_dialog = None
+
+        self.modified_batchlocation_number = None                
 
         self.batchlocations = {} #tool class name, no of tools, dict with settings
         self.batchlocations[0] = ["WaferSource", {'name' : '0'}]
@@ -157,7 +178,98 @@ class MainGui(QtGui.QMainWindow):
         pass
     
     def edit_batchlocation(self):
-        pass    
+        if (not len(self.batchlocations_view.selectedIndexes())):
+            return
+        elif (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):            
+            return
+
+        row = self.batchlocations_view.selectedIndexes()[0].parent().row()
+        index = self.batchlocations_view.selectedIndexes()[0].row()
+        self.modified_batchlocation_number = self.locationgroups[row][index]       
+        batchlocation = self.batchlocations[self.modified_batchlocation_number]
+
+        env = dummy_env()
+        curr_params = {}
+        if (batchlocation[0] == "WaferSource"):
+            curr_params = WaferSource(env).params
+        elif (batchlocation[0] == "WaferUnstacker"):
+            curr_params = WaferUnstacker(env).params
+        elif (batchlocation[0] == "BatchTex"):
+            curr_params = BatchTex(env).params
+        elif (batchlocation[0] == "TubeFurnace"):
+            curr_params = TubeFurnace(env).params
+        elif (batchlocation[0] == "SingleSideEtch"):
+            curr_params = SingleSideEtch(env).params
+        elif (batchlocation[0] == "TubePECVD"):
+            curr_params = TubePECVD(env).params
+        elif (batchlocation[0] == "PrintLine"):
+            curr_params = PrintLine(env).params            
+        elif (batchlocation[0] == "WaferBin"):
+            curr_params = WaferBin(env).params
+        else:
+            return                         
+        
+        curr_params.update(batchlocation[1])
+
+        self.batchlocation_dialog = QtGui.QDialog(self)
+        self.batchlocation_dialog.setWindowTitle(self.tr("Available settings"))
+        vbox = QtGui.QVBoxLayout()
+
+        title_label = QtGui.QLabel(self.tr("Edit settings:"))
+        vbox.addWidget(title_label)
+        
+        for i in curr_params:
+            if isinstance(curr_params[i], str):
+                hbox = QtGui.QHBoxLayout()
+                label = QtGui.QLabel(i)
+                line_edit = QtGui.QLineEdit(curr_params[i])
+                line_edit.setObjectName(i)
+                hbox.addWidget(label)
+                hbox.addWidget(line_edit)                
+                vbox.addLayout(hbox)
+        
+        for i in curr_params:
+            if isinstance(curr_params[i], int) & (not i == 'verbose'):
+                hbox = QtGui.QHBoxLayout()
+                label = QtGui.QLabel(i)
+                spinbox = QtGui.QSpinBox()
+                spinbox.setAccelerated(True)
+                spinbox.setMaximum(999999999)
+                spinbox.setValue(curr_params[i])
+                spinbox.setObjectName(i)
+                hbox.addWidget(label)
+                hbox.addWidget(spinbox)                
+                vbox.addLayout(hbox)
+        
+        for i in curr_params:
+            if isinstance(curr_params[i], bool):
+                hbox = QtGui.QHBoxLayout()
+                label = QtGui.QLabel(i)
+                checkbox = QtGui.QCheckBox()
+                checkbox.setCheckState(curr_params[i])
+                checkbox.setObjectName(i)
+                hbox.addWidget(label)
+                hbox.addWidget(checkbox)                
+                vbox.addLayout(hbox)
+
+        buttonbox = QtGui.QDialogButtonBox()
+        okbutton = QtGui.QPushButton("OK")
+        cancelbutton = QtGui.QPushButton("Cancel")
+        self.connect(okbutton, QtCore.SIGNAL('clicked()'), self.batchlocation_dialog.close)
+        self.connect(cancelbutton, QtCore.SIGNAL('clicked()'), self.batchlocation_dialog.close)
+        buttonbox.addButton(okbutton,QtGui.QDialogButtonBox.ActionRole)
+        buttonbox.addButton(cancelbutton,QtGui.QDialogButtonBox.ActionRole)
+        vbox.addWidget(buttonbox)
+
+        self.batchlocation_dialog.setLayout(vbox)         
+        
+        self.batchlocation_dialog.setModal(True)
+        self.batchlocation_dialog.show()        
+
+    #def read_dialog_params(self):
+        # read contents of each widget
+        # update settings in self.batchlocations[self.modified_batchlocation_number]
+    #    self.batchlocation_dialog.close
 
     def up_batchlocation(self):
         pass
@@ -223,7 +335,7 @@ class MainGui(QtGui.QMainWindow):
             else:
                 curr_locationgroup = self.batchconnections[i][0][0]
                 num += 1
-                self.operators[num][0].append(i)                           
+                self.operators[num][0].append(i)
 
     def add_operator(self):
         pass
@@ -232,9 +344,6 @@ class MainGui(QtGui.QMainWindow):
         pass
 
     def edit_operator(self):
-        pass    
-
-    def edit_simulation(self):
         pass
 
     def run_simulation(self):
@@ -290,47 +399,40 @@ class MainGui(QtGui.QMainWindow):
         
         add_batchlocation_button = QtGui.QPushButton()
         self.connect(add_batchlocation_button, QtCore.SIGNAL('clicked()'), self.add_batchlocation)
-        add_batchlocation_button.setIcon(add_batchlocation_button.style().standardIcon(QtGui.QStyle.SP_DialogOkButton)) 
+        add_batchlocation_button.setIcon(QtGui.QIcon(":plus.png"))
         add_batchlocation_button.setToolTip(self.tr("Add batchlocation"))
         add_batchlocation_button.setStatusTip(self.tr("Add batchlocation"))
         
         del_batchlocation_button = QtGui.QPushButton()
         self.connect(del_batchlocation_button, QtCore.SIGNAL('clicked()'), self.del_batchlocation)
-        del_batchlocation_button.setIcon(del_batchlocation_button.style().standardIcon(QtGui.QStyle.SP_DialogCancelButton))
+        del_batchlocation_button.setIcon(QtGui.QIcon(":minus.png"))
         del_batchlocation_button.setToolTip(self.tr("Remove batchlocation"))
         del_batchlocation_button.setStatusTip(self.tr("Remove batchlocation"))
 
-        edit_batchlocation_button = QtGui.QPushButton()
-        self.connect(edit_batchlocation_button, QtCore.SIGNAL('clicked()'), self.edit_batchlocation)
-        edit_batchlocation_button.setIcon(edit_batchlocation_button.style().standardIcon(QtGui.QStyle.SP_FileDialogDetailedView))
-        edit_batchlocation_button.setToolTip(self.tr("Edit settings"))
-        edit_batchlocation_button.setStatusTip(self.tr("Edit settings"))
-
         up_batchlocation_button = QtGui.QPushButton()
         self.connect(up_batchlocation_button, QtCore.SIGNAL('clicked()'), self.up_batchlocation)
-        up_batchlocation_button.setIcon(up_batchlocation_button.style().standardIcon(QtGui.QStyle.SP_ArrowUp))
+        up_batchlocation_button.setIcon(QtGui.QIcon(":up.png"))
         up_batchlocation_button.setToolTip(self.tr("Move up in list"))
         up_batchlocation_button.setStatusTip(self.tr("Move up in list"))
         
         down_batchlocation_button = QtGui.QPushButton()
         self.connect(down_batchlocation_button, QtCore.SIGNAL('clicked()'), self.down_batchlocation)
-        down_batchlocation_button.setIcon(down_batchlocation_button.style().standardIcon(QtGui.QStyle.SP_ArrowDown))
+        down_batchlocation_button.setIcon(QtGui.QIcon(":down.png"))
         down_batchlocation_button.setToolTip(self.tr("Move down in list"))
         down_batchlocation_button.setStatusTip(self.tr("Move down in list"))
-
-        exec_batchlocations_button = QtGui.QPushButton()
-        self.connect(exec_batchlocations_button, QtCore.SIGNAL('clicked()'), self.exec_batchlocations)
-        exec_batchlocations_button.setIcon(exec_batchlocations_button.style().standardIcon(QtGui.QStyle.SP_DialogApplyButton))
-        exec_batchlocations_button.setToolTip(self.tr("Apply changes"))
-        exec_batchlocations_button.setStatusTip(self.tr("Apply changes"))
+        
+        edit_batchlocation_button = QtGui.QPushButton()
+        self.connect(edit_batchlocation_button, QtCore.SIGNAL('clicked()'), self.edit_batchlocation)
+        edit_batchlocation_button.setIcon(QtGui.QIcon(":gear.png"))
+        edit_batchlocation_button.setToolTip(self.tr("Edit settings"))
+        edit_batchlocation_button.setStatusTip(self.tr("Edit settings"))        
 
         buttonbox0 = QtGui.QDialogButtonBox()
         buttonbox0.addButton(add_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(del_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
-        buttonbox0.addButton(edit_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(up_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(down_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
-        buttonbox0.addButton(exec_batchlocations_button, QtGui.QDialogButtonBox.ActionRole)
+        buttonbox0.addButton(edit_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)        
 
         vbox0 = QtGui.QVBoxLayout()
         vbox0.addWidget(self.batchlocations_view)
@@ -344,25 +446,32 @@ class MainGui(QtGui.QMainWindow):
         self.operators_view.setDragDropMode(QtGui.QAbstractItemView.NoDragDrop)
         self.operators_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
 
+        import_batchlocations_button = QtGui.QPushButton()
+        #self.connect(exec_batchlocations_button, QtCore.SIGNAL('clicked()'), self.exec_batchlocations)
+        import_batchlocations_button.setIcon(QtGui.QIcon(":import.png"))
+        import_batchlocations_button.setToolTip(self.tr("Import locations"))
+        import_batchlocations_button.setStatusTip(self.tr("Import locations"))
+
         add_operator_button = QtGui.QPushButton()
         self.connect(add_operator_button, QtCore.SIGNAL('clicked()'), self.add_operator)
-        add_operator_button.setIcon(add_operator_button.style().standardIcon(QtGui.QStyle.SP_DialogOkButton)) 
+        add_operator_button.setIcon(QtGui.QIcon(":plus.png"))
         add_operator_button.setToolTip(self.tr("Add operator"))
         add_operator_button.setStatusTip(self.tr("Add operator"))
         
         del_operator_button = QtGui.QPushButton()
         self.connect(del_operator_button, QtCore.SIGNAL('clicked()'), self.del_operator)
-        del_operator_button.setIcon(del_operator_button.style().standardIcon(QtGui.QStyle.SP_DialogCancelButton))
+        del_operator_button.setIcon(QtGui.QIcon(":minus.png"))
         del_operator_button.setToolTip(self.tr("Remove operator"))
         del_operator_button.setStatusTip(self.tr("Remove operator"))
 
         edit_operator_button = QtGui.QPushButton()
         self.connect(edit_operator_button, QtCore.SIGNAL('clicked()'), self.edit_operator)
-        edit_operator_button.setIcon(edit_operator_button.style().standardIcon(QtGui.QStyle.SP_FileDialogDetailedView))
+        edit_operator_button.setIcon(QtGui.QIcon(":gear.png"))
         edit_operator_button.setToolTip(self.tr("Edit settings"))
         edit_operator_button.setStatusTip(self.tr("Edit settings"))
 
         buttonbox1 = QtGui.QDialogButtonBox()
+        buttonbox1.addButton(import_batchlocations_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox1.addButton(add_operator_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox1.addButton(del_operator_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox1.addButton(edit_operator_button, QtGui.QDialogButtonBox.ActionRole)
@@ -376,49 +485,47 @@ class MainGui(QtGui.QMainWindow):
         open_file_button = QtGui.QPushButton()
         tip = self.tr("Open file")
         self.connect(open_file_button, QtCore.SIGNAL('clicked()'), self.open_file)
-        open_file_button.setIcon(open_file_button.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)) 
+        #open_file_button.setIcon(open_file_button.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton))
+        open_file_button.setIcon(QtGui.QIcon(":open.png"))
         open_file_button.setToolTip(tip)
         open_file_button.setStatusTip(tip)
 
         save_file_button = QtGui.QPushButton()
         tip = self.tr("Save to file")
         self.connect(save_file_button, QtCore.SIGNAL('clicked()'), self.save_to_file)
-        save_file_button.setIcon(save_file_button.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton)) 
+        save_file_button.setIcon(save_file_button.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton))
+        save_file_button.setIcon(QtGui.QIcon(":save.png"))
         save_file_button.setToolTip(tip)
         save_file_button.setStatusTip(tip)
-
-        self.sim_time_combo = QtGui.QComboBox(self)
-        for i in self.sim_time_selection_list:
-            self.sim_time_combo.addItem(i)               
-        #self.param_one_combo.setCurrentIndex(4) 
-
-        #edit_sim_button = QtGui.QPushButton()
-        #tip = self.tr("Edit simulation settings")
-        #self.connect(edit_sim_button, QtCore.SIGNAL('clicked()'), self.edit_simulation)
-        #edit_sim_button.setIcon(edit_sim_button.style().standardIcon(QtGui.QStyle.SP_FileDialogDetailedView)) 
-        #edit_sim_button.setToolTip(tip)
-        #edit_sim_button.setStatusTip(tip)
 
         self.run_sim_button = QtGui.QPushButton()
         tip = self.tr("Run simulation")
         self.connect(self.run_sim_button, QtCore.SIGNAL('clicked()'), self.run_simulation)
-        self.run_sim_button.setIcon(self.run_sim_button.style().standardIcon(QtGui.QStyle.SP_MediaPlay)) 
+        #self.run_sim_button.setIcon(self.run_sim_button.style().standardIcon(QtGui.QStyle.SP_MediaPlay))
+        self.run_sim_button.setIcon(QtGui.QIcon(":play.png"))
         self.run_sim_button.setToolTip(tip)
         self.run_sim_button.setStatusTip(tip)
+        self.run_sim_button.setShortcut('Ctrl+R')
         
         self.stop_sim_button = QtGui.QPushButton()
         tip = self.tr("Stop simulation")
         self.connect(self.stop_sim_button, QtCore.SIGNAL('clicked()'), self.stop_simulation)
-        self.stop_sim_button.setIcon(self.stop_sim_button.style().standardIcon(QtGui.QStyle.SP_MediaStop)) 
+        #self.stop_sim_button.setIcon(self.stop_sim_button.style().standardIcon(QtGui.QStyle.SP_MediaStop)) 
+        self.stop_sim_button.setIcon(QtGui.QIcon(":stop.png"))
         self.stop_sim_button.setToolTip(tip)
         self.stop_sim_button.setStatusTip(tip)
-        self.stop_sim_button.setEnabled(False)        
+        self.stop_sim_button.setEnabled(False)
+        self.stop_sim_button.setShortcut('Escape')
 
         top_buttonbox = QtGui.QDialogButtonBox()
         top_buttonbox.addButton(open_file_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(save_file_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.run_sim_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.stop_sim_button, QtGui.QDialogButtonBox.ActionRole)
+
+        self.sim_time_combo = QtGui.QComboBox(self)
+        for i in self.sim_time_selection_list:
+            self.sim_time_combo.addItem(i)
         
         toolbar_hbox = QtGui.QHBoxLayout()
         toolbar_hbox.addWidget(top_buttonbox)
@@ -450,14 +557,18 @@ class MainGui(QtGui.QMainWindow):
         self.file_menu = self.menuBar().addMenu(self.tr("File"))
 
         tip = self.tr("Open file")        
-        load_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),self.tr("&Open..."), self)
+        #load_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),self.tr("&Open..."), self)
+        load_action = QtGui.QAction(self.tr("&Open..."), self)
+        load_action.setIcon(QtGui.QIcon(":open.png"))
         self.connect(load_action, QtCore.SIGNAL("triggered()"), self.open_file)
         load_action.setToolTip(tip)
         load_action.setStatusTip(tip)
         load_action.setShortcut('Ctrl+O')
 
         tip = self.tr("Save to file")        
-        save_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton),self.tr("&Save"), self)
+        #save_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton),self.tr("&Save"), self)
+        save_action = QtGui.QAction(self.tr("&Save"), self)
+        save_action.setIcon(QtGui.QIcon(":save.png"))
         self.connect(save_action, QtCore.SIGNAL("triggered()"), self.save_to_file)
         save_action.setToolTip(tip)
         save_action.setStatusTip(tip)
@@ -470,7 +581,9 @@ class MainGui(QtGui.QMainWindow):
         saveas_action.setStatusTip(tip)        
 
         tip = self.tr("Quit")        
-        quit_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_ArrowBack),self.tr("&Quit"), self)
+        #quit_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_ArrowBack),self.tr("&Quit"), self)
+        quit_action = QtGui.QAction(self.tr("&Quit"), self)
+        quit_action.setIcon(QtGui.QIcon(":quit.png"))
         self.connect(quit_action, QtCore.SIGNAL("triggered()"), self.close)
         quit_action.setToolTip(tip)
         quit_action.setStatusTip(tip)
@@ -484,7 +597,9 @@ class MainGui(QtGui.QMainWindow):
         self.help_menu = self.menuBar().addMenu(self.tr("Help"))
 
         tip = self.tr("About the application")        
-        about_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView),self.tr("About..."), self)
+        #about_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView),self.tr("About..."), self)
+        about_action = QtGui.QAction(self.tr("About..."), self)
+        about_action.setIcon(QtGui.QIcon(":info.png"))
         self.connect(about_action, QtCore.SIGNAL("triggered()"), self.on_about)
         about_action.setToolTip(tip)
         about_action.setStatusTip(tip)

@@ -74,8 +74,10 @@ class BatchTex(object):
         batchconnections[2] = [self.batchprocesses[8],self.output,self.params['transfer_time']]
         self.transport2 = BatchTransport(self.env,batchconnections,"[" + self.params['name'] + "][tex2]",self.params['batch_size'],self.params['verbose'])
 
-    def report(self):
-        print "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
+    def report(self,output):
+        string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
+        output.sig.emit(string)
         
         for i in self.batchprocesses:
-            print "[BatchTex][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %"
+            string = "[BatchTex][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %"
+            output.sig.emit(string)

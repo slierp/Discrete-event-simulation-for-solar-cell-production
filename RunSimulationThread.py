@@ -32,6 +32,14 @@ class RunSimulationThread(QtCore.QThread):
         self.signal = SimulationSignal()        
         self.output = SimulationSignal()
 
+    def make_unique(self,nonunique):
+        unique = []
+        for x in nonunique:
+            if x not in unique:
+                unique.append(x)
+        unique.sort()
+        return unique
+
     def run(self):
         
         self.env = simpy.Environment()    
@@ -79,21 +87,40 @@ class RunSimulationThread(QtCore.QThread):
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])
 
-        self.output.sig.emit("0% progress: 0 hours")
-        for i in np.arange(1,11):
-            if(self.stop_simulation):
-                break
-            
-            self.env.run(until=self.params['time_limit']*i/10) # or perhaps do daily updates?
-            if (i < 10):   
-                string = str(i*10) + "% progress: " + str(np.round(self.params['time_limit']*i/36000,1)) + " hours"
-                self.output.sig.emit(string)
+        no_hourly_updates = self.params['time_limit'] // (60*60)
+        hourly_updates = []
+        for i in np.arange(0,no_hourly_updates):
+            hourly_updates.append((i+1)*60*60)
+        
+        percentage_updates = []
+        for i in np.arange(0,10):
+            if (len(percentage_updates)):
+                percentage_updates.append(percentage_updates[i-1] + (self.params['time_limit'] // 10))
             else:
+                percentage_updates.append(self.params['time_limit'] // 10)    
+                
+        updates_list = hourly_updates + percentage_updates
+        updates_list = self.make_unique(updates_list)
+
+        self.output.sig.emit("0% progress: 0 hours")
+        
+        for i in updates_list:
+            if(self.stop_simulation):
+                string = "Stopped at "  + str(np.round(self.env.now/3600,1)) + " hours"
+                self.output.sig.emit(string) 
+                break
+
+            self.env.run(until=i)
+            
+            if (i == self.params['time_limit']):
                 string = "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
-                self.output.sig.emit(string)
+                self.output.sig.emit(string)            
+            elif (i % (self.params['time_limit'] // 10) == 0):
+                string = str(np.round(100*i/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours"
+                self.output.sig.emit(string)        
 
         for i in self.batchlocations:
-            self.batchlocations[i].report()
+            self.batchlocations[i].report(self.output)
 
         for i in self.operators:
             self.operators[i].report(self.output)
