@@ -133,6 +133,8 @@ class MainGui(QtGui.QMainWindow):
         
         if (not filename):
             return
+            
+        # Check for non-ASCII here does not seem to work
         
         self.prev_save_path = str(filename)
         self.prev_dir_path = ntpath.dirname(str(filename))
