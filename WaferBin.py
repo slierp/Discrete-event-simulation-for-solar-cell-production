@@ -7,6 +7,7 @@ Created on Mon Aug 18 11:56:44 2014
 
 from __future__ import division
 from BatchContainer import BatchContainer
+#import simpyx as simpy
 import simpy
 
 class WaferBin(object):

@@ -7,7 +7,6 @@ Created on Mon Aug 18 09:01:54 2014
 
 from __future__ import division
 from BatchContainer import BatchContainer
-import simpy
 
 class WaferSource(object):
 

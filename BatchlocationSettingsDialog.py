@@ -11,6 +11,7 @@ from PyQt4 import QtGui
 class BatchlocationSettingsDialog(QtGui.QDialog):
     def __init__(self, parent=None, curr_params = {}):
         super(QtGui.QDialog, self).__init__(parent)
+        # create dialog screen for each parameter in curr_params
         
         self.parent = parent
         self.setWindowTitle(self.tr("Available settings"))
@@ -66,8 +67,8 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             if isinstance(curr_params[i], bool):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
-                self.booleans.append(QtGui.QCheckBox())
-                self.booleans[-1].setCheckState(curr_params[i])
+                self.booleans.append(QtGui.QCheckBox())                
+                self.booleans[-1].setChecked(curr_params[i])
                 self.booleans[-1].setObjectName(i)
                 hbox.addWidget(label)
                 hbox.addWidget(self.booleans[-1]) 
@@ -82,7 +83,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
 
     def read(self):
         # read contents of each widget
-        # update settings in self.batchlocations[self.modified_batchlocation_number]
+        # update settings in self.batchlocations[self.modified_batchlocation_number] of parent
         new_params = {}
         for i in self.strings:
             new_params[str(i.objectName())] = str(i.text())
@@ -94,7 +95,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             new_params[str(i.objectName())] = float(i.text())
 
         for i in self.booleans:
-            new_params[str(i.objectName())] = bool(i.text())        
+            new_params[str(i.objectName())] = i.isChecked()
         
         self.parent.batchlocations[self.parent.modified_batchlocation_number][1].update(new_params)
         self.parent.load_definition_batchlocations(False)

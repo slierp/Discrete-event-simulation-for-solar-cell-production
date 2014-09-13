@@ -16,6 +16,7 @@ from TubeFurnace import TubeFurnace
 from SingleSideEtch import SingleSideEtch
 from TubePECVD import TubePECVD
 from PrintLine import PrintLine
+#import simpyx as simpy
 import simpy
 import numpy as np
 from PyQt4 import QtCore

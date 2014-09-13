@@ -10,7 +10,6 @@ Should also contain a wafer inspector module?
 """
 from __future__ import division
 from BatchContainer import BatchContainer
-import simpy
 
 class WaferUnstacker(object):
     #WaferUnstacker accepts a number of stacks of wafers

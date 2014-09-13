@@ -8,7 +8,6 @@ Created on Sun Aug 17 14:56:30 2014
 from __future__ import division
 from BatchProcess import BatchProcess
 from BatchContainer import BatchContainer
-import numpy as np
 
 class BatchTransport(object):
     # For simple one-way transports
