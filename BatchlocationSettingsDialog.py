@@ -97,5 +97,5 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             new_params[str(i.objectName())] = bool(i.text())        
         
         self.parent.batchlocations[self.parent.modified_batchlocation_number][1].update(new_params)
-        self.parent.load_definition(False)
+        self.parent.load_definition_batchlocations(False)
         self.accept()

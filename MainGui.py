@@ -92,7 +92,8 @@ class MainGui(QtGui.QMainWindow):
         
         self.create_menu()
         self.create_main_frame()
-        self.load_definition()
+        self.load_definition_batchlocations()
+        self.load_definition_operators()
 
     def open_file(self):
 
@@ -111,8 +112,9 @@ class MainGui(QtGui.QMainWindow):
         
         with open(str(filename)) as f:
             self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
-
-        self.load_definition(False)
+        
+        self.load_definition_batchlocations(False)
+        self.load_definition_operators(False) 
             
         self.statusBar().showMessage(self.tr("New description loaded"))
 
@@ -144,18 +146,14 @@ class MainGui(QtGui.QMainWindow):
             
         self.statusBar().showMessage(self.tr("File saved"))            
 
-    def load_definition(self, default=True):
+    def load_definition_batchlocations(self, default=True):
 
         if (default):        
             self.exec_batchlocations()
             self.exec_locationgroups()
-            self.exec_batchconnections()
 
         self.batchlocations_model.clear()
-        self.operators_model.clear()
-        
-        self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])
-        self.operators_model.setHorizontalHeaderLabels(['Operators'])            
+        self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])           
 
         for i in self.locationgroups:
             parent = QtGui.QStandardItem(self.batchlocations[self.locationgroups[i][0]][0])
@@ -165,6 +163,14 @@ class MainGui(QtGui.QMainWindow):
                 parent.appendRow(child)
             self.batchlocations_model.appendRow(parent)
             self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)            
+
+    def load_definition_operators(self, default=True):
+
+        if (default):
+            self.exec_batchconnections()
+
+        self.operators_model.clear()
+        self.operators_model.setHorizontalHeaderLabels(['Operators'])                       
 
         for i in self.operators:
             parent = QtGui.QStandardItem('Operator ' + self.operators[i][1]['name'])

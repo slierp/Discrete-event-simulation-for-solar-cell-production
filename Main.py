@@ -6,6 +6,8 @@ Created on Sun Aug 17 14:59:54 2014
 
 TODO
 
+Add hourly throughput measurements in store them in a DataFrame
+
 Add a function to calculate the number of wafers in the line at certain intervals
 - wafer.bin - wafer.source after a certain time has passed for stabilization
 - report an average value + calculate the investment of product in the line at any given time
