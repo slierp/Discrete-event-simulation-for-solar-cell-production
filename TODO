@@ -1,9 +1,8 @@
 TODO
 ----
 
-Add information widget to dialog class and information in batchlocation classes
-Implement dialog for operators
 Implement add/removing and up/down
+Implement dialog for operators
 Measure/store vital parameters in pandas DataFrame, eg:
 - Production volume vs time for each tool
 - Production throughput vs time for each tool
