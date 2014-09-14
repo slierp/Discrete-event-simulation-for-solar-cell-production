@@ -515,8 +515,7 @@ class MainGui(QtGui.QMainWindow):
         self.file_menu = self.menuBar().addMenu(self.tr("File"))
 
         tip = self.tr("Open file")        
-        #load_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),self.tr("&Open..."), self)
-        load_action = QtGui.QAction(self.tr("&Open..."), self)
+        load_action = QtGui.QAction(self.tr("Open..."), self)
         load_action.setIcon(QtGui.QIcon(":open.png"))
         self.connect(load_action, QtCore.SIGNAL("triggered()"), self.open_file)
         load_action.setToolTip(tip)
@@ -524,8 +523,7 @@ class MainGui(QtGui.QMainWindow):
         load_action.setShortcut('Ctrl+O')
 
         tip = self.tr("Save to file")        
-        #save_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton),self.tr("&Save"), self)
-        save_action = QtGui.QAction(self.tr("&Save"), self)
+        save_action = QtGui.QAction(self.tr("Save"), self)
         save_action.setIcon(QtGui.QIcon(":save.png"))
         self.connect(save_action, QtCore.SIGNAL("triggered()"), self.save_to_file)
         save_action.setToolTip(tip)
@@ -539,8 +537,7 @@ class MainGui(QtGui.QMainWindow):
         saveas_action.setStatusTip(tip)        
 
         tip = self.tr("Quit")        
-        #quit_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_ArrowBack),self.tr("&Quit"), self)
-        quit_action = QtGui.QAction(self.tr("&Quit"), self)
+        quit_action = QtGui.QAction(self.tr("Quit"), self)
         quit_action.setIcon(QtGui.QIcon(":quit.png"))
         self.connect(quit_action, QtCore.SIGNAL("triggered()"), self.close)
         quit_action.setToolTip(tip)
@@ -555,7 +552,6 @@ class MainGui(QtGui.QMainWindow):
         self.help_menu = self.menuBar().addMenu(self.tr("Help"))
 
         tip = self.tr("About the application")        
-        #about_action = QtGui.QAction(self.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView),self.tr("About..."), self)
         about_action = QtGui.QAction(self.tr("About..."), self)
         about_action.setIcon(QtGui.QIcon(":info.png"))
         self.connect(about_action, QtCore.SIGNAL("triggered()"), self.on_about)
