@@ -11,14 +11,16 @@ Implement shift changes, breaks, factory shut-downs...
 """
 
 from __future__ import division
+from PyQt4 import QtCore
 import numpy as np
 
-class Operator(object):
+class Operator(QtCore.QObject):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
         
-    def __init__(self, env, batchconnections, _params = {}):
-        
-        self.env = env
+    def __init__(self, _env, batchconnections, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
+        self.env = _env
+        self.output_text = _output
         self.batchconnections = batchconnections
 
         self.params = {}
@@ -33,7 +35,8 @@ class Operator(object):
         self.idle_time = 0
         
         if (self.params['verbose']):
-            print str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
+            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
+            self.output_text.sig.emit(string)
         self.env.process(self.run())        
 
     def run(self):
@@ -64,8 +67,10 @@ class Operator(object):
             yield self.env.timeout(self.params['wait_time'])
             self.idle_time += self.params['wait_time']
 
-    def report(self, output):        
+    def report(self):        
         string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
-        output.sig.emit(string)
-        string = "[Operator][" + self.params['name'] + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
-        output.sig.emit(string)
+        self.output_text.sig.emit(string)
+        
+        if (self.params['verbose']):
+            string = "[Operator][" + self.params['name'] + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
+            self.output_text.sig.emit(string)

@@ -10,37 +10,62 @@ Add IV measurement automation
 """
 
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 #import simpyx as simpy
 import simpy
 import numpy as np
 
-class PrintLine(object):
+class PrintLine(QtCore.QObject):
         
-    def __init__(self, env, _params = {}):
-          
-        self.env = env
+    def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
+        self.env = _env
+        self.output_text = _output
         
         self.params = {}
+        self.params['specification'] = self.tr("PrintLine consists of:\n")
+        self.params['specification'] += self.tr("- Input container\n")
+        self.params['specification'] += self.tr("- A number of print and dry stations\n")
+        self.params['specification'] += self.tr("- A firing furnace\n")
+        self.params['specification'] += self.tr("- Output container\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("The machine accepts cassettes which are unloaded one unit at a time. ")
+        self.params['specification'] += self.tr("Each wafer then travels to a number of printers and dryers, ")
+        self.params['specification'] += self.tr("before entering a firing furnace. ")
+        self.params['specification'] += self.tr("Units are finally placed in an infinitely sized container.")
         self.params['name'] = ""
+        self.params['name_desc'] = self.tr("Name of the individual batch location")
         self.params['cassette_size'] = 100
+        self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
         self.params['max_cassette_no'] = 4
-        self.params['units_on_belt_input'] = 8 # how many units fit on the belt between wafer source and printer
-        self.params['time_step'] = 1 # number of seconds for one unit to progress one position
-        self.params['time_new_cassette'] = 10 # number of seconds for new full cassette into position
-        self.params['time_new_stack'] = 10 # number of seconds for putting a new stack in position
-        self.params['time_cassette_to_belt'] = 1 # time to place a wafer onto the first belt
-        self.params['time_print'] = 2 # time to print one wafer
-        self.params['time_dry'] = 90 # time for one wafer to go from printer to dryer and to next input (printing or firing)
-        self.params['no_print_steps'] = 3 # number of print and dry stations
-        self.params['firing_tool_length'] = 7 # in m
-        self.params['firing_belt_speed'] = 5 # in m/min; 5 is roughly 200 ipm
-        self.params['firing_unit_distance'] = 0.2 # in m
+        self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions at input")
+        self.params['units_on_belt_input'] = 8
+        self.params['units_on_belt_input_desc'] = self.tr("Number of units that fit on the belt between wafer source and printer")
+        self.params['time_step'] = 1
+        self.params['time_step_desc'] = self.tr("Time for one unit to progress one position (seconds)")
+        self.params['time_cassette_to_belt'] = 1
+        self.params['time_cassette_to_belt_desc'] = self.tr("Time for placing one unit onto the first belt (seconds)")
+        self.params['time_print'] = 2
+        self.params['time_print_desc'] = self.tr("Time to print one wafer (seconds)")
+        self.params['time_dry'] = 90
+        self.params['time_dry_desc'] = self.tr("Time  for one wafer to go from printer to dryer and ")
+        self.params['time_dry_desc'] += self.tr("to next input (printing or firing) (seconds)")
+        self.params['no_print_steps'] = 3
+        self.params['no_print_steps_desc'] = self.tr("Number of print and dry stations")
+        self.params['firing_tool_length'] = 7.0
+        self.params['firing_tool_length_desc'] = self.tr("Distance between firing furnace input and output (meters)")
+        self.params['firing_belt_speed'] = 5.0 # 5 is roughly 200 ipm
+        self.params['firing_belt_speed_desc'] = self.tr("Speed at which all units travel (meters per minute)")
+        self.params['firing_unit_distance'] = 0.2
+        self.params['firing_unit_distance_desc'] = self.tr("Minimal distance between wafers (meters)")
         self.params['verbose'] = False
+        self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
         self.params.update(_params)
         
         if (self.params['verbose']):               
-            print str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"        
+            string = str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"
+            self.output_text.sig.emit(string)
 
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.output = InfiniteContainer(self.env,"output")
@@ -55,7 +80,7 @@ class PrintLine(object):
         self.inputs = {} # cassette-like input before belts
 
         for i in np.arange(self.params['no_print_steps']):
-            self.next_step[i] = env.event()
+            self.next_step[i] = self.env.event()
             self.belts[i] = BatchContainer(self.env,"belt_input",self.params['units_on_belt_input'],1)
             self.inputs[i] = BatchContainer(self.env,"input",self.params['cassette_size'],1) # buffer inside printer line            
             self.env.process(self.run_belt(i))
@@ -64,13 +89,15 @@ class PrintLine(object):
         self.firing_input = BatchContainer(self.env,"firing_input",1,1)
         self.env.process(self.run_firing_furnace())
 
-    def report(self,output):
+    def report(self):
         string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
-        output.sig.emit(string)
-        for i in self.idle_times:
-            idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
-            string = "[PrintLine][" + self.params['name'] + "][part" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
-            output.sig.emit(string)
+        self.output_text.sig.emit(string)
+        
+        if (self.params['verbose']):
+            for i in self.idle_times:
+                idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
+                string = "[PrintLine][" + self.params['name'] + "][part" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
+                self.output_text.sig.emit(string)
 
     def run_belt(self, num):        
         while True:
@@ -85,7 +112,8 @@ class PrintLine(object):
             yield self.belts[num].container.put(1)
             
             if (self.params['verbose']):
-                print str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer on printer belt " + str(num)
+                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer on printer belt " + str(num)
+                self.output_text.sig.emit(string)
             
     def run_printer(self, num):        
         while True:
@@ -105,7 +133,8 @@ class PrintLine(object):
                 yield self.env.timeout(self.params['time_print'])
                 
                 if (self.params['verbose']):
-                    print str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
+                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
+                    self.output_text.sig.emit(string)
                 self.env.process(self.run_wafer_instance_drying(num))
             else:
                 # if not printing, delay for time needed to load one wafer
@@ -116,7 +145,8 @@ class PrintLine(object):
         yield self.env.timeout(self.params['time_dry'])
         
         if (self.params['verbose']):
-            print str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
+            string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
+            self.output_text.sig.emit(string)
         
         if (num+1 < self.params['no_print_steps']):
             # go to next printer
@@ -140,7 +170,8 @@ class PrintLine(object):
         yield self.output.container.put(1)
         
         if (self.params['verbose']):
-            print str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"        
+            string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
+            self.output_text.sig.emit(string)
 
 class InfiniteContainer(object):
     

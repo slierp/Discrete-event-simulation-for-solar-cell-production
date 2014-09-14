@@ -17,16 +17,26 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         self.setWindowTitle(self.tr("Available settings"))
         vbox = QtGui.QVBoxLayout()
 
-        title_label = QtGui.QLabel(self.tr("Edit settings:"))
-        vbox.addWidget(title_label)        
+        if 'specification' in curr_params:
+            spec = QtGui.QPlainTextEdit(curr_params['specification'])
+            spec.setReadOnly(True)
+            vbox.addWidget(spec)
+        else:
+            title_label = QtGui.QLabel(self.tr("Edit settings:"))
+            vbox.addWidget(title_label)             
         
         self.strings = []
         for i in curr_params:
-            if isinstance(curr_params[i], str):
+            if ("_desc" in i) | ('specification' in i):
+                continue
+            elif isinstance(curr_params[i], str):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
                 self.strings.append(QtGui.QLineEdit(curr_params[i]))
                 self.strings[-1].setObjectName(i)
+                if i + "_desc" in curr_params:
+                    label.setToolTip(curr_params[i + "_desc"])
+                    self.strings[-1].setToolTip(curr_params[i + "_desc"])
                 hbox.addWidget(label)
                 hbox.addWidget(self.strings[-1]) 
                 vbox.addLayout(hbox)
@@ -43,6 +53,9 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 self.integers[-1].setObjectName(i)
                 if (curr_params[i] >= 100):
                     self.integers[-1].setSingleStep(100)
+                if i + "_desc" in curr_params:
+                    label.setToolTip(curr_params[i + "_desc"])
+                    self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
                 hbox.addWidget(label)
                 hbox.addWidget(self.integers[-1])  
                 vbox.addLayout(hbox)
@@ -58,6 +71,9 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 self.doubles[-1].setValue(curr_params[i])
                 self.doubles[-1].setSingleStep(0.1)
                 self.doubles[-1].setObjectName(i)
+                if i + "_desc" in curr_params:
+                    label.setToolTip(curr_params[i + "_desc"])
+                    self.doubles[-1].setToolTip(curr_params[i + "_desc"])             
                 hbox.addWidget(label)
                 hbox.addWidget(self.doubles[-1]) 
                 vbox.addLayout(hbox)
@@ -70,6 +86,9 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 self.booleans.append(QtGui.QCheckBox())                
                 self.booleans[-1].setChecked(curr_params[i])
                 self.booleans[-1].setObjectName(i)
+                if i + "_desc" in curr_params:
+                    label.setToolTip(curr_params[i + "_desc"])
+                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])               
                 hbox.addWidget(label)
                 hbox.addWidget(self.booleans[-1]) 
                 vbox.addLayout(hbox)

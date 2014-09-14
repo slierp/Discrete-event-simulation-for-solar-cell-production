@@ -311,6 +311,7 @@ class MainGui(QtGui.QMainWindow):
                 self.params['time_limit'] = time_limits[i]
         
         if not self.simulation_thread.isRunning():
+        #if True: # interchange for isRunning when not running simulation in separate thread
             self.edit.clear()
             self.simulation_thread.batchlocations = deepcopy(self.batchlocations)
             self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
@@ -323,6 +324,7 @@ class MainGui(QtGui.QMainWindow):
             
             self.simulation_thread.stop_simulation = False
             self.simulation_thread.start()
+            #self.simulation_thread.run() # interchange for start when not running simulation in separate thread
             self.run_sim_button.setEnabled(False)
             self.stop_sim_button.setEnabled(True)
             

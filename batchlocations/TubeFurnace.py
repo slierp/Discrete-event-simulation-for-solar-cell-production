@@ -7,38 +7,61 @@ Created on Mon Aug 18 14:36:34 2014
 """
 
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
 import numpy as np
 
-class TubeFurnace(object):
-    # load-in container, boat-load-unload container, output container
-    # x amount of tube processes and the same amount of cool-down processes
-    # two transporters:
-    # transport1: from load-in to boat-load-unload and from boat-load-unload to output
-    # transport2: from boat-load-unload to tube process to cool-down to boat-load-unload
-    # transport2 triggers transport1 when to do something (load or unload)
-    # number of batches in the system is limited by the no_of_boats variable
-    # unloading has priority as this enables you to start a new process - less idle time
+class TubeFurnace(QtCore.QObject):
         
-    def __init__(self, env, _params = {}):   
-        
-        self.env = env
+    def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
+        self.env = _env
+        self.output_text = _output
         
         self.params = {}
+        self.params['specification'] = self.tr("TubeFurnace consists of:\n")
+        self.params['specification'] += self.tr("- Input container\n")
+        self.params['specification'] += self.tr("- Boat-load-unload container\n")
+        self.params['specification'] += self.tr("- Process tubes\n")
+        self.params['specification'] += self.tr("- Cooldown locations\n")
+        self.params['specification'] += self.tr("- Output container\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("There are two transporters:\n")
+        self.params['specification'] += self.tr("transport1: from load-in to boat-load-unload and from boat-load-unload to output\n")
+        self.params['specification'] += self.tr("transport2: from boat-load-unload to tube process to cool-down to boat-load-unload\n")
+        self.params['specification'] += self.tr("transport2 triggers transport1 when to do something (load or unload)\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("The number of batches in the system is limited by the no_of_boats variable.\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).")
+
         self.params['name'] = ""
+        self.params['name_desc'] = self.tr("Name of the individual batch location")
         self.params['batch_size'] = 500
-        self.params['process_time'] = 60*60        
+        self.params['batch_size_desc'] = self.tr("Number of units in a single process batch")
+        self.params['process_time'] = 60*60
+        self.params['process_time_desc'] = self.tr("Time for a single process (seconds)")
         self.params['cool_time'] = 10*60
+        self.params['cool_time_desc'] = self.tr("Time for a single cooldown (seconds)")
         self.params['no_of_processes'] = 4
+        self.params['no_of_processes_desc'] = self.tr("Number of process locations in the tool")
         self.params['no_of_cooldowns'] = 3
+        self.params['no_of_cooldowns_desc'] = self.tr("Number of cooldown locations in the tool")
         self.params['cassette_size'] = 100
-        self.params['max_cassette_no'] = 5 # max number of cassettes in the input and output buffers
+        self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
+        self.params['max_cassette_no'] = 5
+        self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions at input and the same number at output")
         self.params['no_of_boats'] = 6
-        self.params['transfer_time'] = 90 # time needed to transfer boat between any two locations 
-        self.params['load_time_per_cassette'] = 30 # time needed to transfer one cassette in or out of the boat (very critical for throughput)
+        self.params['no_of_boats_desc'] = self.tr("Number of boats available")
+        self.params['transfer_time'] = 90
+        self.params['transfer_time_desc'] = self.tr("Time for boat transfer between any two locations")
+        self.params['load_time_per_cassette'] = 30
+        self.params['load_time_per_cassette_desc'] = self.tr("Time to transfer one cassette in or out of the boat (very critical for throughput)")
         self.params['wait_time'] = 60
+        self.params['wait_time_desc'] = self.tr("Wait period between boat transport attempts (seconds)")
         self.params['verbose'] = False
+        self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
         self.params.update(_params)        
 
         self.transport_counter = 0
@@ -48,7 +71,8 @@ class TubeFurnace(object):
         self.load_in_out_end = self.env.event()
         
         if (self.params['verbose']):
-            print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"        
+            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"
+            self.output_text.sig.emit(string)
         
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['batch_size'],1)
@@ -69,12 +93,14 @@ class TubeFurnace(object):
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())
 
-    def report(self,output):
+    def report(self):
         string = "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
-        output.sig.emit(string)
-        for i in self.batchprocesses:
-            string = "[TubeFurnace][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %" 
-            output.sig.emit(string)
+        self.output_text.sig.emit(string)
+        
+        if (self.params['verbose']):
+            for i in self.batchprocesses:
+                string = "[TubeFurnace][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %" 
+                self.output_text.sig.emit(string)
 
     def run_transport(self):
         
@@ -107,7 +133,8 @@ class TubeFurnace(object):
                         batchconnections[i][1].start_process()
                         
                         if (self.params['verbose']):
-                            print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved batch to cooldown"                    
+                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved batch to cooldown"
+                            self.output_text.sig.emit(string)
 
             for i in self.coolprocesses:
                 # check if we can unload a batch (should be followed by a re-load if possible)
@@ -123,7 +150,8 @@ class TubeFurnace(object):
                         yield self.boat_load_unload.container.put(self.params['batch_size'])
                         
                         if (self.params['verbose']):
-                            print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved processed batch for load-out"
+                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved processed batch for load-out"
+                            self.output_text.sig.emit(string)
                     
                         self.coolprocesses[i].process_finished = 0                    
                     
@@ -153,7 +181,8 @@ class TubeFurnace(object):
                         self.batchprocesses[i].start_process()
                         
                         if (self.params['verbose']):
-                            print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
+                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
+                            self.output_text.sig.emit(string)
             
             yield self.env.timeout(self.params['wait_time'])                        
             
@@ -169,7 +198,8 @@ class TubeFurnace(object):
             self.load_in_out_end = self.env.event() # make new event
 
             if (self.params['verbose']):
-                print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Loaded batch"
+                string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Loaded batch"
+                self.output_text.sig.emit(string)
 
     def run_load_out(self):
         while True:
@@ -184,4 +214,5 @@ class TubeFurnace(object):
             self.load_in_out_end = self.env.event() # make new event            
 
             if (self.params['verbose']):            
-                print str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Unloaded batch"          
+                string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Unloaded batch"
+                self.output_text.sig.emit(string)

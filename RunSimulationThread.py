@@ -19,17 +19,19 @@ from batchlocations.PrintLine import PrintLine
 #import simpyx as simpy
 import simpy
 import numpy as np
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 class SimulationSignal(QtCore.QObject):
     sig = QtCore.Signal(str)
 
 class RunSimulationThread(QtCore.QThread):
+#class RunSimulationThread(QtGui.QMainWindow): # interchange for QThread when not running simulation in separate thread
 
     def __init__(self, edit, parent = None):
         QtCore.QThread.__init__(self, parent)
-        self.edit = edit
+        #super(QtGui.QMainWindow, self).__init__(parent) # interchange for QThread when not running simulation in separate thread
         self.stop_simulation = False
+        self.edit = edit
         self.signal = SimulationSignal()        
         self.output = SimulationSignal()
 
@@ -48,25 +50,25 @@ class RunSimulationThread(QtCore.QThread):
         #import simpy.rt # if you are really patient
         #self.env = simpy.rt.RealtimeEnvironment(factor=0.1)
         #self.env = simpy.rt.RealtimeEnvironment(factor=1)
-    
+   
         for i in self.batchlocations:
             # replace class names for real class instances in the same list
             if (self.batchlocations[i][0] == "WaferSource"):
-                self.batchlocations[i] = WaferSource(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = WaferSource(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "WaferUnstacker"):
-                self.batchlocations[i] = WaferUnstacker(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = WaferUnstacker(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchTex"):
-                self.batchlocations[i] = BatchTex(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = BatchTex(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "TubeFurnace"):
-                self.batchlocations[i] = TubeFurnace(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = TubeFurnace(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "SingleSideEtch"):
-                self.batchlocations[i] = SingleSideEtch(self.env,self.batchlocations[i][1]) 
+                self.batchlocations[i] = SingleSideEtch(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "TubePECVD"):
-                self.batchlocations[i] = TubePECVD(self.env,self.batchlocations[i][1]) 
+                self.batchlocations[i] = TubePECVD(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "PrintLine"):
-                self.batchlocations[i] = PrintLine(self.env,self.batchlocations[i][1]) 
+                self.batchlocations[i] = PrintLine(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "WaferBin"):
-                self.batchlocations[i] = WaferBin(self.env,self.batchlocations[i][1])             
+                self.batchlocations[i] = WaferBin(self.env,self.output,self.batchlocations[i][1])             
 
         for i in self.locationgroups:
             # replace batchlocation number indicators for references to real class instances
@@ -86,7 +88,7 @@ class RunSimulationThread(QtCore.QThread):
             for j in np.arange(len(self.operators[i][0])):
                 tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
 
-            self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])
+            self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
 
         no_hourly_updates = self.params['time_limit'] // (60*60)
         hourly_updates = []
@@ -121,10 +123,10 @@ class RunSimulationThread(QtCore.QThread):
                 self.output.sig.emit(string)        
 
         for i in self.batchlocations:
-            self.batchlocations[i].report(self.output)
+            self.batchlocations[i].report()
 
         for i in self.operators:
-            self.operators[i].report(self.output)
+            self.operators[i].report()
 
         prod_vol = 0
         l_loc = len(self.locationgroups)
