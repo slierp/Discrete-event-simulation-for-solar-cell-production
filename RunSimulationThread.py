@@ -19,10 +19,11 @@ from batchlocations.PrintLine import PrintLine
 #import simpyx as simpy
 import simpy
 import numpy as np
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore
+#from PyQt4 import QtGui # only needed when not running simulation in separate thread
 
 class SimulationSignal(QtCore.QObject):
-    sig = QtCore.Signal(str)
+        sig = QtCore.pyqtSignal(str)
 
 class RunSimulationThread(QtCore.QThread):
 #class RunSimulationThread(QtGui.QMainWindow): # interchange for QThread when not running simulation in separate thread

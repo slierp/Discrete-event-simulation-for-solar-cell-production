@@ -334,9 +334,11 @@ class MainGui(QtGui.QMainWindow):
         self.simulation_thread.stop_simulation = True
         self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
 
+    @QtCore.pyqtSlot(str)
     def simulation_output(self,string):
         self.edit.insertPlainText(string + '\n')
 
+    @QtCore.pyqtSlot(str)
     def simulation_end_signal(self):
         self.run_sim_button.setEnabled(True)
         self.stop_sim_button.setEnabled(False)
