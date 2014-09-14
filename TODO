@@ -1,6 +1,7 @@
 TODO
 ----
 
+Add information widget to dialog class and information in batchlocation classes
 Implement dialog for operators
 Implement add/removing and up/down
 Measure/store vital parameters in pandas DataFrame, eg:
