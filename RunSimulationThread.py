@@ -7,15 +7,15 @@ Created on Sun Aug 17 14:59:54 2014
 """
 
 from __future__ import division
-from WaferSource import WaferSource
-from WaferUnstacker import WaferUnstacker
-from Operator import Operator
-from WaferBin import WaferBin
-from BatchTex import BatchTex
-from TubeFurnace import TubeFurnace
-from SingleSideEtch import SingleSideEtch
-from TubePECVD import TubePECVD
-from PrintLine import PrintLine
+from batchlocations.WaferSource import WaferSource
+from batchlocations.WaferUnstacker import WaferUnstacker
+from batchlocations.Operator import Operator
+from batchlocations.WaferBin import WaferBin
+from batchlocations.BatchTex import BatchTex
+from batchlocations.TubeFurnace import TubeFurnace
+from batchlocations.SingleSideEtch import SingleSideEtch
+from batchlocations.TubePECVD import TubePECVD
+from batchlocations.PrintLine import PrintLine
 #import simpyx as simpy
 import simpy
 import numpy as np

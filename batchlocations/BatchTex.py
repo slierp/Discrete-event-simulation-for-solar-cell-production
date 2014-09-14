@@ -7,9 +7,9 @@ Created on Mon Aug 18 13:55:53 2014
 """
 
 from __future__ import division
-from BatchTransport import BatchTransport
-from BatchProcess import BatchProcess
-from BatchContainer import BatchContainer
+from batchlocations.BatchTransport import BatchTransport
+from batchlocations.BatchProcess import BatchProcess
+from batchlocations.BatchContainer import BatchContainer
 import numpy as np
 
 class BatchTex(object):

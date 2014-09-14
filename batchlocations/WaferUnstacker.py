@@ -9,7 +9,7 @@ Should also contain a wafer inspector module?
 
 """
 from __future__ import division
-from BatchContainer import BatchContainer
+from batchlocations.BatchContainer import BatchContainer
 
 class WaferUnstacker(object):
     #WaferUnstacker accepts a number of stacks of wafers

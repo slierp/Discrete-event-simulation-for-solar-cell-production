@@ -9,14 +9,14 @@ from __future__ import division
 import numpy as np
 from PyQt4 import QtCore, QtGui
 import os, ntpath
-from WaferSource import WaferSource
-from WaferUnstacker import WaferUnstacker
-from WaferBin import WaferBin
-from BatchTex import BatchTex
-from TubeFurnace import TubeFurnace
-from SingleSideEtch import SingleSideEtch
-from TubePECVD import TubePECVD
-from PrintLine import PrintLine
+from batchlocations.WaferSource import WaferSource
+from batchlocations.WaferUnstacker import WaferUnstacker
+from batchlocations.WaferBin import WaferBin
+from batchlocations.BatchTex import BatchTex
+from batchlocations.TubeFurnace import TubeFurnace
+from batchlocations.SingleSideEtch import SingleSideEtch
+from batchlocations.TubePECVD import TubePECVD
+from batchlocations.PrintLine import PrintLine
 from RunSimulationThread import RunSimulationThread
 from BatchlocationSettingsDialog import BatchlocationSettingsDialog
 from copy import deepcopy

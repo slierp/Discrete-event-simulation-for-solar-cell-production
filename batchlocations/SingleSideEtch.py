@@ -11,7 +11,7 @@ If time_limit is reached because there is no output space available, destroy waf
 """
 
 from __future__ import division
-from BatchContainer import BatchContainer
+from batchlocations.BatchContainer import BatchContainer
 import numpy as np
 
 class SingleSideEtch(object):

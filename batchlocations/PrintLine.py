@@ -10,7 +10,7 @@ Add IV measurement automation
 """
 
 from __future__ import division
-from BatchContainer import BatchContainer
+from batchlocations.BatchContainer import BatchContainer
 #import simpyx as simpy
 import simpy
 import numpy as np
