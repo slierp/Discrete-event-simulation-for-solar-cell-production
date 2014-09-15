@@ -19,21 +19,7 @@ if __name__ == "__main__":
             print "Solar cell manufacturing simulation"
             print "Options:"
             print "--h, --help  : Help message"
-            exit()        
-    
-    #batchlocations = {} #tool class name, no of tools, dict with settings
-    #batchlocations[0] = ["WaferSource", {'name' : '0'}]
-    #batchlocations[1] = ["WaferUnstacker", {'name' : '0'}]
-    #batchlocations[2] = ["WaferUnstacker",{'name' : '1'}]
-    #batchlocations[3] = ["BatchTex", {'name' : '0'}]
-    #batchlocations[4] = ["TubeFurnace", {'name' : '0'}]
-    #batchlocations[5] = ["TubeFurnace", {'name' : '1'}]
-    #batchlocations[6] = ["SingleSideEtch", {'name' : '0'}]
-    #batchlocations[7] = ["TubePECVD", {'name' : '0'}]
-    #batchlocations[8] = ["TubePECVD", {'name' : '1'}]
-    #batchlocations[9] = ["PrintLine", {'name' : '0'}]
-    #batchlocations[10] = ["PrintLine", {'name' : '1'}]
-    #batchlocations[11] = ["WaferBin", {'name' : '0'}]
+            exit()            
 
     batchlocations = [] #tool class name, no of tools, dict with settings
     batchlocations.append(["WaferSource", {'name' : '0'}])
@@ -47,16 +33,7 @@ if __name__ == "__main__":
     batchlocations.append(["TubePECVD", {'name' : '1'}])
     batchlocations.append(["PrintLine", {'name' : '0'}])
     batchlocations.append(["PrintLine", {'name' : '1'}])
-    #batchlocations[11] = ["WaferBin", {'name' : '0'}]
-    
-    #locationgroups = {}
-    #locationgroups[0] = [0]
-    #locationgroups[1] = [1, 2]
-    #locationgroups[2] = [3]
-    #locationgroups[3] = [4, 5]
-    #locationgroups[4] = [6]
-    #locationgroups[5] = [7, 8]
-    #locationgroups[6] = [9, 10]
+    #batchlocations[11] = ["WaferBin", {'name' : '0'}]    
 
     locationgroups = []
     locationgroups.append([0])

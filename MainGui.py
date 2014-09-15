@@ -61,19 +61,6 @@ class MainGui(QtGui.QMainWindow):
 
         self.modified_batchlocation_number = None
 
-        #self.batchlocations = {} #tool class name, no of tools, dict with settings
-        #self.batchlocations[0] = ["WaferSource", {'name' : '0'}]
-        #self.batchlocations[1] = ["WaferUnstacker", {'name' : '0'}]
-        #self.batchlocations[2] = ["WaferUnstacker",{'name' : '1'}]
-        #self.batchlocations[3] = ["BatchTex", {'name' : '0'}]
-        #self.batchlocations[4] = ["TubeFurnace", {'name' : '0'}]
-        #self.batchlocations[5] = ["TubeFurnace", {'name' : '1'}]
-        #self.batchlocations[6] = ["SingleSideEtch", {'name' : '0'}]
-        #self.batchlocations[7] = ["TubePECVD", {'name' : '0'}]
-        #self.batchlocations[8] = ["TubePECVD", {'name' : '1'}]
-        #self.batchlocations[9] = ["PrintLine", {'name' : '0'}]
-        #self.batchlocations[10] = ["PrintLine", {'name' : '1'}]
-
         self.batchlocations = [] #tool class name, no of tools, dict with settings
         self.batchlocations.append(["WaferSource", {'name' : '0'}])
         self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
@@ -87,7 +74,7 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations.append(["PrintLine", {'name' : '0'}])
         self.batchlocations.append(["PrintLine", {'name' : '1'}])
 
-        self.locationgroups = {}
+        self.locationgroups = []
         self.batchconnections = {}
 
         self.operators = {}
@@ -194,6 +181,14 @@ class MainGui(QtGui.QMainWindow):
             self.operators_model.appendRow(parent)
             self.operators_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True) 
 
+    def reindex_locationgroups(self):
+        # change it so that all indexes are consecutive, which should always be the case
+        num = 0
+        for i, value0 in enumerate(self.locationgroups):
+            for j, value1 in enumerate(self.locationgroups[i]):
+                self.locationgroups[i][j] = num
+                num += 1
+
     def add_batchlocation(self):
         pass
 
@@ -206,7 +201,8 @@ class MainGui(QtGui.QMainWindow):
             # if parent item, remove all batchlocation children and row in locationgroups
         
             row = self.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups            
-            self.del_locationgroups_row(row)
+            del self.batchlocations[self.locationgroups[row][0]:self.locationgroups[row][len(self.locationgroups[row])-1]+1]
+            del self.locationgroups[row]            
 
         else: # if child item
             
@@ -214,38 +210,17 @@ class MainGui(QtGui.QMainWindow):
             
             if (len(self.locationgroups[row]) == 1):
                 # if last child item, remove batchlocation and whole row in locationgroups
-                self.del_locationgroups_row(row)            
+                del self.batchlocations[self.locationgroups[row][0]:self.locationgroups[row][len(self.locationgroups[row])-1]+1]
+                del self.locationgroups[row]
             else:
                 # if not last child item, remove batchlocation and element in locationgroup row
                 index = self.batchlocations_view.selectedIndexes()[0].row()
                 del self.batchlocations[self.locationgroups[row][index]]
-
-                for i in np.arange(index+1, len(self.locationgroups[row])):
-                    # reduce higher indexes by one in same locationgroups row
-                    self.locationgroups[row][i] -= 1
-
-                for i in np.arange(row+1,len(self.locationgroups)):
-                    # reduce all indexes by one in locationgroups for higher rows
-                    for j, value in enumerate(self.locationgroups[i]):
-                        self.locationgroups[i][j] -= 1
-
                 del self.locationgroups[row][index]
       
+        self.reindex_locationgroups()
         self.load_definition_batchlocations(False)
-
-    def del_locationgroups_row(self,row):
-        
-        no_removals = len(self.locationgroups[row])
-        
-        # delete batchlocation in the locationgroups row
-        del self.batchlocations[self.locationgroups[row][0]:self.locationgroups[row][len(self.locationgroups[row])-1]+1]
-        
-        for i in np.arange(row+1,len(self.locationgroups)):
-            # reduce all indexes by number of batchlocations removed, in locationgroups for higher rows
-            for j, value in enumerate(self.locationgroups[i]):
-                self.locationgroups[i][j] -= no_removals            
-          
-        del self.locationgroups[row]
+        self.statusBar().showMessage(self.tr("Batch location(s) removed"))
 
     def up_batchlocation(self):
         pass
@@ -331,6 +306,11 @@ class MainGui(QtGui.QMainWindow):
                     self.batchconnections[num] = [[i,j],[i+1,k],transport_time, time_per_unit]
                     num  += 1                            
 
+    def import_batchlocations(self):
+        self.exec_locationgroups()
+        self.load_definition_operators()
+        self.statusBar().showMessage(self.tr("Batch locations imported"))
+
     def print_batchconnection(self, num):
         value1 = self.locationgroups[self.batchconnections[num][0][0]][self.batchconnections[num][0][1]]
         value2 = self.locationgroups[self.batchconnections[num][1][0]][self.batchconnections[num][1][1]]
@@ -342,10 +322,11 @@ class MainGui(QtGui.QMainWindow):
 
     def exec_batchconnections(self):
         # generate a default operators list from batchconnections list
-    
-        for i in self.operators:
-            # erase existing batchconnections in the operators list
-            self.operators[i][0] = []
+        
+        self.operators = {}    
+        for i in np.arange(len(self.locationgroups)-1):
+            # make as many operators as there are locationgroups minus one
+            self.operators[i] = [[],{'name' : str(i)}]
             
         num = 0
         curr_locationgroup = 0
@@ -422,31 +403,31 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)          
         
         add_batchlocation_button = QtGui.QPushButton()
-        self.connect(add_batchlocation_button, QtCore.SIGNAL('clicked()'), self.add_batchlocation)
+        add_batchlocation_button.clicked.connect(self.add_batchlocation)
         add_batchlocation_button.setIcon(QtGui.QIcon(":plus.png"))
         add_batchlocation_button.setToolTip(self.tr("Add batchlocation"))
         add_batchlocation_button.setStatusTip(self.tr("Add batchlocation"))
         
         del_batchlocation_button = QtGui.QPushButton()
-        self.connect(del_batchlocation_button, QtCore.SIGNAL('clicked()'), self.del_batchlocation)
+        del_batchlocation_button.clicked.connect(self.del_batchlocation)
         del_batchlocation_button.setIcon(QtGui.QIcon(":minus.png"))
         del_batchlocation_button.setToolTip(self.tr("Remove batchlocation"))
         del_batchlocation_button.setStatusTip(self.tr("Remove batchlocation"))
 
         up_batchlocation_button = QtGui.QPushButton()
-        self.connect(up_batchlocation_button, QtCore.SIGNAL('clicked()'), self.up_batchlocation)
+        up_batchlocation_button.clicked.connect(self.up_batchlocation)        
         up_batchlocation_button.setIcon(QtGui.QIcon(":up.png"))
         up_batchlocation_button.setToolTip(self.tr("Move up in list"))
         up_batchlocation_button.setStatusTip(self.tr("Move up in list"))
         
         down_batchlocation_button = QtGui.QPushButton()
-        self.connect(down_batchlocation_button, QtCore.SIGNAL('clicked()'), self.down_batchlocation)
+        down_batchlocation_button.clicked.connect(self.down_batchlocation)         
         down_batchlocation_button.setIcon(QtGui.QIcon(":down.png"))
         down_batchlocation_button.setToolTip(self.tr("Move down in list"))
         down_batchlocation_button.setStatusTip(self.tr("Move down in list"))
         
         edit_batchlocation_button = QtGui.QPushButton()
-        self.connect(edit_batchlocation_button, QtCore.SIGNAL('clicked()'), self.edit_batchlocation)
+        edit_batchlocation_button.clicked.connect(self.edit_batchlocation)        
         edit_batchlocation_button.setIcon(QtGui.QIcon(":gear.png"))
         edit_batchlocation_button.setToolTip(self.tr("Edit settings"))
         edit_batchlocation_button.setStatusTip(self.tr("Edit settings"))        
@@ -471,25 +452,25 @@ class MainGui(QtGui.QMainWindow):
         self.operators_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
 
         import_batchlocations_button = QtGui.QPushButton()
-        #self.connect(exec_batchlocations_button, QtCore.SIGNAL('clicked()'), self.exec_batchlocations)
+        import_batchlocations_button.clicked.connect(self.import_batchlocations)        
         import_batchlocations_button.setIcon(QtGui.QIcon(":import.png"))
         import_batchlocations_button.setToolTip(self.tr("Import locations"))
         import_batchlocations_button.setStatusTip(self.tr("Import locations"))
 
         add_operator_button = QtGui.QPushButton()
-        self.connect(add_operator_button, QtCore.SIGNAL('clicked()'), self.add_operator)
+        add_operator_button.clicked.connect(self.add_operator)           
         add_operator_button.setIcon(QtGui.QIcon(":plus.png"))
         add_operator_button.setToolTip(self.tr("Add operator"))
         add_operator_button.setStatusTip(self.tr("Add operator"))
         
         del_operator_button = QtGui.QPushButton()
-        self.connect(del_operator_button, QtCore.SIGNAL('clicked()'), self.del_operator)
+        del_operator_button.clicked.connect(self.del_operator)          
         del_operator_button.setIcon(QtGui.QIcon(":minus.png"))
         del_operator_button.setToolTip(self.tr("Remove operator"))
         del_operator_button.setStatusTip(self.tr("Remove operator"))
 
         edit_operator_button = QtGui.QPushButton()
-        self.connect(edit_operator_button, QtCore.SIGNAL('clicked()'), self.edit_operator)
+        edit_operator_button.clicked.connect(self.edit_operator)        
         edit_operator_button.setIcon(QtGui.QIcon(":gear.png"))
         edit_operator_button.setToolTip(self.tr("Edit settings"))
         edit_operator_button.setStatusTip(self.tr("Edit settings"))
@@ -508,24 +489,21 @@ class MainGui(QtGui.QMainWindow):
 
         open_file_button = QtGui.QPushButton()
         tip = self.tr("Open file")
-        self.connect(open_file_button, QtCore.SIGNAL('clicked()'), self.open_file)
-        #open_file_button.setIcon(open_file_button.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton))
+        open_file_button.clicked.connect(self.open_file)        
         open_file_button.setIcon(QtGui.QIcon(":open.png"))
         open_file_button.setToolTip(tip)
         open_file_button.setStatusTip(tip)
 
         save_file_button = QtGui.QPushButton()
         tip = self.tr("Save to file")
-        self.connect(save_file_button, QtCore.SIGNAL('clicked()'), self.save_to_file)
-        save_file_button.setIcon(save_file_button.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton))
+        save_file_button.clicked.connect(self.save_to_file) 
         save_file_button.setIcon(QtGui.QIcon(":save.png"))
         save_file_button.setToolTip(tip)
         save_file_button.setStatusTip(tip)
 
         self.run_sim_button = QtGui.QPushButton()
         tip = self.tr("Run simulation")
-        self.connect(self.run_sim_button, QtCore.SIGNAL('clicked()'), self.run_simulation)
-        #self.run_sim_button.setIcon(self.run_sim_button.style().standardIcon(QtGui.QStyle.SP_MediaPlay))
+        self.run_sim_button.clicked.connect(self.run_simulation)         
         self.run_sim_button.setIcon(QtGui.QIcon(":play.png"))
         self.run_sim_button.setToolTip(tip)
         self.run_sim_button.setStatusTip(tip)
@@ -533,8 +511,7 @@ class MainGui(QtGui.QMainWindow):
         
         self.stop_sim_button = QtGui.QPushButton()
         tip = self.tr("Stop simulation")
-        self.connect(self.stop_sim_button, QtCore.SIGNAL('clicked()'), self.stop_simulation)
-        #self.stop_sim_button.setIcon(self.stop_sim_button.style().standardIcon(QtGui.QStyle.SP_MediaStop)) 
+        self.stop_sim_button.clicked.connect(self.stop_simulation)          
         self.stop_sim_button.setIcon(QtGui.QIcon(":stop.png"))
         self.stop_sim_button.setToolTip(tip)
         self.stop_sim_button.setStatusTip(tip)
@@ -583,7 +560,7 @@ class MainGui(QtGui.QMainWindow):
         tip = self.tr("Open file")        
         load_action = QtGui.QAction(self.tr("Open..."), self)
         load_action.setIcon(QtGui.QIcon(":open.png"))
-        self.connect(load_action, QtCore.SIGNAL("triggered()"), self.open_file)
+        load_action.triggered.connect(self.open_file)
         load_action.setToolTip(tip)
         load_action.setStatusTip(tip)
         load_action.setShortcut('Ctrl+O')
@@ -591,21 +568,21 @@ class MainGui(QtGui.QMainWindow):
         tip = self.tr("Save to file")        
         save_action = QtGui.QAction(self.tr("Save"), self)
         save_action.setIcon(QtGui.QIcon(":save.png"))
-        self.connect(save_action, QtCore.SIGNAL("triggered()"), self.save_to_file)
+        save_action.triggered.connect(self.save_to_file)        
         save_action.setToolTip(tip)
         save_action.setStatusTip(tip)
         save_action.setShortcut('Ctrl+S')
 
         tip = self.tr("Save to file as...")        
         saveas_action = QtGui.QAction(self.tr("Save as..."), self)
-        self.connect(saveas_action, QtCore.SIGNAL("triggered()"), self.save_to_file_as)
+        saveas_action.triggered.connect(self.save_to_file_as)         
         saveas_action.setToolTip(tip)
         saveas_action.setStatusTip(tip)        
 
         tip = self.tr("Quit")        
         quit_action = QtGui.QAction(self.tr("Quit"), self)
         quit_action.setIcon(QtGui.QIcon(":quit.png"))
-        self.connect(quit_action, QtCore.SIGNAL("triggered()"), self.close)
+        quit_action.triggered.connect(self.close)        
         quit_action.setToolTip(tip)
         quit_action.setStatusTip(tip)
         quit_action.setShortcut('Ctrl+Q')
@@ -620,7 +597,7 @@ class MainGui(QtGui.QMainWindow):
         tip = self.tr("About the application")        
         about_action = QtGui.QAction(self.tr("About..."), self)
         about_action.setIcon(QtGui.QIcon(":info.png"))
-        self.connect(about_action, QtCore.SIGNAL("triggered()"), self.on_about)
+        about_action.triggered.connect(self.on_about)         
         about_action.setToolTip(tip)
         about_action.setStatusTip(tip)
         about_action.setShortcut('F1')
