@@ -61,18 +61,31 @@ class MainGui(QtGui.QMainWindow):
 
         self.modified_batchlocation_number = None
 
-        self.batchlocations = {} #tool class name, no of tools, dict with settings
-        self.batchlocations[0] = ["WaferSource", {'name' : '0'}]
-        self.batchlocations[1] = ["WaferUnstacker", {'name' : '0'}]
-        self.batchlocations[2] = ["WaferUnstacker",{'name' : '1'}]
-        self.batchlocations[3] = ["BatchTex", {'name' : '0'}]
-        self.batchlocations[4] = ["TubeFurnace", {'name' : '0'}]
-        self.batchlocations[5] = ["TubeFurnace", {'name' : '1'}]
-        self.batchlocations[6] = ["SingleSideEtch", {'name' : '0'}]
-        self.batchlocations[7] = ["TubePECVD", {'name' : '0'}]
-        self.batchlocations[8] = ["TubePECVD", {'name' : '1'}]
-        self.batchlocations[9] = ["PrintLine", {'name' : '0'}]
-        self.batchlocations[10] = ["PrintLine", {'name' : '1'}]
+        #self.batchlocations = {} #tool class name, no of tools, dict with settings
+        #self.batchlocations[0] = ["WaferSource", {'name' : '0'}]
+        #self.batchlocations[1] = ["WaferUnstacker", {'name' : '0'}]
+        #self.batchlocations[2] = ["WaferUnstacker",{'name' : '1'}]
+        #self.batchlocations[3] = ["BatchTex", {'name' : '0'}]
+        #self.batchlocations[4] = ["TubeFurnace", {'name' : '0'}]
+        #self.batchlocations[5] = ["TubeFurnace", {'name' : '1'}]
+        #self.batchlocations[6] = ["SingleSideEtch", {'name' : '0'}]
+        #self.batchlocations[7] = ["TubePECVD", {'name' : '0'}]
+        #self.batchlocations[8] = ["TubePECVD", {'name' : '1'}]
+        #self.batchlocations[9] = ["PrintLine", {'name' : '0'}]
+        #self.batchlocations[10] = ["PrintLine", {'name' : '1'}]
+
+        self.batchlocations = [] #tool class name, no of tools, dict with settings
+        self.batchlocations.append(["WaferSource", {'name' : '0'}])
+        self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
+        self.batchlocations.append(["WaferUnstacker",{'name' : '1'}])
+        self.batchlocations.append(["BatchTex", {'name' : '0'}])
+        self.batchlocations.append(["TubeFurnace", {'name' : '0'}])
+        self.batchlocations.append(["TubeFurnace", {'name' : '1'}])
+        self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
+        self.batchlocations.append(["TubePECVD", {'name' : '0'}])
+        self.batchlocations.append(["TubePECVD", {'name' : '1'}])
+        self.batchlocations.append(["PrintLine", {'name' : '0'}])
+        self.batchlocations.append(["PrintLine", {'name' : '1'}])
 
         self.locationgroups = {}
         self.batchconnections = {}
@@ -155,7 +168,7 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations_model.clear()
         self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])           
 
-        for i in self.locationgroups:
+        for i, value in enumerate(self.locationgroups):
             parent = QtGui.QStandardItem(self.batchlocations[self.locationgroups[i][0]][0])
 
             for j in self.locationgroups[i]:
@@ -192,8 +205,7 @@ class MainGui(QtGui.QMainWindow):
         if (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
             # if parent item, remove all batchlocation children and row in locationgroups
         
-            row = self.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups
-            print row
+            row = self.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups            
             self.del_locationgroups_row(row)
 
         else: # if child item
@@ -206,52 +218,34 @@ class MainGui(QtGui.QMainWindow):
             else:
                 # if not last child item, remove batchlocation and element in locationgroup row
                 index = self.batchlocations_view.selectedIndexes()[0].row()
-                deleted_batchlocation_number = self.locationgroups[row][index]
-                
-                for i in np.arange(deleted_batchlocation_number,len(self.batchlocations)-1):
-                    # copy all higher positions to one below
-                    self.batchlocations[i] = self.batchlocations[i+1]
-                
-                # delete last item
-                self.batchlocations.pop(len(self.batchlocations)-1)
-                
-                for i in np.arange(index+1,len(self.locationgroups[row])):
-                    # reduce all items in the same locationgroups row by one
+                del self.batchlocations[self.locationgroups[row][index]]
+
+                for i in np.arange(index+1, len(self.locationgroups[row])):
+                    # reduce higher indexes by one in same locationgroups row
                     self.locationgroups[row][i] -= 1
-                
-                # delete last item in same row
-                self.locationgroups[row].pop(len(self.locationgroups[row])-1)
-                
+
                 for i in np.arange(row+1,len(self.locationgroups)):
-                    # lower all values in higher rows by one
+                    # reduce all indexes by one in locationgroups for higher rows
                     for j, value in enumerate(self.locationgroups[i]):
                         self.locationgroups[i][j] -= 1
+
+                del self.locationgroups[row][index]
       
         self.load_definition_batchlocations(False)
 
     def del_locationgroups_row(self,row):
         
         no_removals = len(self.locationgroups[row])
-        for i in self.locationgroups[row]:
-            # remove all batchlocations in the locationgroups row
-            for j in np.arange(i,len(self.batchlocations)-1):
-                # copy all higher positions to one below
-                self.batchlocations[j] = self.batchlocations[j+1]
-            
-            # delete last item
-            self.batchlocations.pop(len(self.batchlocations)-1)
-
-        for i in np.arange(row,len(self.locationgroups)):
+        
+        # delete batchlocation in the locationgroups row
+        del self.batchlocations[self.locationgroups[row][0]:self.locationgroups[row][len(self.locationgroups[row])-1]+1]
+        
+        for i in np.arange(row+1,len(self.locationgroups)):
             # reduce all indexes by number of batchlocations removed, in locationgroups for higher rows
             for j, value in enumerate(self.locationgroups[i]):
-                self.locationgroups[i][j] -= no_removals
-            
-        for i in np.arange(row,len(self.locationgroups)-1):
-            # copy all higher positions to one below
-            self.locationgroups[i] = self.locationgroups[i+1]
-            
-        # delete last item
-        self.locationgroups.pop(len(self.locationgroups)-1)
+                self.locationgroups[i][j] -= no_removals            
+          
+        del self.locationgroups[row]
 
     def up_batchlocation(self):
         pass
@@ -309,19 +303,19 @@ class MainGui(QtGui.QMainWindow):
     def exec_batchlocations(self):
         # generate a default locationgroups list from batchlocations
 
-        self.locationgroups = {}
+        self.locationgroups = []
         num = 0
-        for i in self.batchlocations:
+        for i, value in enumerate(self.batchlocations):
             # generate new locationgroups
             
             if (i == 0):
-                self.locationgroups[num] = [0]
+                self.locationgroups.insert(num,[0])
                 num += 1
             elif (self.batchlocations[i][0] == self.batchlocations[i-1][0]):
                 self.locationgroups[num-1].append(i)
             else:
-                self.locationgroups[num] = [i]
-                num += 1   
+                self.locationgroups.insert(num,[i])
+                num += 1
 
     def exec_locationgroups(self):
         # generate a default batchconnections list from locationgroups        

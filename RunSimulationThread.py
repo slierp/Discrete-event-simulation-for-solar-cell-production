@@ -52,7 +52,7 @@ class RunSimulationThread(QtCore.QThread):
         #self.env = simpy.rt.RealtimeEnvironment(factor=0.1)
         #self.env = simpy.rt.RealtimeEnvironment(factor=1)
    
-        for i in self.batchlocations:
+        for i, value in enumerate(self.batchlocations):
             # replace class names for real class instances in the same list
             if (self.batchlocations[i][0] == "WaferSource"):
                 self.batchlocations[i] = WaferSource(self.env,self.output,self.batchlocations[i][1])
@@ -71,7 +71,7 @@ class RunSimulationThread(QtCore.QThread):
             elif (self.batchlocations[i][0] == "WaferBin"):
                 self.batchlocations[i] = WaferBin(self.env,self.output,self.batchlocations[i][1])             
 
-        for i in self.locationgroups:
+        for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances
             for j in np.arange(len(self.locationgroups[i])):
                 self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]
@@ -123,7 +123,7 @@ class RunSimulationThread(QtCore.QThread):
                 string = str(np.round(100*i/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours"
                 self.output.sig.emit(string)        
 
-        for i in self.batchlocations:
+        for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 
         for i in self.operators:

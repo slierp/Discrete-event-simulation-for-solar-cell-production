@@ -21,28 +21,51 @@ if __name__ == "__main__":
             print "--h, --help  : Help message"
             exit()        
     
-    batchlocations = {} #tool class name, no of tools, dict with settings
-    batchlocations[0] = ["WaferSource", {'name' : '0'}]
-    batchlocations[1] = ["WaferUnstacker", {'name' : '0'}]
-    batchlocations[2] = ["WaferUnstacker",{'name' : '1'}]
-    batchlocations[3] = ["BatchTex", {'name' : '0'}]
-    batchlocations[4] = ["TubeFurnace", {'name' : '0'}]
-    batchlocations[5] = ["TubeFurnace", {'name' : '1'}]
-    batchlocations[6] = ["SingleSideEtch", {'name' : '0'}]
-    batchlocations[7] = ["TubePECVD", {'name' : '0'}]
-    batchlocations[8] = ["TubePECVD", {'name' : '1'}]
-    batchlocations[9] = ["PrintLine", {'name' : '0'}]
-    batchlocations[10] = ["PrintLine", {'name' : '1'}]
+    #batchlocations = {} #tool class name, no of tools, dict with settings
+    #batchlocations[0] = ["WaferSource", {'name' : '0'}]
+    #batchlocations[1] = ["WaferUnstacker", {'name' : '0'}]
+    #batchlocations[2] = ["WaferUnstacker",{'name' : '1'}]
+    #batchlocations[3] = ["BatchTex", {'name' : '0'}]
+    #batchlocations[4] = ["TubeFurnace", {'name' : '0'}]
+    #batchlocations[5] = ["TubeFurnace", {'name' : '1'}]
+    #batchlocations[6] = ["SingleSideEtch", {'name' : '0'}]
+    #batchlocations[7] = ["TubePECVD", {'name' : '0'}]
+    #batchlocations[8] = ["TubePECVD", {'name' : '1'}]
+    #batchlocations[9] = ["PrintLine", {'name' : '0'}]
+    #batchlocations[10] = ["PrintLine", {'name' : '1'}]
+    #batchlocations[11] = ["WaferBin", {'name' : '0'}]
+
+    batchlocations = [] #tool class name, no of tools, dict with settings
+    batchlocations.append(["WaferSource", {'name' : '0'}])
+    batchlocations.append(["WaferUnstacker", {'name' : '0'}])
+    batchlocations.append(["WaferUnstacker",{'name' : '1'}])
+    batchlocations.append(["BatchTex", {'name' : '0'}])
+    batchlocations.append(["TubeFurnace", {'name' : '0'}])
+    batchlocations.append(["TubeFurnace", {'name' : '1'}])
+    batchlocations.append(["SingleSideEtch", {'name' : '0'}])
+    batchlocations.append(["TubePECVD", {'name' : '0'}])
+    batchlocations.append(["TubePECVD", {'name' : '1'}])
+    batchlocations.append(["PrintLine", {'name' : '0'}])
+    batchlocations.append(["PrintLine", {'name' : '1'}])
     #batchlocations[11] = ["WaferBin", {'name' : '0'}]
     
-    locationgroups = {}
-    locationgroups[0] = [0]
-    locationgroups[1] = [1, 2]
-    locationgroups[2] = [3]
-    locationgroups[3] = [4, 5]
-    locationgroups[4] = [6]
-    locationgroups[5] = [7, 8]
-    locationgroups[6] = [9, 10]
+    #locationgroups = {}
+    #locationgroups[0] = [0]
+    #locationgroups[1] = [1, 2]
+    #locationgroups[2] = [3]
+    #locationgroups[3] = [4, 5]
+    #locationgroups[4] = [6]
+    #locationgroups[5] = [7, 8]
+    #locationgroups[6] = [9, 10]
+
+    locationgroups = []
+    locationgroups.append([0])
+    locationgroups.append([1, 2])
+    locationgroups.append([3])
+    locationgroups.append([4, 5])
+    locationgroups.append([6])
+    locationgroups.append([7, 8])
+    locationgroups.append([9, 10])
 
     transport_time = 90 # time for actual transport of one or more units
     time_per_unit = 20 # added time per unit for loading/unloading on the machines (combined value for input and output stations)
