@@ -9,7 +9,7 @@ For testing a full line
 """
 
 from __future__ import division
-from RunSimulation import RunSimulation
+#from RunSimulation import RunSimulation
 import pickle, sys
 
 if __name__ == "__main__":      

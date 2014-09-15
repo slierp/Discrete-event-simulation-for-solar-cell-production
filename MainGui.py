@@ -185,12 +185,86 @@ class MainGui(QtGui.QMainWindow):
         pass
 
     def del_batchlocation(self):
+        if (not len(self.batchlocations_view.selectedIndexes())):
+            # if nothing selected
+            return
+        
+        if (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
+            # if parent item, remove all batchlocation children and row in locationgroups
+        
+            row = self.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups
+            print row
+            self.del_locationgroups_row(row)
+
+        else: # if child item
+            
+            row = self.batchlocations_view.selectedIndexes()[0].parent().row() # selected row in locationgroups
+            
+            if (len(self.locationgroups[row]) == 1):
+                # if last child item, remove batchlocation and whole row in locationgroups
+                self.del_locationgroups_row(row)            
+            else:
+                # if not last child item, remove batchlocation and element in locationgroup row
+                index = self.batchlocations_view.selectedIndexes()[0].row()
+                deleted_batchlocation_number = self.locationgroups[row][index]
+                
+                for i in np.arange(deleted_batchlocation_number,len(self.batchlocations)-1):
+                    # copy all higher positions to one below
+                    self.batchlocations[i] = self.batchlocations[i+1]
+                
+                # delete last item
+                self.batchlocations.pop(len(self.batchlocations)-1)
+                
+                for i in np.arange(index+1,len(self.locationgroups[row])):
+                    # reduce all items in the same locationgroups row by one
+                    self.locationgroups[row][i] -= 1
+                
+                # delete last item in same row
+                self.locationgroups[row].pop(len(self.locationgroups[row])-1)
+                
+                for i in np.arange(row+1,len(self.locationgroups)):
+                    # lower all values in higher rows by one
+                    for j, value in enumerate(self.locationgroups[i]):
+                        self.locationgroups[i][j] -= 1
+      
+        self.load_definition_batchlocations(False)
+
+    def del_locationgroups_row(self,row):
+        
+        no_removals = len(self.locationgroups[row])
+        for i in self.locationgroups[row]:
+            # remove all batchlocations in the locationgroups row
+            for j in np.arange(i,len(self.batchlocations)-1):
+                # copy all higher positions to one below
+                self.batchlocations[j] = self.batchlocations[j+1]
+            
+            # delete last item
+            self.batchlocations.pop(len(self.batchlocations)-1)
+
+        for i in np.arange(row,len(self.locationgroups)):
+            # reduce all indexes by number of batchlocations removed, in locationgroups for higher rows
+            for j, value in enumerate(self.locationgroups[i]):
+                self.locationgroups[i][j] -= no_removals
+            
+        for i in np.arange(row,len(self.locationgroups)-1):
+            # copy all higher positions to one below
+            self.locationgroups[i] = self.locationgroups[i+1]
+            
+        # delete last item
+        self.locationgroups.pop(len(self.locationgroups)-1)
+
+    def up_batchlocation(self):
+        pass
+
+    def down_batchlocation(self):
         pass
     
     def edit_batchlocation(self):
         if (not len(self.batchlocations_view.selectedIndexes())):
+            # if nothing selected
             return
-        elif (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):            
+        elif (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
+            # if parent row is selected            
             return
 
         # find out which batchlocation was selected
@@ -228,12 +302,6 @@ class MainGui(QtGui.QMainWindow):
         batchlocation_dialog = BatchlocationSettingsDialog(self,curr_params)
         batchlocation_dialog.setModal(True)
         batchlocation_dialog.show()
-
-    def up_batchlocation(self):
-        pass
-
-    def down_batchlocation(self):
-        pass
 
     def print_batchlocation(self, num):
         return self.batchlocations[num][0] + " " + self.batchlocations[num][1]['name']
