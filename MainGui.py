@@ -348,6 +348,20 @@ class MainGui(QtGui.QMainWindow):
         pass
 
     def run_simulation(self):
+        
+        for i in self.batchconnections:
+            # check if all batchconnections exist inside locationgroups
+            # no separate check whether all batchlocations inside locationgroups exist
+            # since GUI should not allow for any errors to appear
+            if (self.batchconnections[i][0][0] > (len(self.locationgroups)-1)) | \
+                    (self.batchconnections[i][1][0] > (len(self.locationgroups)-1)):
+                self.statusBar().showMessage(self.tr("Invalid batchconnections found"))
+                return
+            elif (self.batchconnections[i][0][1] > (len(self.locationgroups[self.batchconnections[i][0][0]])-1)) | \
+                    (self.batchconnections[i][1][1] > (len(self.locationgroups[self.batchconnections[i][1][0]])-1)):
+                self.statusBar().showMessage(self.tr("Invalid batchconnections found"))
+                return
+        
         time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
         for i, value in enumerate(self.sim_time_selection_list):
             if (value == self.sim_time_combo.currentText()):
