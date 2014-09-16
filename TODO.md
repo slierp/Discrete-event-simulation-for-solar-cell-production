@@ -1,6 +1,7 @@
 TODO
 ====
 
+- Check that all batchonnections in operators exist before running simulation
 - Double-click on batchlocation parent item should open dialog to edit all children at once
 	(provided that all children are of the same class)
 - Measure bottlenecks: how full the input / output buffers (percentage-wise) are on average
