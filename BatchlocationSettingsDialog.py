@@ -9,11 +9,12 @@ from __future__ import division
 from PyQt4 import QtGui
 
 class BatchlocationSettingsDialog(QtGui.QDialog):
-    def __init__(self, parent=None, curr_params = {}):
-        super(QtGui.QDialog, self).__init__(parent)
+    def __init__(self, _parent, curr_params = {}, _row = None):
+        super(QtGui.QDialog, self).__init__(_parent)
         # create dialog screen for each parameter in curr_params
         
-        self.parent = parent
+        self.parent = _parent
+        self.row = _row
         self.setWindowTitle(self.tr("Available settings"))
         vbox = QtGui.QVBoxLayout()
 
@@ -53,6 +54,8 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 self.integers[-1].setObjectName(i)
                 if (curr_params[i] >= 100):
                     self.integers[-1].setSingleStep(100)
+                elif (curr_params[i] >= 10):
+                    self.integers[-1].setSingleStep(10)                     
                 if i + "_desc" in curr_params:
                     label.setToolTip(curr_params[i + "_desc"])
                     self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
@@ -118,4 +121,10 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         
         self.parent.batchlocations[self.parent.modified_batchlocation_number][1].update(new_params)
         self.parent.load_definition_batchlocations(False)
+
+        if self.row: # expand row again after reloading definitions
+            index = self.parent.batchlocations_model.index(self.row, 0)
+            self.parent.batchlocations_view.setExpanded(index, True)
+        
+        self.parent.statusBar().showMessage(self.tr("Batch location settings updated"))
         self.accept()

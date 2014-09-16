@@ -84,8 +84,7 @@ aI8
 aa(lp41
 I9
 aI10
-aaa(dp42
-I0
+aaa(lp42
 (lp43
 (lp44
 I0
@@ -95,8 +94,7 @@ I1
 aI0
 aaI90
 aI20
-asI1
-(lp46
+aa(lp46
 (lp47
 I0
 aI0
@@ -105,8 +103,7 @@ I1
 aI1
 aaI90
 aI20
-asI2
-(lp49
+aa(lp49
 (lp50
 I1
 aI0
@@ -115,8 +112,7 @@ I2
 aI0
 aaI90
 aI20
-asI3
-(lp52
+aa(lp52
 (lp53
 I1
 aI1
@@ -125,8 +121,7 @@ I2
 aI0
 aaI90
 aI20
-asI4
-(lp55
+aa(lp55
 (lp56
 I2
 aI0
@@ -135,8 +130,7 @@ I3
 aI0
 aaI90
 aI20
-asI5
-(lp58
+aa(lp58
 (lp59
 I2
 aI0
@@ -145,8 +139,7 @@ I3
 aI1
 aaI90
 aI20
-asI6
-(lp61
+aa(lp61
 (lp62
 I3
 aI0
@@ -155,8 +148,7 @@ I4
 aI0
 aaI90
 aI20
-asI7
-(lp64
+aa(lp64
 (lp65
 I3
 aI1
@@ -165,8 +157,7 @@ I4
 aI0
 aaI90
 aI20
-asI8
-(lp67
+aa(lp67
 (lp68
 I4
 aI0
@@ -175,8 +166,7 @@ I5
 aI0
 aaI90
 aI20
-asI9
-(lp70
+aa(lp70
 (lp71
 I4
 aI0
@@ -185,8 +175,7 @@ I5
 aI1
 aaI90
 aI20
-asI10
-(lp73
+aa(lp73
 (lp74
 I5
 aI0
@@ -195,8 +184,7 @@ I6
 aI0
 aaI90
 aI20
-asI11
-(lp76
+aa(lp76
 (lp77
 I5
 aI0
@@ -205,8 +193,7 @@ I6
 aI1
 aaI90
 aI20
-asI12
-(lp79
+aa(lp79
 (lp80
 I5
 aI1
@@ -215,8 +202,7 @@ I6
 aI0
 aaI90
 aI20
-asI13
-(lp82
+aa(lp82
 (lp83
 I5
 aI1
@@ -225,8 +211,7 @@ I6
 aI1
 aaI90
 aI20
-asa(dp85
-I0
+aaa(lp85
 (lp86
 (lp87
 I0
@@ -234,16 +219,14 @@ aI1
 aa(dp88
 g5
 g6
-sasI1
-(lp89
+saa(lp89
 (lp90
 I2
 aI3
 aa(dp91
 g5
 g12
-sasI2
-(lp92
+saa(lp92
 (lp93
 I4
 aI5
@@ -251,8 +234,7 @@ aa(dp94
 g5
 S'2'
 p95
-sasI3
-(lp96
+saa(lp96
 (lp97
 I6
 aI7
@@ -260,8 +242,7 @@ aa(dp98
 g5
 S'3'
 p99
-sasI4
-(lp100
+saa(lp100
 (lp101
 I8
 aI9
@@ -269,8 +250,7 @@ aa(dp102
 g5
 S'4'
 p103
-sasI5
-(lp104
+saa(lp104
 (lp105
 I10
 aI11
@@ -280,4 +260,4 @@ aa(dp106
 g5
 S'5'
 p107
-sasa.
+saaa.

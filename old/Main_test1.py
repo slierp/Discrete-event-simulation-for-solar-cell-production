@@ -38,15 +38,13 @@ if __name__ == "__main__":
 
     transport_time = 90 # time for actual transport of one or more units
     time_per_unit = 20 # added time per unit for loading/unloading on the machines (combined value for input and output stations)
-    batchconnections = {} #[machine1,machine2,transport_time,time_per_unit]
-    
-    batchconnections = {}
-    batchconnections[0] = [[0,0],[1,0],transport_time,time_per_unit]
-    batchconnections[1] = [[1,0],[2,0],transport_time,time_per_unit]
+    batchconnections = [] #[machine1,machine2,transport_time,time_per_unit]
+    batchconnections.append([[0,0],[1,0],transport_time,time_per_unit])
+    batchconnections.append([[1,0],[2,0],transport_time,time_per_unit])
 
-    operators = {}
-    operators[0] = [[0],{'name' : '0'}]
-    operators[1] = [[1],{'name' : '1'}]    
+    operators = []
+    operators.append([[0],{'name' : '0'}])
+    operators.append([[1],{'name' : '1'}])
 
     params = {}
 

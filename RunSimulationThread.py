@@ -76,12 +76,12 @@ class RunSimulationThread(QtCore.QThread):
             for j in np.arange(len(self.locationgroups[i])):
                 self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]
            
-        for i in self.batchconnections:
+        for i, value in enumerate(self.batchconnections):
             # replace locationgroup number indicators for references to real class instances
             self.batchconnections[i][0] = self.locationgroups[self.batchconnections[i][0][0]][self.batchconnections[i][0][1]]
             self.batchconnections[i][1] = self.locationgroups[self.batchconnections[i][1][0]][self.batchconnections[i][1][1]]
     
-        for i in self.operators:
+        for i, value in enumerate(self.operators):
             # replace batchconnection number indicators for references to real class instances
             # also replace operator list elements for new class instances
             tmp_batchconnections = {}
@@ -106,8 +106,10 @@ class RunSimulationThread(QtCore.QThread):
         updates_list = hourly_updates + percentage_updates
         updates_list = self.make_unique(updates_list)
 
-        self.output.sig.emit("0% progress: 0 hours")
-        
+        self.output.sig.emit("0% progress: 0 hours / 0 produced")
+
+        prev_production_volume_update = 0
+        prev_percentage_time = self.env.now
         for i in updates_list:
             if(self.stop_simulation):
                 string = "Stopped at "  + str(np.round(self.env.now/3600,1)) + " hours"
@@ -116,17 +118,30 @@ class RunSimulationThread(QtCore.QThread):
 
             self.env.run(until=i)
             
-            if (i == self.params['time_limit']):
+            if (i == self.params['time_limit']):                
                 string = "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
-                self.output.sig.emit(string)            
+                self.output.sig.emit(string)                            
             elif (i % (self.params['time_limit'] // 10) == 0):
-                string = str(np.round(100*i/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours"
-                self.output.sig.emit(string)        
+                
+                l_loc = len(self.locationgroups)
+                percentage_production_volume_update = 0
+                for j in np.arange(len(self.locationgroups[l_loc-1])):
+                    percentage_production_volume_update += self.locationgroups[l_loc-1][j].output.container.level
+                    
+                percentage_wph_update = (percentage_production_volume_update - prev_production_volume_update)
+                percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
+                
+                string = str(np.round(100*i/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours / "
+                string += str(percentage_production_volume_update) + " produced (" + str(np.round(percentage_wph_update).astype(int)) + " wph)"
+                self.output.sig.emit(string)
+
+                prev_percentage_time = self.env.now
+                prev_production_volume_update = percentage_production_volume_update                
 
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 
-        for i in self.operators:
+        for i, value in enumerate(self.operators):
             self.operators[i].report()
 
         prod_vol = 0

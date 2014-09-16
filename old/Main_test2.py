@@ -46,36 +46,34 @@ if __name__ == "__main__":
 
     transport_time = 90 # time for actual transport of one or more units
     time_per_unit = 20 # added time per unit for loading/unloading on the machines (combined value for input and output stations)
-    batchconnections = {} #[machine1,machine2,transport_time,time_per_unit]
+    batchconnections = [] #[machine1,machine2,transport_time,time_per_unit]
+    batchconnections.append([[0,0],[1,0],transport_time,time_per_unit])
+    batchconnections.append([[0,0],[1,1],transport_time,time_per_unit])
     
-    batchconnections = {}
-    batchconnections[0] = [[0,0],[1,0],transport_time,time_per_unit]
-    batchconnections[1] = [[0,0],[1,1],transport_time,time_per_unit]
+    batchconnections.append([[1,0],[2,0],transport_time,time_per_unit])
+    batchconnections.append([[1,1],[2,0],transport_time,time_per_unit])
     
-    batchconnections[2] = [[1,0],[2,0],transport_time,time_per_unit]
-    batchconnections[3] = [[1,1],[2,0],transport_time,time_per_unit]
+    batchconnections.append([[2,0],[3,0],transport_time,time_per_unit])
+    batchconnections.append([[2,0],[3,1],transport_time,time_per_unit])
     
-    batchconnections[4] = [[2,0],[3,0],transport_time,time_per_unit]
-    batchconnections[5] = [[2,0],[3,1],transport_time,time_per_unit]
+    batchconnections.append([[3,0],[4,0],transport_time,time_per_unit])
+    batchconnections.append([[3,1],[4,0],transport_time,time_per_unit])
     
-    batchconnections[6] = [[3,0],[4,0],transport_time,time_per_unit]
-    batchconnections[7] = [[3,1],[4,0],transport_time,time_per_unit]
+    batchconnections.append([[4,0],[5,0],transport_time,time_per_unit])
+    batchconnections.append([[4,0],[5,1],transport_time,time_per_unit])
     
-    batchconnections[8] = [[4,0],[5,0],transport_time,time_per_unit]
-    batchconnections[9] = [[4,0],[5,1],transport_time,time_per_unit]
+    batchconnections.append([[5,0],[6,0],transport_time,time_per_unit])
+    batchconnections.append([[5,0],[6,1],transport_time,time_per_unit])
+    batchconnections.append([[5,1],[6,0],transport_time,time_per_unit])
+    batchconnections.append([[5,1],[6,1],transport_time,time_per_unit])
     
-    batchconnections[10] = [[5,0],[6,0],transport_time,time_per_unit]
-    batchconnections[11] = [[5,0],[6,1],transport_time,time_per_unit]
-    batchconnections[12] = [[5,1],[6,0],transport_time,time_per_unit]
-    batchconnections[13] = [[5,1],[6,1],transport_time,time_per_unit]
-    
-    operators = {}
-    operators[0] = [[0,1],{'name' : '0'}]
-    operators[1] = [[2,3],{'name' : '1'}]    
-    operators[2] = [[4,5],{'name' : '2'}]
-    operators[3] = [[6,7],{'name' : '3'}]
-    operators[4] = [[8,9],{'name' : '4'}]
-    operators[5] = [[10,11,12,13],{'name' : '5'}]
+    operators = []
+    operators.append([[0,1],{'name' : '0'}])
+    operators.append([[2,3],{'name' : '1'}])
+    operators.append([[4,5],{'name' : '2'}])   
+    operators.append([[6,7],{'name' : '3'}])
+    operators.append([[8,9],{'name' : '4'}])
+    operators.append([[10,11,12,13],{'name' : '5'}])
 
     params = {}
 

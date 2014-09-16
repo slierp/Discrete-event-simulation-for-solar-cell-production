@@ -17,17 +17,25 @@ import numpy as np
 class Operator(QtCore.QObject):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
         
-    def __init__(self, _env, batchconnections, _output=None, _params = {}):
+    def __init__(self, _env, _batchconnections = None, _output=None, _params = {}):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.batchconnections = batchconnections
+        self.batchconnections = _batchconnections
 
         self.params = {}
+        self.params['specification'] = self.tr("An operator instance functions only as the transporter between batch locations. ")
+        self.params['specification'] += self.tr("Each time interval it will try to do a transport between two locations that were assigned. ")
+        self.params['specification'] += self.tr("If no transport was possible then it will wait a set amount of time before trying again.")
+        
         self.params['name'] = ""
-        self.params['min_units'] = 1 # not yet implemented
+        self.params['name_desc'] = self.tr("Name of the individual operator")        
+        self.params['min_units'] = 1
+        self.params['min_units_desc'] = self.tr("Not yet implemented")        
         self.params['wait_time'] = 60
+        self.params['wait_time_desc'] = self.tr("Wait period between transport attempts (seconds)")
         self.params['verbose'] = False
+        self.params['verbose_desc'] = self.tr("Enable to get updates on all actions of the operator")        
         self.params.update(_params)
         
         self.transport_counter = 0
@@ -37,6 +45,7 @@ class Operator(QtCore.QObject):
         if (self.params['verbose']):
             string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
             self.output_text.sig.emit(string)
+            
         self.env.process(self.run())        
 
     def run(self):
@@ -58,7 +67,12 @@ class Operator(QtCore.QObject):
                     yield self.env.timeout(self.batchconnections[i][2] + self.batchconnections[i][3]*no_batches_for_transport)
                     self.transport_counter += no_batches_for_transport*self.batchconnections[i][0].output.batch_size
                     yield self.batchconnections[i][1].input.container.put(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
-                    continue_loop = True                                
+                    continue_loop = True
+
+                    if (self.params['verbose']):
+                        string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
+                        string += str(no_batches_for_transport)
+                        self.output_text.sig.emit(string)                              
 
             if (continue_loop):
                 continue_loop = False
