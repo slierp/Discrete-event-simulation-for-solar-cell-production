@@ -1,12 +1,12 @@
 Discrete-event-simulation-for-solar-cell-production
 ===================================================
 
-The Python program is to a utility for simulating and analyzing the logistics of (silicon) solar cell production lines. It uses the Simpy package for its discrete event simulation capability. The program simulates the movement of wafers within production tools and between tools, buffers and operators.
+The Python program is a utility for simulating and analyzing the logistics of (silicon) solar cell production lines. It uses the Simpy package for its discrete event simulation capability. With this technique, the program simulates the movement of wafers within production tools and between tools, buffers and operators.
 
 <b>Features</b>
 - Graphical user interface with which one can define any arbitrary production line
 - A set of production tools to choose from with a wide range of available settings
-- A set of operators can be generated or defined, that take care of transport wafers between tools
+- A set of operators that can be generated or defined, that take care of transport wafers between tools
 - Each tool instance, each operator and each tool-to-tool connection can be individually configured
 - Analysis results include production volume, throughput per hour, idle time for each tool etc.
 - Cross-platform - tested on Windows; should also be compatible with Linux and Mac OS
@@ -16,6 +16,7 @@ Please see the TODO document for a list of future additions
 <b>Example applications</b>
 - In the research phase of any new solar cell technology it is often the question whether the cost of an added step outways the efficiency benefits. To make a better estimate of the cost of an added step it is interesting to simulate a production line with and without the added step.
 - When running a production line it can be of interest to fine-tune a model that exactly represents the line itself, so one can run a lot of 'what-if' scenarios, such as unscheduled down-time for certain tools.
+- To calculate the cost-of-ownership of a particular solar cell technology, one of things one needs to derive is the amount of cells that are produced with the particular tool setup. One can make estimates using the process that has the lowest effective throughput, but reality is of course more complicated, because different tools have different behaviour, such as in their maintenance schedules. Discrete event simulation can in principle take all those things into account.
 
 <b>Install</b>
 
@@ -26,6 +27,6 @@ To install you can choose between these methods:
 
 <b>Using the program</b>
 
-On startup the program loads in a default production line that mimics a p-type monocrystalline silicon solar cell production line. In the left panel one can define and alter 'batch locations' (tools, buffers, sources or bins) and the way they are interconnected. On the right panel one can define and alter operators that take care of a certain set of connections. These connections are defined by the information in the left panel.
+On startup the program loads in a default production line that mimics a p-type monocrystalline silicon solar cell production line. In the left panel one can define and alter 'batch locations' (tools, buffers, sources or bins) and the way they are interconnected. On the right panel one can define and alter operators that take care of a certain set of tool-to-tool connections. These connections are defined by the information in the left panel.
 
 In the toolbar one can load and save production line definitions, start and stop the simulation and set the simulation time limit. The text box below contains the output, which includes some standard information. The amount of information output from a particular tool or operator can be increased in the settings.
