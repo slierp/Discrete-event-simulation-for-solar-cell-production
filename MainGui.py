@@ -492,12 +492,19 @@ class MainGui(QtGui.QMainWindow):
             # since GUI should not allow for any errors to appear
             if (self.batchconnections[i][0][0] > (len(self.locationgroups)-1)) | \
                     (self.batchconnections[i][1][0] > (len(self.locationgroups)-1)):
-                self.statusBar().showMessage(self.tr("Invalid batchconnections found"))
+                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
                 return
             elif (self.batchconnections[i][0][1] > (len(self.locationgroups[self.batchconnections[i][0][0]])-1)) | \
                     (self.batchconnections[i][1][1] > (len(self.locationgroups[self.batchconnections[i][1][0]])-1)):
-                self.statusBar().showMessage(self.tr("Invalid batchconnections found"))
+                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
                 return
+
+        for i, value in enumerate(self.operators):
+            # check if all batchconnection numbers inside self.operators exist inside self.batchconnections
+            for j in self.operators[i][0]:
+                if (j > len(self.batchconnections)):
+                    self.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"))
+                    return
         
         time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
         for i, value in enumerate(self.sim_time_selection_list):
