@@ -9,41 +9,31 @@ from __future__ import division
 import numpy as np
 from PyQt4 import QtCore, QtGui
 import os, ntpath
-from batchlocations.WaferSource import WaferSource
-from batchlocations.WaferUnstacker import WaferUnstacker
-from batchlocations.WaferBin import WaferBin
-from batchlocations.BatchTex import BatchTex
-from batchlocations.TubeFurnace import TubeFurnace
-from batchlocations.SingleSideEtch import SingleSideEtch
-from batchlocations.TubePECVD import TubePECVD
-from batchlocations.PrintLine import PrintLine
-from batchlocations.Operator import Operator
+from AddBatchlocationView import AddBatchlocationView
+from DelBatchlocationView import DelBatchlocationView
+from EditBatchlocationView import EditBatchlocationView
+from AddOperatorView import AddOperatorView
+from DelOperatorView import DelOperatorView
+from EditOperatorView import EditOperatorView
+from RunSimulation import RunSimulation
 from RunSimulationThread import RunSimulationThread
-from BatchlocationSettingsDialog import BatchlocationSettingsDialog
-from OperatorSettingsDialog import OperatorSettingsDialog
-from AddBatchlocationDialog import AddBatchlocationDialog
-from ConnectionSettingsDialog import ConnectionSettingsDialog
-from AddOperatorConnectionDialog import AddOperatorConnectionDialog
-from copy import deepcopy
 import pickle
 
-class dummy_env(object):
-    
-    def process(dummy0=None,dummy1=None):
-        pass
-
-    def now(self):
-        pass
-    
-    def event(dummy0=None):
-        pass
+class DeselectableTreeView(QtGui.QTreeView):
+    # de-select by right click or by clicking on white space
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            self.clearSelection()
+        else:
+            self.clearSelection()            
+            QtGui.QTreeView.mousePressEvent(self, event)    
 
 class MainGui(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell manufacturing simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
 
         self.edit = QtGui.QTextEdit()
         self.edit.setReadOnly(True)               
@@ -56,16 +46,14 @@ class MainGui(QtGui.QMainWindow):
         self.prev_save_path = ""
 
         self.batchlocations_model = QtGui.QStandardItemModel()
-        self.batchlocations_view = QtGui.QTreeView()
+        self.batchlocations_view = DeselectableTreeView()
         self.batchlocations_view.doubleClicked.connect(self.edit_batchlocation_view)
         self.batchlocations_view.setAlternatingRowColors(True)
         self.operators_model = QtGui.QStandardItemModel()
-        self.operators_view = QtGui.QTreeView()
+        self.operators_view = DeselectableTreeView()
         self.operators_view.doubleClicked.connect(self.edit_operator_view)
         self.operators_view.setAlternatingRowColors(True)
         self.batchlocation_dialog = None
-
-        self.modified_batchlocation_number = None
 
         self.batchlocations = [] #tool class name, no of tools, dict with settings
         self.batchlocations.append(["WaferSource", {'name' : '0'}])
@@ -189,114 +177,30 @@ class MainGui(QtGui.QMainWindow):
                 num += 1
 
     def add_batchlocation_view(self):
-        if (not len(self.batchlocations_view.selectedIndexes())):
-            # if nothing selected
-            self.statusBar().showMessage(self.tr("Please select position"))
-            return
-            
-        if (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
-            row = self.batchlocations_view.selectedIndexes()[0].row()
-            index = None
-        else:
-            row = self.batchlocations_view.selectedIndexes()[0].parent().row()
-            index = self.batchlocations_view.selectedIndexes()[0].row()
+        AddBatchlocationView(self)
 
-        # start dialog to enable user to add batch location
-        add_batchlocation_dialog = AddBatchlocationDialog(self,row,index)
-        add_batchlocation_dialog.setModal(True)
-        add_batchlocation_dialog.show()
-
-    def del_batchlocation_view(self):
-        if (not len(self.batchlocations_view.selectedIndexes())):
-            # if nothing selected
-            self.statusBar().showMessage(self.tr("Please select position"))
-            return
-        
-        child_item = False
-        
-        if (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
-            # if parent item, remove all batchlocation children and row in locationgroups
-        
-            row = self.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups            
-            del self.batchlocations[self.locationgroups[row][0]:self.locationgroups[row][len(self.locationgroups[row])-1]+1]
-            del self.locationgroups[row]            
-
-        else: # if child item
-            row = self.batchlocations_view.selectedIndexes()[0].parent().row() # selected row in locationgroups
-            
-            if (len(self.locationgroups[row]) == 1):
-                # if last child item, remove batchlocation and whole row in locationgroups
-                del self.batchlocations[self.locationgroups[row][0]:self.locationgroups[row][len(self.locationgroups[row])-1]+1]
-                del self.locationgroups[row]
-            else:
-                # if not last child item, remove batchlocation and element in locationgroup row
-                index = self.batchlocations_view.selectedIndexes()[0].row()
-                del self.batchlocations[self.locationgroups[row][index]]
-                del self.locationgroups[row][index]
-                child_item = True
-      
-        self.reindex_locationgroups()
-        self.load_definition_batchlocations(False)
-        
-        if child_item:
-            index = self.batchlocations_model.index(row, 0)
-            self.batchlocations_view.setExpanded(index, True)        
-        
-        self.statusBar().showMessage(self.tr("Batch location(s) removed"))
-
-    #def up_batchlocation(self):
-    #    pass
-
-    #def down_batchlocation(self):
-    #    pass
+    def del_batchlocation_view(self):        
+        DelBatchlocationView(self)
     
     def edit_batchlocation_view(self):
-        if (not len(self.batchlocations_view.selectedIndexes())):
-            # if nothing selected
-            self.statusBar().showMessage(self.tr("Please select position"))
-            return
-        elif (self.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
-            # TO BE IMPLEMENTED: change all children, provided that they are of the same class
-            self.statusBar().showMessage("Not yet implemented")            
-            return
+        EditBatchlocationView(self)
 
-        # find out which batchlocation was selected
-        row = self.batchlocations_view.selectedIndexes()[0].parent().row()
-        index = self.batchlocations_view.selectedIndexes()[0].row()
-        self.modified_batchlocation_number = self.locationgroups[row][index]       
-        batchlocation = self.batchlocations[self.modified_batchlocation_number]
-
-        env = dummy_env()
-        curr_params = {}
-        # load default settings list
-        if (batchlocation[0] == "WaferSource"):
-            curr_params = WaferSource(env).params
-        elif (batchlocation[0] == "WaferUnstacker"):
-            curr_params = WaferUnstacker(env).params
-        elif (batchlocation[0] == "BatchTex"):
-            curr_params = BatchTex(env).params
-        elif (batchlocation[0] == "TubeFurnace"):
-            curr_params = TubeFurnace(env).params
-        elif (batchlocation[0] == "SingleSideEtch"):
-            curr_params = SingleSideEtch(env).params
-        elif (batchlocation[0] == "TubePECVD"):
-            curr_params = TubePECVD(env).params
-        elif (batchlocation[0] == "PrintLine"):
-            curr_params = PrintLine(env).params            
-        elif (batchlocation[0] == "WaferBin"):
-            curr_params = WaferBin(env).params
-        else:
-            return                         
+    def trash_batchlocation_view(self):
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle(self.tr("Warning"))
+        msgBox.setIcon(QtGui.QMessageBox.Warning)
+        msgBox.setText(self.tr("This will remove all batch locations. Continue?"))
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Ok)
+        ret = msgBox.exec_()
         
-        # update default settings list with currently stored settings
-        curr_params.update(batchlocation[1])
-
-        # start dialog to enable user to change settings
-        batchlocation_dialog = BatchlocationSettingsDialog(self,curr_params,row)
-        batchlocation_dialog.setModal(True)
-        batchlocation_dialog.show()
+        if (ret == QtGui.QMessageBox.Ok):
+            self.batchlocations = []
+            self.locationgroups = []
+            self.batchconnections = []
+            self.batchlocations_model.clear()
+            self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations']) 
+            self.statusBar().showMessage(self.tr("All batch locations were removed"))
 
     def print_batchlocation(self, num):
         return self.batchlocations[num][0] + " " + self.batchlocations[num][1]['name']
@@ -361,175 +265,33 @@ class MainGui(QtGui.QMainWindow):
                 curr_locationgroup = self.batchconnections[i][0][0]
                 num += 1
                 self.operators[num][0].append(i)
-
-    def add_operator_batchconnections(self):
-        # find out which connection was selected
-        row = self.operators_view.selectedIndexes()[0].parent().row()
-        index = self.operators_view.selectedIndexes()[0].row()
         
-        # start dialog to enable user to add operator
-        connection_dialog = AddOperatorConnectionDialog(self,row,index)
-        connection_dialog.setModal(True)
-        connection_dialog.show()        
-
-    def del_operator_batchconnections(self):
-        # find out which connection was selected
-        row = self.operators_view.selectedIndexes()[0].parent().row()
-        index = self.operators_view.selectedIndexes()[0].row()
-
-        if (len(self.operators[row][0]) == 1):
-            # if last child item, remove the operator
-            del self.operators[row]
-            
-            # reload definition into view
-            self.load_definition_operators(False) 
-            
-            self.statusBar().showMessage("Last operator connection and operator removed")            
-        else:
-            del self.operators[row][0][index]
-            
-            # reload definition into view
-            self.load_definition_operators(False)
-
-            # re-expand the operator parent item
-            index = self.operators_model.index(row, 0)
-            self.operators_view.setExpanded(index, True) 
-            
-            self.statusBar().showMessage("Operator connection removed")          
-
-    def edit_batchconnection(self):
-        # find out which connection was selected
-        row = self.operators_view.selectedIndexes()[0].parent().row()
-        index = self.operators_view.selectedIndexes()[0].row()
-        self.modified_batchconnection_number = self.operators[row][0][index]       
-        batchconnection = self.batchconnections[self.modified_batchconnection_number]
-
-        # start dialog to enable user to change settings
-        connection_dialog = ConnectionSettingsDialog(self,batchconnection)
-        connection_dialog.setModal(True)
-        connection_dialog.show()
-
-    def add_operator(self):
-        # find out which operator was selected
-        row = self.operators_view.selectedIndexes()[0].row()
-        
-        # copy selected operator and give it name 'new'
-        self.operators.insert(row,deepcopy(self.operators[row]))
-        self.operators[row][1].update({'name' : 'new'})
-        
-        # reload definitions
-        self.load_definition_operators(False)
-        
-        index = self.operators_model.index(row, 0)
-        self.operators_view.setCurrentIndex(index)
-        
-        self.statusBar().showMessage(self.tr("Operator added"))
-
-    def del_operator(self):
-        # find out which operator was selected
-        row = self.operators_view.selectedIndexes()[0].row()
-        
-        # remove selected operator
-        del self.operators[row]
-        
-        # reload definitions
-        self.load_definition_operators(False)        
-        
-        self.statusBar().showMessage(self.tr("Operator removed"))
-
-    def edit_operator(self):
-        # find out which operator was selected
-        row = self.operators_view.selectedIndexes()[0].row()
-
-        env = dummy_env()
-        curr_params = {}
-        # load default settings list
-        curr_params = Operator(env).params
-
-        # update default settings list with currently stored settings
-        curr_params.update(self.operators[row][1])
-
-        # start dialog to enable user to change settings
-        batchlocation_dialog = OperatorSettingsDialog(self,curr_params,row)
-        batchlocation_dialog.setModal(True)
-        batchlocation_dialog.show()
-
     def add_operator_view(self):
-        if (not len(self.operators_view.selectedIndexes())):
-            # if nothing selected
-            self.statusBar().showMessage(self.tr("Please select position"))
-        elif (self.operators_view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
-            self.add_operator()
-        else: # if child row is selected
-            self.add_operator_batchconnections()
+        AddOperatorView(self)    
 
     def del_operator_view(self):
-        if (not len(self.operators_view.selectedIndexes())):
-            # if nothing selected
-            self.statusBar().showMessage(self.tr("Please select position"))
-        elif (self.operators_view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
-            self.del_operator()
-        else: # if child row is selected
-            self.del_operator_batchconnections()
+        DelOperatorView(self)
 
     def edit_operator_view(self):
-        if (not len(self.operators_view.selectedIndexes())):
-            # if nothing selected
-            self.statusBar().showMessage(self.tr("Please select position"))
-        elif (self.operators_view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
-            self.edit_operator()
-        else: # if child row is selected
-            self.edit_batchconnection()
+        EditOperatorView(self)
+
+    def trash_operator_view(self):
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle(self.tr("Warning"))
+        msgBox.setIcon(QtGui.QMessageBox.Warning)
+        msgBox.setText(self.tr("This will remove all operators. Continue?"))
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Ok)
+        ret = msgBox.exec_()
+        
+        if (ret == QtGui.QMessageBox.Ok):
+            self.operators = []
+            self.operators_model.clear()
+            self.operators_model.setHorizontalHeaderLabels(['Operators']) 
+            self.statusBar().showMessage(self.tr("All operators were removed"))
 
     def run_simulation(self):
-        
-        for i, value in enumerate(self.batchconnections):
-            # check if all batchconnections exist inside locationgroups
-            # no separate check whether all batchlocations inside locationgroups exist
-            # since GUI should not allow for any errors to appear
-            if (self.batchconnections[i][0][0] > (len(self.locationgroups)-1)) | \
-                    (self.batchconnections[i][1][0] > (len(self.locationgroups)-1)):
-                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
-                return
-            elif (self.batchconnections[i][0][1] > (len(self.locationgroups[self.batchconnections[i][0][0]])-1)) | \
-                    (self.batchconnections[i][1][1] > (len(self.locationgroups[self.batchconnections[i][1][0]])-1)):
-                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
-                return
-
-        for i, value in enumerate(self.operators):
-            # check if all batchconnection numbers inside self.operators exist inside self.batchconnections
-            for j in self.operators[i][0]:
-                if (j > len(self.batchconnections)):
-                    self.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"))
-                    return
-        
-        time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
-        for i, value in enumerate(self.sim_time_selection_list):
-            if (value == self.sim_time_combo.currentText()):
-                self.params['time_limit'] = time_limits[i]
-        
-        if not self.simulation_thread.isRunning():
-        #if True: # interchange for isRunning when not running simulation in separate thread
-            self.edit.clear()
-            self.simulation_thread.batchlocations = deepcopy(self.batchlocations)
-            self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
-            self.simulation_thread.batchconnections = deepcopy(self.batchconnections)
-            self.simulation_thread.operators = deepcopy(self.operators)
-
-            self.simulation_thread.params = {}
-            self.simulation_thread.params['time_limit'] = 1000
-            self.simulation_thread.params.update(self.params)
-            
-            self.simulation_thread.stop_simulation = False
-            self.simulation_thread.start()
-            #self.simulation_thread.run() # interchange for start when not running simulation in separate thread
-            self.run_sim_button.setEnabled(False)
-            self.stop_sim_button.setEnabled(True)
-            
-            self.statusBar().showMessage(self.tr("Simulation started"))
+        RunSimulation(self)        
 
     def stop_simulation(self):
         self.simulation_thread.stop_simulation = True
@@ -559,7 +321,7 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations_view.setModel(self.batchlocations_model)
         self.batchlocations_view.setUniformRowHeights(True)
         self.batchlocations_view.setDragDropMode(QtGui.QAbstractItemView.NoDragDrop)
-        self.batchlocations_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)          
+        self.batchlocations_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         
         add_batchlocation_button = QtGui.QPushButton()
         add_batchlocation_button.clicked.connect(self.add_batchlocation_view)
@@ -572,18 +334,6 @@ class MainGui(QtGui.QMainWindow):
         del_batchlocation_button.setIcon(QtGui.QIcon(":minus.png"))
         del_batchlocation_button.setToolTip(self.tr("Remove batchlocation"))
         del_batchlocation_button.setStatusTip(self.tr("Remove batchlocation"))
-
-        #up_batchlocation_button = QtGui.QPushButton()
-        #up_batchlocation_button.clicked.connect(self.up_batchlocation)        
-        #up_batchlocation_button.setIcon(QtGui.QIcon(":up.png"))
-        #up_batchlocation_button.setToolTip(self.tr("Move up in list"))
-        #up_batchlocation_button.setStatusTip(self.tr("Move up in list"))
-        
-        #down_batchlocation_button = QtGui.QPushButton()
-        #down_batchlocation_button.clicked.connect(self.down_batchlocation)         
-        #down_batchlocation_button.setIcon(QtGui.QIcon(":down.png"))
-        #down_batchlocation_button.setToolTip(self.tr("Move down in list"))
-        #down_batchlocation_button.setStatusTip(self.tr("Move down in list"))
         
         edit_batchlocation_button = QtGui.QPushButton()
         edit_batchlocation_button.clicked.connect(self.edit_batchlocation_view)        
@@ -591,12 +341,17 @@ class MainGui(QtGui.QMainWindow):
         edit_batchlocation_button.setToolTip(self.tr("Edit settings"))
         edit_batchlocation_button.setStatusTip(self.tr("Edit settings"))        
 
+        empty_batchlocation_view_button = QtGui.QPushButton()
+        empty_batchlocation_view_button.clicked.connect(self.trash_batchlocation_view)        
+        empty_batchlocation_view_button.setIcon(QtGui.QIcon(":trash.png"))
+        empty_batchlocation_view_button.setToolTip(self.tr("Remove all"))
+        empty_batchlocation_view_button.setStatusTip(self.tr("Remove all")) 
+
         buttonbox0 = QtGui.QDialogButtonBox()
         buttonbox0.addButton(add_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(del_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
-        #buttonbox0.addButton(up_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
-        #buttonbox0.addButton(down_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(edit_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)        
+        buttonbox0.addButton(empty_batchlocation_view_button, QtGui.QDialogButtonBox.ActionRole)
 
         vbox0 = QtGui.QVBoxLayout()
         vbox0.addWidget(self.batchlocations_view)
@@ -634,12 +389,19 @@ class MainGui(QtGui.QMainWindow):
         edit_operator_button.setIcon(QtGui.QIcon(":gear.png"))
         edit_operator_button.setToolTip(self.tr("Edit settings"))
         edit_operator_button.setStatusTip(self.tr("Edit settings"))
+        
+        empty_operator_view_button = QtGui.QPushButton()
+        empty_operator_view_button.clicked.connect(self.trash_operator_view)        
+        empty_operator_view_button.setIcon(QtGui.QIcon(":trash.png"))
+        empty_operator_view_button.setToolTip(self.tr("Remove all"))
+        empty_operator_view_button.setStatusTip(self.tr("Remove all"))        
 
         buttonbox1 = QtGui.QDialogButtonBox()
-        buttonbox1.addButton(import_batchlocations_button, QtGui.QDialogButtonBox.ActionRole)
+        buttonbox1.addButton(import_batchlocations_button, QtGui.QDialogButtonBox.ActionRole)       
         buttonbox1.addButton(add_operator_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox1.addButton(del_operator_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox1.addButton(edit_operator_button, QtGui.QDialogButtonBox.ActionRole)
+        buttonbox1.addButton(empty_operator_view_button, QtGui.QDialogButtonBox.ActionRole)
 
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.operators_view)

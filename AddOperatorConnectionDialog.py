@@ -9,13 +9,16 @@ from __future__ import division
 from PyQt4 import QtGui
 
 class AddOperatorConnectionDialog(QtGui.QDialog):
-    def __init__(self, parent, _row, _index):
+    def __init__(self, parent):
         super(QtGui.QDialog, self).__init__(parent)
         # create dialog screen for each parameter in curr_params
         
         self.parent = parent
-        self.row = _row
-        self.index = _index
+
+        # find out which connection was selected
+        self.row = self.parent.operators_view.selectedIndexes()[0].parent().row()
+        self.index = self.parent.operators_view.selectedIndexes()[0].row()        
+        
         self.setWindowTitle(self.tr("Add operator connection"))
         vbox = QtGui.QVBoxLayout()
 

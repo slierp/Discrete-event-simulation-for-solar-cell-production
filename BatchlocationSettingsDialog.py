@@ -7,14 +7,64 @@ Created on Fri Sep 12 18:00:48 2014
 
 from __future__ import division
 from PyQt4 import QtGui
+from batchlocations.WaferSource import WaferSource
+from batchlocations.WaferUnstacker import WaferUnstacker
+from batchlocations.WaferBin import WaferBin
+from batchlocations.BatchTex import BatchTex
+from batchlocations.TubeFurnace import TubeFurnace
+from batchlocations.SingleSideEtch import SingleSideEtch
+from batchlocations.TubePECVD import TubePECVD
+from batchlocations.PrintLine import PrintLine
+
+class dummy_env(object):
+    
+    def process(dummy0=None,dummy1=None):
+        pass
+
+    def now(self):
+        pass
+    
+    def event(dummy0=None):
+        pass
 
 class BatchlocationSettingsDialog(QtGui.QDialog):
-    def __init__(self, _parent, curr_params = {}, _row = None):
+    def __init__(self, _parent):
         super(QtGui.QDialog, self).__init__(_parent)
         # create dialog screen for each parameter in curr_params
         
-        self.parent = _parent
-        self.row = _row
+        self.parent = _parent        
+
+        # find out which batchlocation was selected
+        self.row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row()
+        index = self.parent.batchlocations_view.selectedIndexes()[0].row()
+        self.modified_batchlocation_number = self.parent.locationgroups[self.row][index]       
+        batchlocation = self.parent.batchlocations[self.modified_batchlocation_number]
+
+        env = dummy_env()
+        curr_params = {}
+        # load default settings list
+        if (batchlocation[0] == "WaferSource"):
+            curr_params = WaferSource(env).params
+        elif (batchlocation[0] == "WaferUnstacker"):
+            curr_params = WaferUnstacker(env).params
+        elif (batchlocation[0] == "BatchTex"):
+            curr_params = BatchTex(env).params
+        elif (batchlocation[0] == "TubeFurnace"):
+            curr_params = TubeFurnace(env).params
+        elif (batchlocation[0] == "SingleSideEtch"):
+            curr_params = SingleSideEtch(env).params
+        elif (batchlocation[0] == "TubePECVD"):
+            curr_params = TubePECVD(env).params
+        elif (batchlocation[0] == "PrintLine"):
+            curr_params = PrintLine(env).params            
+        elif (batchlocation[0] == "WaferBin"):
+            curr_params = WaferBin(env).params
+        else:
+            return                         
+        
+        # update default settings list with currently stored settings
+        curr_params.update(batchlocation[1])
+        
         self.setWindowTitle(self.tr("Available settings"))
         vbox = QtGui.QVBoxLayout()
 
@@ -119,7 +169,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         for i in self.booleans:
             new_params[str(i.objectName())] = i.isChecked()
         
-        self.parent.batchlocations[self.parent.modified_batchlocation_number][1].update(new_params)
+        self.parent.batchlocations[self.modified_batchlocation_number][1].update(new_params)
         self.parent.load_definition_batchlocations(False)
 
         if self.row: # expand row again after reloading definitions
