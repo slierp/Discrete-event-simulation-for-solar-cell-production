@@ -72,11 +72,20 @@ class AddBatchlocationDialog(QtGui.QDialog):
         self.parent.batchlocations.insert(self.selected_batchlocation_number,
                                           [self.batchlocation_types_combo.currentText(), {'name' : 'new'}])
             
-        
+        self.reset_operators()
         self.parent.reindex_locationgroups()
         self.parent.load_definition_batchlocations(False)
+        self.parent.load_definition_operators(False)
+        
         index = self.parent.batchlocations_model.index(self.row, 0)
         self.parent.batchlocations_view.setExpanded(index, True)
         
         self.parent.statusBar().showMessage(self.tr("Batch location added"))
         self.accept()
+        
+    def reset_operators(self):    
+        for i, value0 in enumerate(self.parent.operators):
+            dict_copy = self.parent.operators[i][1]
+            del self.parent.operators[i]                        
+            self.parent.operators.insert(i,[[],dict_copy])
+            self.parent.operators[i][0].append(0)        

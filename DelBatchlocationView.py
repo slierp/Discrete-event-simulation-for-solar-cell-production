@@ -25,15 +25,18 @@ class DelBatchlocationView(QtCore.QObject):
             # if parent item, remove all batchlocation children and row in locationgroups
         
             row = self.parent.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups            
-            del self.parent.batchlocations[self.parent.locationgroups[row][0]:self.parent.locationgroups[row][len(self.parent.locationgroups[row])-1]+1]
+            start = self.parent.locationgroups[row][0]
+            finish = self.parent.locationgroups[row][len(self.parent.locationgroups[row])-1]+1
+                
+            del self.parent.batchlocations[start:finish]
             del self.parent.locationgroups[row]            
 
         else: # if child item
-            row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row() # selected row in locationgroups
+            row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row() # selected row in locationgroups           
             
             if (len(self.parent.locationgroups[row]) == 1):
                 # if last child item, remove batchlocation and whole row in locationgroups
-                del self.parent.batchlocations[self.parent.locationgroups[row][0]:self.parent.locationgroups[row][len(self.parent.locationgroups[row])-1]+1]
+                del self.parent.batchlocations[self.parent.locationgroups[row][0]]
                 del self.parent.locationgroups[row]
             else:
                 # if not last child item, remove batchlocation and element in locationgroup row
@@ -42,11 +45,24 @@ class DelBatchlocationView(QtCore.QObject):
                 del self.parent.locationgroups[row][index]
                 child_item = True
       
+        self.reset_operators()      
         self.parent.reindex_locationgroups()
         self.parent.load_definition_batchlocations(False)
+        self.parent.exec_locationgroups() # generate new connections list
+        self.parent.load_definition_operators(False)
         
         if child_item:
             index = self.parent.batchlocations_model.index(row, 0)
             self.parent.batchlocations_view.setExpanded(index, True)        
         
         self.parent.statusBar().showMessage(self.tr("Batch location(s) removed"))
+        
+    def reset_operators(self):
+        if (len(self.parent.batchlocations) == 0):
+            self.parent.operators = []
+    
+        for i, value0 in enumerate(self.parent.operators):
+            dict_copy = self.parent.operators[i][1]
+            del self.parent.operators[i]                        
+            self.parent.operators.insert(i,[[],dict_copy])
+            self.parent.operators[i][0].append(0)

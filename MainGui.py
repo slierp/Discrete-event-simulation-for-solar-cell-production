@@ -137,8 +137,8 @@ class MainGui(QtGui.QMainWindow):
 
         if (default): # generate default locationgroup arrangement by batchlocation contents        
             self.exec_batchlocations()
+            self.exec_locationgroups()
             
-        self.exec_locationgroups() # make sure batchconnections are updated every time locationgroups changes
         self.batchlocations_model.clear()
         self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])           
 
