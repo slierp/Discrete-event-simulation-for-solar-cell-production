@@ -64,7 +64,7 @@ class AddBatchlocationDialog(QtGui.QDialog):
             self.row = len(self.parent.locationgroups)-1
         elif (self.index == None): # if parent item was selected      
             self.selected_batchlocation_number = self.parent.locationgroups[self.row][0]
-            self.parent.locationgroups.insert(self.row,[0])
+            self.parent.locationgroups.insert(self.row,[0])        
         else: # if child item was selected       
             self.selected_batchlocation_number = self.parent.locationgroups[self.row][self.index]
             self.parent.locationgroups[self.row].insert(self.index,0)
@@ -72,10 +72,10 @@ class AddBatchlocationDialog(QtGui.QDialog):
         self.parent.batchlocations.insert(self.selected_batchlocation_number,
                                           [self.batchlocation_types_combo.currentText(), {'name' : 'new'}])
             
-        self.reset_operators()
         self.parent.reindex_locationgroups()
         self.parent.load_definition_batchlocations(False)
-        self.parent.load_definition_operators(False)
+        self.parent.exec_locationgroups() # generate new connections list        
+        self.reset_operators(self.row)
         
         index = self.parent.batchlocations_model.index(self.row, 0)
         self.parent.batchlocations_view.setExpanded(index, True)
@@ -83,9 +83,23 @@ class AddBatchlocationDialog(QtGui.QDialog):
         self.parent.statusBar().showMessage(self.tr("Batch location added"))
         self.accept()
         
-    def reset_operators(self):    
+    def reset_operators(self, row):
+        if (len(self.parent.batchlocations) == 0):
+            return
+
+        reset_list = []
         for i, value0 in enumerate(self.parent.operators):
+            for j, value1 in enumerate(self.parent.operators[i][0]):
+                if (self.parent.operators[i][0][j] < (len(self.parent.batchconnections)-1)):
+                    num = self.parent.batchconnections[self.parent.operators[i][0][j]]
+                    
+                    if (num[0][0] >= row) | (num[1][0] >= row):
+                        reset_list.append(i)
+            
+        for i in reset_list:
             dict_copy = self.parent.operators[i][1]
             del self.parent.operators[i]                        
             self.parent.operators.insert(i,[[],dict_copy])
-            self.parent.operators[i][0].append(0)        
+            self.parent.operators[i][0].append(0)
+            
+        self.parent.load_definition_operators(False)    

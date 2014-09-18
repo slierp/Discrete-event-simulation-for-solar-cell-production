@@ -15,8 +15,8 @@ class RunSimulation(QtCore.QObject):
         
         self.parent = _parent
         
-        if (len(self.parent.batchlocations) == 0) | (len(self.parent.locationgroups) == 0):
-            self.parent.statusBar().showMessage(self.tr("No batch locations found"))
+        if (len(self.parent.batchlocations) < 2) | (len(self.parent.locationgroups) < 2):
+            self.parent.statusBar().showMessage(self.tr("Not enough batch locations found"))
             return
         
         for i, value in enumerate(self.parent.batchconnections):

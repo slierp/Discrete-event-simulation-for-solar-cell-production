@@ -8,6 +8,7 @@ Created on Fri Sep 12 18:00:48 2014
 from __future__ import division
 from PyQt4 import QtCore
 from BatchlocationSettingsDialog import BatchlocationSettingsDialog
+from LocationgroupSettingsDialog import LocationgroupSettingsDialog
 
 class EditBatchlocationView(QtCore.QObject):
     def __init__(self, _parent):
@@ -19,13 +20,23 @@ class EditBatchlocationView(QtCore.QObject):
             # if nothing selected
             self.parent.statusBar().showMessage(self.tr("Please select position"))
             return
-        elif (self.parent.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
+        
+        if (self.parent.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
-            # TO BE IMPLEMENTED: change all children, provided that they are of the same class
-            self.parent.statusBar().showMessage("Not yet implemented")            
-            return
-
-        # start dialog to enable user to change settings
-        batchlocation_dialog = BatchlocationSettingsDialog(self.parent)
-        batchlocation_dialog.setModal(True)
-        batchlocation_dialog.show()                 
+            row = self.parent.batchlocations_view.selectedIndexes()[0].row()         
+            
+            # check if all the child elements are of the same class
+            reference = self.parent.batchlocations[self.parent.locationgroups[row][0]][0]
+            for i, value in enumerate(self.parent.locationgroups[row]):
+                to_be_tested = self.parent.batchlocations[self.parent.locationgroups[row][i]][0]        
+                if not (reference == to_be_tested):
+                    self.parent.statusBar().showMessage(self.tr("Not all batch locations in this group are of the same kind"))
+                    return
+                    
+            locationgroup_dialog = LocationgroupSettingsDialog(self.parent)
+            locationgroup_dialog.setModal(True)
+            locationgroup_dialog.show()             
+        else:            
+            batchlocation_dialog = BatchlocationSettingsDialog(self.parent)
+            batchlocation_dialog.setModal(True)
+            batchlocation_dialog.show()                                    

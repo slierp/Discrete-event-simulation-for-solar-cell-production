@@ -27,7 +27,7 @@ class dummy_env(object):
     def event(dummy0=None):
         pass
 
-class BatchlocationSettingsDialog(QtGui.QDialog):
+class LocationgroupSettingsDialog(QtGui.QDialog):
     def __init__(self, _parent):
         super(QtGui.QDialog, self).__init__(_parent)
         # create dialog screen for each parameter in curr_params
@@ -35,10 +35,8 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         self.parent = _parent
 
         # find out which batchlocation was selected
-        self.row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row()
-        index = self.parent.batchlocations_view.selectedIndexes()[0].row()
-        self.modified_batchlocation_number = self.parent.locationgroups[self.row][index]       
-        batchlocation = self.parent.batchlocations[self.modified_batchlocation_number]
+        self.row = self.parent.batchlocations_view.selectedIndexes()[0].row()      
+        batchlocation = self.parent.batchlocations[self.parent.locationgroups[self.row][0]]
 
         env = dummy_env()
         curr_params = {}
@@ -78,7 +76,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         
         self.strings = []
         for i in curr_params:
-            if ("_desc" in i) | ('specification' in i):
+            if ("_desc" in i) | ('specification' in i) | ('name' in i):
                 continue
             elif isinstance(curr_params[i], str):
                 hbox = QtGui.QHBoxLayout()
@@ -169,12 +167,14 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         for i in self.booleans:
             new_params[str(i.objectName())] = i.isChecked()
         
-        self.parent.batchlocations[self.modified_batchlocation_number][1].update(new_params)
+        for i in self.parent.locationgroups[self.row]:
+            self.parent.batchlocations[i][1].update(new_params)
+        
         self.parent.load_definition_batchlocations(False)
 
         if self.row: # expand row again after reloading definitions
             index = self.parent.batchlocations_model.index(self.row, 0)
             self.parent.batchlocations_view.setExpanded(index, True)
         
-        self.parent.statusBar().showMessage(self.tr("Batch location settings updated"))
+        self.parent.statusBar().showMessage(self.tr("Location group settings updated"))
         self.accept()

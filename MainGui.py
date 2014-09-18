@@ -203,6 +203,9 @@ class MainGui(QtGui.QMainWindow):
             self.statusBar().showMessage(self.tr("All batch locations were removed"))
 
     def print_batchlocation(self, num):
+        if (num >= len(self.batchlocations)):
+            return "Error"
+            
         return self.batchlocations[num][0] + " " + self.batchlocations[num][1]['name']
 
     def exec_batchlocations(self):
@@ -243,6 +246,9 @@ class MainGui(QtGui.QMainWindow):
         self.statusBar().showMessage(self.tr("Batch locations imported"))
 
     def print_batchconnection(self, num):
+        if (num >= len(self.batchconnections)):
+            return "Error"
+            
         value1 = self.locationgroups[self.batchconnections[num][0][0]][self.batchconnections[num][0][1]]
         value2 = self.locationgroups[self.batchconnections[num][1][0]][self.batchconnections[num][1][1]]
         self.print_batchlocation
