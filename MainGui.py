@@ -17,7 +17,7 @@ from DelOperatorView import DelOperatorView
 from EditOperatorView import EditOperatorView
 from RunSimulation import RunSimulation
 from RunSimulationThread import RunSimulationThread
-import pickle
+import pickle, random
 
 class DeselectableTreeView(QtGui.QTreeView):
     # de-select by right click or by clicking on white space
@@ -33,10 +33,10 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell manufacturing simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
-
-        self.edit = QtGui.QTextEdit()
-        self.edit.setReadOnly(True)               
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
+        
+        self.edit = QtGui.QTextBrowser()
+        self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
 
         self.simulation_thread = RunSimulationThread(self.edit)
         self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
@@ -305,7 +305,9 @@ class MainGui(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot(str)
     def simulation_output(self,string):
+        self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
         self.edit.insertPlainText(string + '\n')
+        #self.edit.insertHtml(QtCore.QString(string))
 
     @QtCore.pyqtSlot(str)
     def simulation_end_signal(self):
@@ -460,8 +462,47 @@ class MainGui(QtGui.QMainWindow):
         toolbar_hbox.addWidget(top_buttonbox)
         toolbar_hbox.addWidget(self.sim_time_combo)        
         
-        textbox_hbox = QtGui.QHBoxLayout()
-        textbox_hbox.addWidget(self.edit)
+        #textbox_hbox = QtGui.QHBoxLayout()
+        #textbox_hbox.addWidget(self.edit)
+        bottom_tabwidget = QtGui.QTabWidget()
+        bottom_tabwidget.addTab(self.edit, QtCore.QString("Log"))
+
+        ############ TESTING ###################
+        random.seed(42)
+        idle_times = []
+        item0 = ["TubeFurnace","0",["furnace0",random.randint(1, 100)],["furnace1",random.randint(1, 100)],["furnace2",random.randint(1, 100)],["furnace3",random.randint(1, 100)]]
+        item1 = ["TubeFurnace","1",["furnace0",random.randint(1, 100)],["furnace1",random.randint(1, 100)],["furnace2",random.randint(1, 100)],["furnace3",random.randint(1, 100)]]
+        idle_times.append(item0)
+        idle_times.append(item1)
+        
+        table_widget = QtGui.QTableWidget()
+
+        table_widget.setRowCount(len(self.batchlocations))
+        table_widget.setColumnCount(16)
+        table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        table_widget.setHorizontalHeaderLabels(('Tool type','Name'))
+        table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+
+        for i, row in enumerate(idle_times):
+            item0 = QtGui.QTableWidgetItem(idle_times[i][0])
+            item1 = QtGui.QTableWidgetItem(idle_times[i][1])
+            table_widget.setItem(i, 0, item0)
+            table_widget.setItem(i, 1, item1)
+            
+            for j in np.arange(2,len(idle_times[i])):
+                item = QtGui.QTableWidgetItem(idle_times[i][j][0])
+                table_widget.setItem(i, j, item)
+                
+                if (idle_times[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
+                elif (idle_times[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
+                elif (idle_times[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
+                else: color_code = QtGui.QColor(255,100,100)
+                    
+                table_widget.item(i, j).setBackground(color_code)
+                
+        bottom_tabwidget.addTab(table_widget, QtCore.QString("Idle"))
+        table_widget.clear()
         
         ##### Main layout #####
         top_hbox = QtGui.QHBoxLayout()
@@ -472,7 +513,8 @@ class MainGui(QtGui.QMainWindow):
         vbox = QtGui.QVBoxLayout()       
         vbox.addLayout(toolbar_hbox)
         vbox.addLayout(top_hbox)
-        vbox.addLayout(textbox_hbox)
+        #vbox.addLayout(textbox_hbox)
+        vbox.addWidget(bottom_tabwidget)
                                                          
         self.main_frame.setLayout(vbox)
 

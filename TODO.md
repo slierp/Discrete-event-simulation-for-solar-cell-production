@@ -1,6 +1,8 @@
 TODO
 ====
 
+- Implement idle time presentation dialog / change batch locations accordingly
+- Start counting idle time on receiving first batch of wafers
 - Add button that starts simulation of selected tool at maximum throughput
 - Implement down-time schedules
 - Implement cassette transfer machines
