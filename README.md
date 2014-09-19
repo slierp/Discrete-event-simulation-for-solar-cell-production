@@ -15,7 +15,7 @@ Please see the TODO document for a list of future additions.
 
 <b>Example applications</b>
 - To calculate the cost-of-ownership of a particular solar cell technology, the amount of cells that are produced with the selected tool setup in a given time period are paramount. One can make estimates using the process that has the lowest effective throughput, but reality is more complicated because different tools have different down-time behaviour, such as in their maintenance schedules. Discrete event simulation can in principle take all those things into account.
-- Espeically in the research phase of any new solar cell technology it is often the question whether the cost of an added step outways the efficiency benefits. To make a better estimate of the cost of an added step it is interesting to simulate a production line with and without the added step.
+- Especially in the research phase of any new solar cell technology it is often the question whether the cost of an added step outways the efficiency benefits. To make a better estimate of the cost of an added step it is interesting to simulate a production line with and without the added step.
 - When running a production line it can be of interest to fine-tune a model that exactly represents the line itself, so one can run a lot of 'what-if' scenarios, such as unscheduled down-time for certain tools.
 
 <b>Install</b>
