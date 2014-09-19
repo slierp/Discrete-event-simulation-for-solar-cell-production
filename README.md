@@ -1,7 +1,7 @@
 Discrete-event-simulation-for-solar-cell-production
 ===================================================
 
-The goal of this Python program is to be a platform for simulating and analyzing the logistics of (silicon) solar cell production lines. It is based on the Simpy package that performs discrete event simulation. With this technique, the program can in principle simulate every movement of wafers within production tools and between tools, buffers and operators.
+The goal of this Python program is to be a platform for simulating and analyzing the logistics of (silicon) solar cell production lines. It is based on the Simpy package that performs discrete event simulation. With this technique, the program can in principle simulate every wafer movement within production tools and between tools, buffers and operators.
 
 <b>Features</b>
 - Graphical user interface with which one can define any arbitrary production line
@@ -11,7 +11,7 @@ The goal of this Python program is to be a platform for simulating and analyzing
 - Analysis results include production volume, throughput per hour, idle time for each tool etc.
 - Cross-platform - tested on Windows; should also be compatible with Linux and Mac OS
 
-Please see the TODO document for a list of future additions
+Please see the TODO document for a list of future additions.
 
 <b>Example applications</b>
 - To calculate the cost-of-ownership of a particular solar cell technology, the amount of cells that are produced with the selected tool setup in a given time period are paramount. One can make estimates using the process that has the lowest effective throughput, but reality is more complicated because different tools have different down-time behaviour, such as in their maintenance schedules. Discrete event simulation can in principle take all those things into account.
