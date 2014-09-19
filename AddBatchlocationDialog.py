@@ -15,23 +15,30 @@ class AddBatchlocationDialog(QtGui.QDialog):
         
         self.parent = parent
         self.append_mode = False
+        parent_type = None
+        self.child_item = False
         
         if (not len(self.parent.batchlocations_view.selectedIndexes())):
             # if nothing selected
-            self.append_mode = True
+            self.append_mode = True            
         elif (self.parent.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
             self.row = self.parent.batchlocations_view.selectedIndexes()[0].row()
             self.index = None
+            parent_type = self.parent.batchlocations[self.parent.locationgroups[self.row][0]][0]
         else:
             self.row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row()
             self.index = self.parent.batchlocations_view.selectedIndexes()[0].row()
+            parent_type = self.parent.batchlocations[self.parent.locationgroups[self.row][self.index]][0]
+            self.child_item = True
                 
         self.setWindowTitle(self.tr("Add batch location"))
-        vbox = QtGui.QVBoxLayout()
 
-        title_label = QtGui.QLabel(self.tr("Available types:"))
-        vbox.addWidget(title_label)
+        vbox = QtGui.QVBoxLayout()
+        hbox0 = QtGui.QHBoxLayout()
+
+        label = QtGui.QLabel(self.tr("Select type:"))
+        hbox0.addWidget(label)
 
         batchlocation_types = []
         batchlocation_types.append("WaferSource")
@@ -47,11 +54,39 @@ class AddBatchlocationDialog(QtGui.QDialog):
         for i in batchlocation_types:
             self.batchlocation_types_combo.addItem(i)
 
-        vbox.addWidget(self.batchlocation_types_combo)
+        if (parent_type):
+            for i, value in enumerate(batchlocation_types):
+                if (parent_type == value):
+                    self.batchlocation_types_combo.setCurrentIndex(i)
+                    continue
+
+        hbox0.addWidget(self.batchlocation_types_combo)
+        vbox.addLayout(hbox0)
+
+        hbox1 = QtGui.QHBoxLayout()
+        
+        label = QtGui.QLabel(self.tr("name"))
+        hbox1.addWidget(label)
+
+        self.name_edit = QtGui.QLineEdit("new")
+        hbox1.addWidget(self.name_edit)        
+
+        if (self.child_item):
+            hbox2 = QtGui.QHBoxLayout()
+        
+            label = QtGui.QLabel(self.tr("create_copy"))
+            hbox2.addWidget(label)
+
+            self.copy_checkbox = QtGui.QCheckBox()
+            self.copy_checkbox.setChecked(True)
+            hbox2.addWidget(self.copy_checkbox) 
 
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
-        buttonbox.rejected.connect(self.reject)
+        buttonbox.rejected.connect(self.reject)        
+        
+        vbox.addLayout(hbox1)
+        if (self.child_item): vbox.addLayout(hbox2)
         vbox.addWidget(buttonbox)
 
         self.setLayout(vbox)
@@ -67,23 +102,40 @@ class AddBatchlocationDialog(QtGui.QDialog):
             self.parent.locationgroups.insert(self.row,[0])        
         else: # if child item was selected       
             self.selected_batchlocation_number = self.parent.locationgroups[self.row][self.index]
-            self.parent.locationgroups[self.row].insert(self.index,0)
-        
+            self.parent.locationgroups[self.row].insert(self.index,0)        
+
+        new_dict = {}
+        if (self.child_item): # copy previously selected batchlocation
+            if (self.copy_checkbox.isChecked()): # if user selected this option
+                new_dict.update(self.parent.batchlocations[self.parent.locationgroups[self.row][self.index+1]][1])
+
+        # insert new batch location with selected name
+        input_string = str(self.name_edit.text()) 
+        new_dict.update({'name' : input_string})
         self.parent.batchlocations.insert(self.selected_batchlocation_number,
-                                          [self.batchlocation_types_combo.currentText(), {'name' : 'new'}])
-            
+                                          [self.batchlocation_types_combo.currentText(), new_dict])
+        
+        # do a bit of housekeeping, now that batchlocations has changed
         self.parent.reindex_locationgroups()
         self.parent.load_definition_batchlocations(False)
         self.parent.exec_locationgroups() # generate new connections list        
         self.reset_operators(self.row)
-        
+
+        # re-expand parent item in view       
         index = self.parent.batchlocations_model.index(self.row, 0)
         self.parent.batchlocations_view.setExpanded(index, True)
+        
+        if (self.child_item): # select newly created item in view
+            parent = self.parent.batchlocations_model.index(self.row, 0)
+            index = self.parent.batchlocations_model.index(self.index, 0, parent)
+            self.parent.batchlocations_view.setCurrentIndex(index)
         
         self.parent.statusBar().showMessage(self.tr("Batch location added"))
         self.accept()
         
     def reset_operators(self, row):
+        # reset connection list of operators whose connections have become invalid
+    
         if (len(self.parent.batchlocations) == 0):
             return
 

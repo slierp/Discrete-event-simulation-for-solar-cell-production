@@ -47,6 +47,7 @@ class DelBatchlocationView(QtCore.QObject):
                 del self.parent.locationgroups[row][index]
                 child_item = True
           
+        # do a bit of housekeeping now that batchlocations has changed
         self.parent.reindex_locationgroups()
         self.parent.load_definition_batchlocations(False)
         self.parent.exec_locationgroups() # generate new connections list        
@@ -58,6 +59,8 @@ class DelBatchlocationView(QtCore.QObject):
         self.parent.statusBar().showMessage(self.tr("Batch location(s) removed"))
         
     def reset_operators(self, row):
+        # reset connection list of operators whose connections have become invalid
+    
         if (len(self.parent.batchlocations) == 0):
             return
 

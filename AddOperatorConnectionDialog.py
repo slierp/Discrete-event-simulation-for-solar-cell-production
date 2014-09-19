@@ -47,7 +47,7 @@ class AddOperatorConnectionDialog(QtGui.QDialog):
         
         # re-expand the operator parent item
         index = self.parent.operators_model.index(self.row, 0)
-        self.parent.operators_view.setExpanded(index, True) 
+        self.parent.operators_view.setExpanded(index, True)              
             
         self.parent.statusBar().showMessage("Operator connection added") 
         

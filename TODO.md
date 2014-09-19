@@ -1,6 +1,7 @@
 TODO
 ====
 
+- Add button that starts simulation of selected tool at maximum throughput
 - Implement down-time schedules
 - Implement cassette transfer machines
 - Implement buffers and operator behaviour around buffers

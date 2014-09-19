@@ -33,7 +33,7 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell manufacturing simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
+        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
 
         self.edit = QtGui.QTextEdit()
         self.edit.setReadOnly(True)               
