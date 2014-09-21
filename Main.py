@@ -21,7 +21,7 @@ if __name__ == "__main__":
     
     if len(sys.argv) > 1:
         if "--help" in sys.argv or "-h" in sys.argv:
-            print "Solar cell manufacturing simulation"
+            print "Solar cell production simulation"
             print "Options:"
             print "--h, --help  : Help message"
             exit()

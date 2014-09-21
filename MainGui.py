@@ -31,7 +31,7 @@ class DeselectableTreeView(QtGui.QTreeView):
 class MainGui(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MainGui, self).__init__(parent)
-        self.setWindowTitle(self.tr("Solar cell manufacturing simulation"))
+        self.setWindowTitle(self.tr("Solar cell production simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
         
@@ -316,7 +316,7 @@ class MainGui(QtGui.QMainWindow):
         self.statusBar().showMessage(self.tr("Simulation has ended"))
 
     def on_about(self):
-        msg = self.tr("Solar cell manufacturing simulation\n\n- Author: Ronald Naber (rnaber@tempress.nl)\n- License: Public domain")
+        msg = self.tr("Solar cell production simulation\n\n- Author: Ronald Naber (rnaber@tempress.nl)\n- License: Public domain")
         QtGui.QMessageBox.about(self, self.tr("About the application"), msg)
     
     def create_main_frame(self):
@@ -470,17 +470,21 @@ class MainGui(QtGui.QMainWindow):
         ############ TESTING ###################
         random.seed(42)
         idle_times = []
-        item0 = ["TubeFurnace","0",["furnace0",random.randint(1, 100)],["furnace1",random.randint(1, 100)],["furnace2",random.randint(1, 100)],["furnace3",random.randint(1, 100)]]
-        item1 = ["TubeFurnace","1",["furnace0",random.randint(1, 100)],["furnace1",random.randint(1, 100)],["furnace2",random.randint(1, 100)],["furnace3",random.randint(1, 100)]]
+        item0 = ["TubeFurnace","0",["tube0",random.randint(1, 100)],["tube1",random.randint(1, 100)],["tube2",random.randint(1, 100)],["tube3",random.randint(1, 100)]]
+        item1 = ["TubeFurnace","1",["tube0",random.randint(1, 100)],["tube1",random.randint(1, 100)],["tube2",random.randint(1, 100)],["tube3",random.randint(1, 100)]]
         idle_times.append(item0)
         idle_times.append(item1)
         
         table_widget = QtGui.QTableWidget()
 
-        table_widget.setRowCount(len(self.batchlocations))
+        table_widget.setRowCount(64)
         table_widget.setColumnCount(16)
         table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        table_widget.setHorizontalHeaderLabels(('Tool type','Name'))
+        
+        headerlabels = ['Tool type','Name']
+        for i in np.arange(2,16):
+            headerlabels.append("Process " + str(i-2))
+        table_widget.setHorizontalHeaderLabels(headerlabels)
         table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
         table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
@@ -491,7 +495,7 @@ class MainGui(QtGui.QMainWindow):
             table_widget.setItem(i, 1, item1)
             
             for j in np.arange(2,len(idle_times[i])):
-                item = QtGui.QTableWidgetItem(idle_times[i][j][0])
+                item = QtGui.QTableWidgetItem(str(idle_times[i][j][1]) + "%")
                 table_widget.setItem(i, j, item)
                 
                 if (idle_times[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
