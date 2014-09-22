@@ -470,8 +470,8 @@ class MainGui(QtGui.QMainWindow):
         ############ TESTING ###################
         random.seed(42)
         idle_times = []
-        item0 = ["TubeFurnace","0",["tube0",random.randint(1, 100)],["tube1",random.randint(1, 100)],["tube2",random.randint(1, 100)],["tube3",random.randint(1, 100)]]
-        item1 = ["TubeFurnace","1",["tube0",random.randint(1, 100)],["tube1",random.randint(1, 100)],["tube2",random.randint(1, 100)],["tube3",random.randint(1, 100)]]
+        item0 = ["TubeFurnace","0",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
+        item1 = ["TubeFurnace","1",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
         idle_times.append(item0)
         idle_times.append(item1)
         
@@ -495,7 +495,7 @@ class MainGui(QtGui.QMainWindow):
             table_widget.setItem(i, 1, item1)
             
             for j in np.arange(2,len(idle_times[i])):
-                item = QtGui.QTableWidgetItem(str(idle_times[i][j][1]) + "%")
+                item = QtGui.QTableWidgetItem(str(idle_times[i][j][0]) + "-" + str(idle_times[i][j][1]) + "%")
                 table_widget.setItem(i, j, item)
                 
                 if (idle_times[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
