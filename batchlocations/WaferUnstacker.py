@@ -18,6 +18,8 @@ class WaferUnstacker(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
+        self.next_step = self.env.event()        
         
         self.params = {}
         self.params['specification'] = self.tr("WaferUnstacker accepts a number of stacks of wafers. A pick and place machine puts wafers one by one on a belt. The belt loads them into cassettes.")
@@ -43,9 +45,7 @@ class WaferUnstacker(QtCore.QObject):
         self.params['time_pick_and_place_desc'] = self.tr("Time for putting a single unit on the belt (seconds)")
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
-        self.params.update(_params)
-        
-        self.next_step = self.env.event()
+        self.params.update(_params)    
         
         if (self.params['verbose']):
             string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"

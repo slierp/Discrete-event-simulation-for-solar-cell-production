@@ -15,6 +15,7 @@ class WaferSource(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
 
         self.params = {}
         self.params['specification'] = self.tr("WaferSource is an imaginary machine that sources stacks of wafers.")
@@ -31,7 +32,7 @@ class WaferSource(QtCore.QObject):
         self.params.update(_params)
         
         self.batch_size = self.params['batch_size']
-        self.process_counter = 0
+        self.process_counter = 0        
        
         if (self.params['verbose']):
             string = str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"

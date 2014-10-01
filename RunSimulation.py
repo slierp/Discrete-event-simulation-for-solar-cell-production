@@ -58,7 +58,7 @@ class RunSimulation(QtCore.QObject):
             
             self.parent.simulation_thread.stop_simulation = False
             self.parent.simulation_thread.start()
-            #self.simulation_thread.run() # interchange for start when not running simulation in separate thread
+            #self.parent.simulation_thread.run() # interchange for start when not running simulation in separate thread
             self.parent.run_sim_button.setEnabled(False)
             self.parent.stop_sim_button.setEnabled(True)
             

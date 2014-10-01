@@ -22,6 +22,7 @@ class PrintLine(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
         
         self.params = {}
         self.params['specification'] = self.tr("PrintLine consists of:\n")
@@ -71,9 +72,9 @@ class PrintLine(QtCore.QObject):
         self.output = InfiniteContainer(self.env,"output")
 
         self.start_time = self.env.now
-        self.idle_times = {}
-        for i in np.arange(self.params['no_print_steps']+1): # plus one for the firing furnace
-            self.idle_times[i] = 0
+        #self.idle_times = {}
+        #for i in np.arange(self.params['no_print_steps']+1): # plus one for the firing furnace
+        #    self.idle_times[i] = 0
 
         self.next_step = {} # trigger events
         self.belts = {} # belts preceeding printers
@@ -93,11 +94,11 @@ class PrintLine(QtCore.QObject):
         string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
         self.output_text.sig.emit(string)
         
-        if (self.params['verbose']):
-            for i in self.idle_times:
-                idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
-                string = "[PrintLine][" + self.params['name'] + "][part" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
-                self.output_text.sig.emit(string)
+        #if (self.params['verbose']):
+        #    for i in self.idle_times:
+        #        idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
+        #        string = "[PrintLine][" + self.params['name'] + "][part" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
+        #        self.output_text.sig.emit(string)
 
     def run_belt(self, num):        
         while True:
@@ -139,7 +140,7 @@ class PrintLine(QtCore.QObject):
             else:
                 # if not printing, delay for time needed to load one wafer
                 yield self.env.timeout(self.params['time_step'])
-                self.idle_times[num] += self.params['time_step']
+                #self.idle_times[num] += self.params['time_step']
 
     def run_wafer_instance_drying(self, num):        
         yield self.env.timeout(self.params['time_dry'])
@@ -163,7 +164,7 @@ class PrintLine(QtCore.QObject):
                 yield self.env.timeout(60*self.params['firing_unit_distance']/self.params['firing_belt_speed']) # same lane cannot accept new unit until after x seconds
             else:
                 yield self.env.timeout(1) # check every second for new wafers
-                self.idle_times[len(self.idle_times)-1] += 1
+                #self.idle_times[len(self.idle_times)-1] += 1
             
     def run_wafer_instance_firing(self):
         yield self.env.timeout(60*self.params['firing_tool_length']/self.params['firing_belt_speed'])        

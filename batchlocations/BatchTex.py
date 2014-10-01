@@ -19,6 +19,7 @@ class BatchTex(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
         
         self.params = {}
         self.params['specification'] = self.tr("BatchTex consists of:\n")

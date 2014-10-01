@@ -17,24 +17,29 @@ from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
 from batchlocations.PrintLine import PrintLine
 #import simpyx as simpy
-import simpy
+import simpy, random
 import numpy as np
 from PyQt4 import QtCore
 #from PyQt4 import QtGui # only needed when not running simulation in separate thread
 
-class SimulationSignal(QtCore.QObject):
-        sig = QtCore.pyqtSignal(str)
+class StringSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal(str)
+
+class ListSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal(list)
 
 class RunSimulationThread(QtCore.QThread):
 #class RunSimulationThread(QtGui.QMainWindow): # interchange for QThread when not running simulation in separate thread
 
-    def __init__(self, edit, parent = None):
-        QtCore.QThread.__init__(self, parent)
-        #super(QtGui.QMainWindow, self).__init__(parent) # interchange for QThread when not running simulation in separate thread
-        self.stop_simulation = False
-        self.edit = edit
-        self.signal = SimulationSignal()        
-        self.output = SimulationSignal()
+    def __init__(self, _parent, _edit):
+        QtCore.QThread.__init__(self, _parent)
+        #super(QtGui.QMainWindow, self).__init__(_parent) # interchange for QThread when not running simulation in separate thread
+        self.parent = _parent
+        self.edit = _edit
+        self.stop_simulation = False        
+        self.signal = StringSignal()        
+        self.output = StringSignal()
+        self.idle = ListSignal()
 
     def make_unique(self,nonunique):
         unique = []
@@ -52,6 +57,7 @@ class RunSimulationThread(QtCore.QThread):
         #self.env = simpy.rt.RealtimeEnvironment(factor=0.1)
         #self.env = simpy.rt.RealtimeEnvironment(factor=1)
    
+        ### Replace string elements in production line definition for real class instances ###
         for i, value in enumerate(self.batchlocations):
             # replace class names for real class instances in the same list
             if (self.batchlocations[i][0] == "WaferSource"):
@@ -91,6 +97,7 @@ class RunSimulationThread(QtCore.QThread):
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
 
+        ### Calculate time steps needed ###
         no_hourly_updates = self.params['time_limit'] // (60*60)
         hourly_updates = []
         for i in np.arange(0,no_hourly_updates):
@@ -108,6 +115,7 @@ class RunSimulationThread(QtCore.QThread):
 
         self.output.sig.emit("0% progress: 0 hours / 0 produced")
 
+        ### Run simulation ###
         prev_production_volume_update = 0
         prev_percentage_time = self.env.now
         for i in updates_list:
@@ -138,12 +146,22 @@ class RunSimulationThread(QtCore.QThread):
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update                
 
+        ### Generate summary output in log tab ###
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 
         for i, value in enumerate(self.operators):
             self.operators[i].report()
 
+        ### Generate idle time output for special tab ###
+        idle_times = []
+        for i, value in enumerate(self.batchlocations):
+            if len(self.batchlocations[i].idle_times):
+                for j, value2 in enumerate(self.batchlocations[i].idle_times):
+                    idle_times.append(self.batchlocations[i].idle_times[j])
+        self.idle.sig.emit(idle_times)
+
+        ### Calculate sum of all produced cells ###
         prod_vol = 0
         l_loc = len(self.locationgroups)
         for i in np.arange(len(self.locationgroups[l_loc-1])):

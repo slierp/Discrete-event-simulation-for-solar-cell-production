@@ -17,6 +17,7 @@ class WaferBin(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
         
         self.params = {}
         self.params['specification'] = self.tr("WaferBin is an imaginary machine that accepts cassettes and places them in an infinitely sized container.")

@@ -9,15 +9,15 @@ from __future__ import division
 import numpy as np
 from PyQt4 import QtCore, QtGui
 import os, ntpath
-from AddBatchlocationView import AddBatchlocationView
-from DelBatchlocationView import DelBatchlocationView
-from EditBatchlocationView import EditBatchlocationView
-from AddOperatorView import AddOperatorView
-from DelOperatorView import DelOperatorView
-from EditOperatorView import EditOperatorView
+from dialogs.AddBatchlocationView import AddBatchlocationView
+from dialogs.DelBatchlocationView import DelBatchlocationView
+from dialogs.EditBatchlocationView import EditBatchlocationView
+from dialogs.AddOperatorView import AddOperatorView
+from dialogs.DelOperatorView import DelOperatorView
+from dialogs.EditOperatorView import EditOperatorView
 from RunSimulation import RunSimulation
 from RunSimulationThread import RunSimulationThread
-import pickle, random
+import pickle
 
 class DeselectableTreeView(QtGui.QTreeView):
     # de-select by right click or by clicking on white space
@@ -37,10 +37,13 @@ class MainGui(QtGui.QMainWindow):
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
+        
+        self.table_widget = QtGui.QTableWidget()        
 
-        self.simulation_thread = RunSimulationThread(self.edit)
+        self.simulation_thread = RunSimulationThread(self,self.edit)
         self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
         self.simulation_thread.output.sig.connect(self.simulation_output)
+        self.simulation_thread.idle.sig.connect(self.idle_times_output)
 
         self.prev_dir_path = ""
         self.prev_save_path = ""
@@ -309,6 +312,34 @@ class MainGui(QtGui.QMainWindow):
         self.edit.insertPlainText(string + '\n')
         #self.edit.insertHtml(QtCore.QString(string))
 
+    @QtCore.pyqtSlot(list)
+    def idle_times_output(self,idle_times):
+        self.table_widget.clear()
+        
+        headerlabels = ['Tool type','Name']
+        for i in np.arange(2,16):
+            headerlabels.append("Process " + str(i-2))
+        self.table_widget.setHorizontalHeaderLabels(headerlabels)
+        self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+
+        for i, row in enumerate(idle_times):
+            item0 = QtGui.QTableWidgetItem(idle_times[i][0])
+            item1 = QtGui.QTableWidgetItem(idle_times[i][1])
+            self.table_widget.setItem(i, 0, item0)
+            self.table_widget.setItem(i, 1, item1)
+            
+            for j in np.arange(2,len(idle_times[i])):
+                item = QtGui.QTableWidgetItem(str(idle_times[i][j][0]) + "-" + str(idle_times[i][j][1]) + "%")
+                self.table_widget.setItem(i, j, item)
+                
+                if (idle_times[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
+                elif (idle_times[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
+                elif (idle_times[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
+                else: color_code = QtGui.QColor(255,100,100)
+                    
+                self.table_widget.item(i, j).setBackground(color_code)
+
     @QtCore.pyqtSlot(str)
     def simulation_end_signal(self):
         self.run_sim_button.setEnabled(True)
@@ -416,7 +447,6 @@ class MainGui(QtGui.QMainWindow):
         vbox1.addWidget(buttonbox1)
 
         ##### Top buttonbox #####
-
         open_file_button = QtGui.QPushButton()
         tip = self.tr("Open file")
         open_file_button.clicked.connect(self.open_file)        
@@ -462,51 +492,22 @@ class MainGui(QtGui.QMainWindow):
         toolbar_hbox.addWidget(top_buttonbox)
         toolbar_hbox.addWidget(self.sim_time_combo)        
         
-        #textbox_hbox = QtGui.QHBoxLayout()
-        #textbox_hbox.addWidget(self.edit)
         bottom_tabwidget = QtGui.QTabWidget()
         bottom_tabwidget.addTab(self.edit, QtCore.QString("Log"))
 
-        ############ TESTING ###################
-        random.seed(42)
-        idle_times = []
-        item0 = ["TubeFurnace","0",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
-        item1 = ["TubeFurnace","1",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
-        idle_times.append(item0)
-        idle_times.append(item1)
-        
-        table_widget = QtGui.QTableWidget()
+        ##### Idle time tab #####       
+        self.table_widget.setRowCount(64)
+        self.table_widget.setColumnCount(16)
+        self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
 
-        table_widget.setRowCount(64)
-        table_widget.setColumnCount(16)
-        table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        
         headerlabels = ['Tool type','Name']
         for i in np.arange(2,16):
             headerlabels.append("Process " + str(i-2))
-        table_widget.setHorizontalHeaderLabels(headerlabels)
-        table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-
-        for i, row in enumerate(idle_times):
-            item0 = QtGui.QTableWidgetItem(idle_times[i][0])
-            item1 = QtGui.QTableWidgetItem(idle_times[i][1])
-            table_widget.setItem(i, 0, item0)
-            table_widget.setItem(i, 1, item1)
-            
-            for j in np.arange(2,len(idle_times[i])):
-                item = QtGui.QTableWidgetItem(str(idle_times[i][j][0]) + "-" + str(idle_times[i][j][1]) + "%")
-                table_widget.setItem(i, j, item)
+        self.table_widget.setHorizontalHeaderLabels(headerlabels)
+        self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
                 
-                if (idle_times[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
-                elif (idle_times[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
-                elif (idle_times[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
-                else: color_code = QtGui.QColor(255,100,100)
-                    
-                table_widget.item(i, j).setBackground(color_code)
-                
-        bottom_tabwidget.addTab(table_widget, QtCore.QString("Idle"))
-        table_widget.clear()
+        bottom_tabwidget.addTab(self.table_widget, QtCore.QString("Idle"))
         
         ##### Main layout #####
         top_hbox = QtGui.QHBoxLayout()

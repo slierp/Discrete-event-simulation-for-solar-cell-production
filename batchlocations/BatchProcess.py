@@ -22,7 +22,8 @@ class BatchProcess(object):
         self.process_finished = 0
         self.start_time = self.env.now
         self.process_time_counter = 0
-        self.start = env.event()        
+        self.start = env.event()
+        self.idle_times = []
 
         self.process_counter = 0            
         self.container = simpy.Container(self.env,capacity=self.batch_size,init=0)

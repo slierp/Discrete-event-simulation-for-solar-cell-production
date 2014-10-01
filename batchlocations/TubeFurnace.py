@@ -18,6 +18,7 @@ class TubeFurnace(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
         
         self.params = {}
         self.params['specification'] = self.tr("TubeFurnace consists of:\n")
@@ -101,6 +102,13 @@ class TubeFurnace(QtCore.QObject):
             for i in self.batchprocesses:
                 string = "[TubeFurnace][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %" 
                 self.output_text.sig.emit(string)
+
+        import random
+        random.seed(42)
+        item0 = ["TubeFurnace","0",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
+        item1 = ["TubeFurnace","1",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
+        self.idle_times.append(item0)
+        self.idle_times.append(item1)                
 
     def run_transport(self):
         

@@ -21,6 +21,7 @@ class SingleSideEtch(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
+        self.idle_times = []
         
         self.params = {}
         self.params['specification'] = self.tr("SingleSideEtch consists of:\n")
@@ -66,20 +67,20 @@ class SingleSideEtch(QtCore.QObject):
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])                  
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
         
-        self.idle_times = {}
-        for i in np.arange(self.params['no_of_lanes']):
-            self.env.process(self.run_one_lane(i))
-            self.idle_times[i] = 0
+        #self.idle_times = {}
+        #for i in np.arange(self.params['no_of_lanes']):
+        #    self.env.process(self.run_one_lane(i))
+        #    self.idle_times[i] = 0
 
     def report(self):
         string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
         self.output_text.sig.emit(string)
         
-        if (self.params['verbose']):
-            for i in self.idle_times:
-                idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
-                string = "[SingleSideEtch][" + self.params['name'] + "][lane" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
-                self.output_text.sig.emit(string)
+        #if (self.params['verbose']):
+        #    for i in self.idle_times:
+        #        idle_time = 100*self.idle_times[i]/(self.env.now-self.start_time)
+        #        string = "[SingleSideEtch][" + self.params['name'] + "][lane" + str(i) + "] Idle time: " + str(np.round(idle_time,1)) + " %"
+        #        self.output_text.sig.emit(string)
 
     def run_one_lane(self, lane_number):       
         while True:
@@ -89,7 +90,7 @@ class SingleSideEtch(QtCore.QObject):
                 yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed']) # same lane cannot accept new unit until after x seconds
             else:                
                 yield self.env.timeout(1)
-                self.idle_times[lane_number] += 1
+                #self.idle_times[lane_number] += 1
                 
     def run_wafer_instance(self, lane_number):
         yield self.env.timeout(60*self.params['tool_length']/self.params['belt_speed'])

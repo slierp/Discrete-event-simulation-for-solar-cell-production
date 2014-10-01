@@ -19,7 +19,7 @@ class BatchTransport(object):
         self.name = name
         self.verbose = verbose
         self.transport_counter = 0
-        self.wait_time = 60 # simulation runs much faster with higher values!!!
+        self.wait_time = 60 # simulation runs much faster with higher values!!!        
         
         if (self.verbose):
             print str(self.env.now) + " - [BatchTransport]" + self.name + " Added simple transporter"
