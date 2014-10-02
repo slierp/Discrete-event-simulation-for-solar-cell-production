@@ -23,6 +23,7 @@ class BatchProcess(object):
         self.start_time = self.env.now
         self.process_time_counter = 0
         self.start = env.event()
+        self.first_run = True
         self.idle_times = []
 
         self.process_counter = 0            
@@ -35,6 +36,11 @@ class BatchProcess(object):
     def run(self):
         while True:
             yield self.start
+            
+            if self.first_run:
+                self.start_time = self.env.now
+                self.first_run = False
+                
             if (self.container.level >= self.batch_size) & (not self.process_finished):
                 with self.resource.request() as request:
                     yield request

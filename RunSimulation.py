@@ -6,8 +6,9 @@ Created on Fri Sep 12 18:00:48 2014
 """
 
 from __future__ import division
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 from copy import deepcopy
+import numpy as np
 
 class RunSimulation(QtCore.QObject):
     def __init__(self, _parent):
@@ -46,14 +47,17 @@ class RunSimulation(QtCore.QObject):
         
         if not self.parent.simulation_thread.isRunning():
         #if True: # interchange for isRunning when not running simulation in separate thread
+        
+            # clear log tab
             self.parent.edit.clear()
+            
+            # send production line definition to simulation thread using deep copy
             self.parent.simulation_thread.batchlocations = deepcopy(self.parent.batchlocations)
             self.parent.simulation_thread.locationgroups = deepcopy(self.parent.locationgroups)
             self.parent.simulation_thread.batchconnections = deepcopy(self.parent.batchconnections)
             self.parent.simulation_thread.operators = deepcopy(self.parent.operators)
 
             self.parent.simulation_thread.params = {}
-            self.parent.simulation_thread.params['time_limit'] = 1000
             self.parent.simulation_thread.params.update(self.parent.params)
             
             self.parent.simulation_thread.stop_simulation = False
@@ -61,5 +65,15 @@ class RunSimulation(QtCore.QObject):
             #self.parent.simulation_thread.run() # interchange for start when not running simulation in separate thread
             self.parent.run_sim_button.setEnabled(False)
             self.parent.stop_sim_button.setEnabled(True)
+
+            # clear idle tab and reset headers
+            self.parent.table_widget.clear()
+        
+            headerlabels = ['Tool type','Name']
+            for i in np.arange(2,35):
+                headerlabels.append("Process " + str(i-2))
+            self.parent.table_widget.setHorizontalHeaderLabels(headerlabels)
+            self.parent.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+            self.parent.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
             
             self.parent.statusBar().showMessage(self.tr("Simulation started"))           

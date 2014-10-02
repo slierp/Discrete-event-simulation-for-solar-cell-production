@@ -81,11 +81,11 @@ class TubeFurnace(QtCore.QObject):
         self.batchprocesses = {}
         self.coolprocesses = {}  
         for i in np.arange(self.params['no_of_processes']):
-            process_name = "furnace" + str(i)
+            process_name = "t" + str(i)
             self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['process_time'],self.params['verbose'])
             
         for i in np.arange(self.params['no_of_cooldowns']):
-            process_name = "cooldown" + str(i)
+            process_name = "c" + str(i)
             self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['cool_time'],self.params['verbose'])
                
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])        
@@ -96,19 +96,14 @@ class TubeFurnace(QtCore.QObject):
 
     def report(self):
         string = "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
-        self.output_text.sig.emit(string)
-        
-        if (self.params['verbose']):
-            for i in self.batchprocesses:
-                string = "[TubeFurnace][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %" 
-                self.output_text.sig.emit(string)
+        self.output_text.sig.emit(string)        
 
-        import random
-        random.seed(42)
-        item0 = ["TubeFurnace","0",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
-        item1 = ["TubeFurnace","1",["t0",random.randint(1, 100)],["t1",random.randint(1, 100)],["t2",random.randint(1, 100)],["t3",random.randint(1, 100)]]
-        self.idle_times.append(item0)
-        self.idle_times.append(item1)                
+        idle_item = []
+        idle_item.append("TubeFurnace")
+        idle_item.append(self.params['name'])
+        for i in self.batchprocesses:
+            idle_item.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
+        self.idle_times.append(idle_item)              
 
     def run_transport(self):
         

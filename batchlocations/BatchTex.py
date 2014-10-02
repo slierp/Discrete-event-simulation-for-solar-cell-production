@@ -64,15 +64,15 @@ class BatchTex(QtCore.QObject):
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])        
 
         self.batchprocesses = {}
-        self.batchprocesses[0] = BatchProcess(self.env,"tex0",self.params['batch_size'],self.params['process_time'])
-        self.batchprocesses[1] = BatchProcess(self.env,"tex1",self.params['batch_size'],self.params['process_time'])
-        self.batchprocesses[2] = BatchProcess(self.env,"tex2",self.params['batch_size'],self.params['process_time'])
-        self.batchprocesses[3] = BatchProcess(self.env,"rinse0",self.params['batch_size'],self.params['rinse_time'])
-        self.batchprocesses[4] = BatchProcess(self.env,"neutr",self.params['batch_size'],self.params['neutr_time'])
-        self.batchprocesses[5] = BatchProcess(self.env,"rinse1",self.params['batch_size'],self.params['rinse_time'])
-        self.batchprocesses[6] = BatchProcess(self.env,"dry0",self.params['batch_size'],self.params['dry_time'])
-        self.batchprocesses[7] = BatchProcess(self.env,"dry1",self.params['batch_size'],self.params['dry_time'])
-        self.batchprocesses[8] = BatchProcess(self.env,"dry2",self.params['batch_size'],self.params['dry_time'])
+        self.batchprocesses[0] = BatchProcess(self.env,"t0",self.params['batch_size'],self.params['process_time'])
+        self.batchprocesses[1] = BatchProcess(self.env,"t1",self.params['batch_size'],self.params['process_time'])
+        self.batchprocesses[2] = BatchProcess(self.env,"t2",self.params['batch_size'],self.params['process_time'])
+        self.batchprocesses[3] = BatchProcess(self.env,"r0",self.params['batch_size'],self.params['rinse_time'])
+        self.batchprocesses[4] = BatchProcess(self.env,"n0",self.params['batch_size'],self.params['neutr_time'])
+        self.batchprocesses[5] = BatchProcess(self.env,"r1",self.params['batch_size'],self.params['rinse_time'])
+        self.batchprocesses[6] = BatchProcess(self.env,"d0",self.params['batch_size'],self.params['dry_time'])
+        self.batchprocesses[7] = BatchProcess(self.env,"d1",self.params['batch_size'],self.params['dry_time'])
+        self.batchprocesses[8] = BatchProcess(self.env,"d2",self.params['batch_size'],self.params['dry_time'])
         
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
@@ -103,9 +103,11 @@ class BatchTex(QtCore.QObject):
 
     def report(self):
         string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
-        self.output_text.sig.emit(string)
-        
-        if (self.params['verbose']):
-            for i in self.batchprocesses:
-                string = "[BatchTex][" + self.params['name'] + "][" + self.batchprocesses[i].name + "] Idle time: " + str(np.round(self.batchprocesses[i].idle_time(),1)) + " %"
-                self.output_text.sig.emit(string)
+        self.output_text.sig.emit(string)        
+
+        idle_item = []
+        idle_item.append("BatchTex")
+        idle_item.append(self.params['name'])
+        for i in self.batchprocesses:
+            idle_item.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
+        self.idle_times.append(idle_item)                 

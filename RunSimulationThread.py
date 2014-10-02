@@ -17,7 +17,7 @@ from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
 from batchlocations.PrintLine import PrintLine
 #import simpyx as simpy
-import simpy, random
+import simpy
 import numpy as np
 from PyQt4 import QtCore
 #from PyQt4 import QtGui # only needed when not running simulation in separate thread

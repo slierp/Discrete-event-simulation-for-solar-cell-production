@@ -314,14 +314,6 @@ class MainGui(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot(list)
     def idle_times_output(self,idle_times):
-        self.table_widget.clear()
-        
-        headerlabels = ['Tool type','Name']
-        for i in np.arange(2,16):
-            headerlabels.append("Process " + str(i-2))
-        self.table_widget.setHorizontalHeaderLabels(headerlabels)
-        self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
         for i, row in enumerate(idle_times):
             item0 = QtGui.QTableWidgetItem(idle_times[i][0])
@@ -497,11 +489,11 @@ class MainGui(QtGui.QMainWindow):
 
         ##### Idle time tab #####       
         self.table_widget.setRowCount(64)
-        self.table_widget.setColumnCount(16)
+        self.table_widget.setColumnCount(35)
         self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
 
         headerlabels = ['Tool type','Name']
-        for i in np.arange(2,16):
+        for i in np.arange(2,35):
             headerlabels.append("Process " + str(i-2))
         self.table_widget.setHorizontalHeaderLabels(headerlabels)
         self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
