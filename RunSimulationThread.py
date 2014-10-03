@@ -16,6 +16,7 @@ from batchlocations.TubeFurnace import TubeFurnace
 from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
 from batchlocations.PrintLine import PrintLine
+from batchlocations.Buffer import Buffer
 #import simpyx as simpy
 import simpy
 import numpy as np
@@ -75,7 +76,9 @@ class RunSimulationThread(QtCore.QThread):
             elif (self.batchlocations[i][0] == "PrintLine"):
                 self.batchlocations[i] = PrintLine(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "WaferBin"):
-                self.batchlocations[i] = WaferBin(self.env,self.output,self.batchlocations[i][1])             
+                self.batchlocations[i] = WaferBin(self.env,self.output,self.batchlocations[i][1])
+            elif (self.batchlocations[i][0] == "Buffer"):
+                self.batchlocations[i] = Buffer(self.env,self.output,self.batchlocations[i][1])                 
 
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances

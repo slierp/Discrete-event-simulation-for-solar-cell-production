@@ -30,8 +30,8 @@ class Operator(QtCore.QObject):
         
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual operator")        
-        self.params['min_units'] = 1
-        self.params['min_units_desc'] = self.tr("Not yet implemented")        
+        self.params['min_no_batches'] = 1
+        self.params['min_no_batches_desc'] = self.tr("Minimum number of batches needed for transport")        
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = self.tr("Wait period between transport attempts (seconds)")
         self.params['verbose'] = False
@@ -63,6 +63,11 @@ class Operator(QtCore.QObject):
                 
                 if (units_for_transport >= self.batchconnections[i][0].output.batch_size):
                     no_batches_for_transport = units_for_transport // self.batchconnections[i][0].output.batch_size
+
+                    if (no_batches_for_transport < self.params['min_no_batches']):
+                        # abort transport if not enough batches available
+                        continue
+                    
                     yield self.batchconnections[i][0].output.container.get(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
                     yield self.env.timeout(self.batchconnections[i][2] + self.batchconnections[i][3]*no_batches_for_transport)
                     self.transport_counter += no_batches_for_transport*self.batchconnections[i][0].output.batch_size
