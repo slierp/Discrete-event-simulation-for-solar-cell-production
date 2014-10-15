@@ -12,8 +12,8 @@ from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
 import numpy as np
 
-class TubePECVD(QtCore.QObject):
-
+class TubeFurnace(QtCore.QObject):
+        
     def __init__(self, _env, _output=None, _params = {}):
         QtCore.QObject.__init__(self)
         self.env = _env
@@ -21,12 +21,27 @@ class TubePECVD(QtCore.QObject):
         self.idle_times = []
         
         self.params = {}
-        self.params['specification'] = self.tr("TubePECVD is currenly a copy of TubeFurnace, but with a different default batch size and process_time.")
+        self.params['specification'] = self.tr("TubeFurnace consists of:\n")
+        self.params['specification'] += self.tr("- Input container\n")
+        self.params['specification'] += self.tr("- Boat-load-unload container\n")
+        self.params['specification'] += self.tr("- Process tubes\n")
+        self.params['specification'] += self.tr("- Cooldown locations\n")
+        self.params['specification'] += self.tr("- Output container\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("There are two transporters:\n")
+        self.params['specification'] += self.tr("transport1: from load-in to boat-load-unload and from boat-load-unload to output\n")
+        self.params['specification'] += self.tr("transport2: from boat-load-unload to tube process to cool-down to boat-load-unload\n")
+        self.params['specification'] += self.tr("transport2 triggers transport1 when to do something (load or unload)\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("The number of batches in the system is limited by the no_of_boats variable.\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).")
+
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual batch location")
-        self.params['batch_size'] = 300
+        self.params['batch_size'] = 500
         self.params['batch_size_desc'] = self.tr("Number of units in a single process batch")
-        self.params['process_time'] = 30*60
+        self.params['process_time'] = 60*60
         self.params['process_time_desc'] = self.tr("Time for a single process (seconds)")
         self.params['cool_time'] = 10*60
         self.params['cool_time_desc'] = self.tr("Time for a single cooldown (seconds)")
@@ -57,39 +72,22 @@ class TubePECVD(QtCore.QObject):
         self.load_in_out_end = self.env.event()
         
         if (self.params['verbose']):
-            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube PECVD"
+            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"
             self.output_text.sig.emit(string)
         
-        ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['batch_size'],1)
 
-        ### Add batch processes ###
-        self.batchprocesses = []
- 
+        self.batchprocesses = {}
+        self.coolprocesses = {}  
         for i in np.arange(self.params['no_of_processes']):
-            #process_name = "t" + str(i)
-            #self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['process_time'],self.params['verbose'])
-            process_params = {}
-            process_params['name'] = "t" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['process_time']
-            process_params['verbose'] = self.params['verbose']
-            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))            
-
-        ### Add cooldown processes ###
-        self.coolprocesses = []            
+            process_name = "t" + str(i)
+            self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['process_time'],self.params['verbose'])
+            
         for i in np.arange(self.params['no_of_cooldowns']):
-            #process_name = "c" + str(i)
-            #self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['cool_time'],self.params['verbose'])
-            process_params = {}
-            process_params['name'] = "c" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['cool_time']
-            process_params['verbose'] = self.params['verbose']
-            self.coolprocesses.append(BatchProcess(self.env,self.output_text,process_params))            
-    
-        ### Add output ###
+            process_name = "c" + str(i)
+            self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['cool_time'],self.params['verbose'])
+               
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])        
      
         self.env.process(self.run_transport())   
@@ -97,15 +95,15 @@ class TubePECVD(QtCore.QObject):
         self.env.process(self.run_load_out())
 
     def report(self):
-        string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+        string = "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
         self.output_text.sig.emit(string)        
-                
+
         idle_item = []
-        idle_item.append("TubePECVD")
+        idle_item.append("TubeFurnace")
         idle_item.append(self.params['name'])
-        for i in range(len(self.batchprocesses)):
+        for i in self.batchprocesses:
             idle_item.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
-        self.idle_times.append(idle_item)                
+        self.idle_times.append(idle_item)              
 
     def run_transport(self):
         
@@ -138,10 +136,10 @@ class TubePECVD(QtCore.QObject):
                         batchconnections[i][1].start_process()
                         
                         if (self.params['verbose']):
-                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown"
+                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved batch to cooldown"
                             self.output_text.sig.emit(string)
 
-            for i in range(len(self.coolprocesses)):
+            for i in self.coolprocesses:
                 # check if we can unload a batch (should be followed by a re-load if possible)
                 if (self.coolprocesses[i].container.level > 0) & \
                         (self.boat_load_unload.container.level == 0) & \
@@ -155,7 +153,7 @@ class TubePECVD(QtCore.QObject):
                         yield self.boat_load_unload.container.put(self.params['batch_size'])
                         
                         if (self.params['verbose']):
-                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved processed batch for load-out"
+                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved processed batch for load-out"
                             self.output_text.sig.emit(string)
                     
                         self.coolprocesses[i].process_finished = 0                    
@@ -171,7 +169,7 @@ class TubePECVD(QtCore.QObject):
                 yield self.load_in_out_end
                 self.load_in_start = self.env.event() # make new event                
 
-            for i in range(len(self.batchprocesses)):
+            for i in self.batchprocesses:
                 # check if we can load new wafers into a tube
                 if (self.batchprocesses[i].container.level == 0) & \
                         (self.boat_load_unload.container.level == self.params['batch_size']):
@@ -186,7 +184,7 @@ class TubePECVD(QtCore.QObject):
                         self.batchprocesses[i].start_process()
                         
                         if (self.params['verbose']):
-                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Started a process"
+                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
                             self.output_text.sig.emit(string)
             
             yield self.env.timeout(self.params['wait_time'])                        
@@ -201,9 +199,9 @@ class TubePECVD(QtCore.QObject):
             self.batches_loaded += 1
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event
-            
+
             if (self.params['verbose']):
-                string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loaded batch"
+                string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Loaded batch"
                 self.output_text.sig.emit(string)
 
     def run_load_out(self):
@@ -216,8 +214,8 @@ class TubePECVD(QtCore.QObject):
                 self.transport_counter += self.params['cassette_size']
             self.batches_loaded -= 1
             yield self.load_in_out_end.succeed()
-            self.load_in_out_end = self.env.event() # make new event
-            
-            if (self.params['verbose']):
-                string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloaded batch"
+            self.load_in_out_end = self.env.event() # make new event            
+
+            if (self.params['verbose']):            
+                string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Unloaded batch"
                 self.output_text.sig.emit(string)

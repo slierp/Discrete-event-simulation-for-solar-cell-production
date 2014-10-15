@@ -20,7 +20,7 @@ from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 #import simpyx as simpy
 import simpy
-import cProfile, pstats, StringIO
+#import cProfile, pstats, StringIO
 import numpy as np
 from PyQt4 import QtCore
 #from PyQt4 import QtGui # only needed when not running simulation in separate thread

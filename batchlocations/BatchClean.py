@@ -83,8 +83,18 @@ class BatchClean(QtCore.QObject):
         self.params['dry_time'] = 10*60
         self.params['dry_time_desc'] = self.tr("Time for a single dry cycle (seconds)")
         
-        self.params['transfer_time'] = 60
-        self.params['transfer_time_desc'] = self.tr("Time for cassette transfer between any two locations (baths, input and output) (seconds)")
+        self.params['transfer0_time'] = 60
+        self.params['transfer0_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")
+        
+        self.params['transfer1_time'] = 60
+        self.params['transfer1_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")
+
+        self.params['transfer2_time'] = 60
+        self.params['transfer2_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")        
+
+        self.params['transfer3_time'] = 60
+        self.params['transfer3_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")        
+        
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
         self.params.update(_params)
@@ -99,31 +109,66 @@ class BatchClean(QtCore.QObject):
         ### Create and add all batchprocesses to list and keep track of positions in list###
         self.batchprocesses = []
         for i in np.arange(0,self.params['oxetch0_baths']):
-            self.batchprocesses.append(BatchProcess(self.env,"h" + str(i),self.params['batch_size'],self.params['oxetch0_time']))
+            process_params = {}
+            process_params['name'] = "h" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['oxetch0_time']
+            process_params['verbose'] = self.params['verbose']
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         first_rinse0 = self.params['oxetch0_baths']              
         for i in np.arange(0,self.params['rinse0_baths']):
-            self.batchprocesses.append(BatchProcess(self.env,"r" + str(i),self.params['batch_size'],self.params['rinse0_time']))
+            process_params = {}
+            process_params['name'] = "r" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['rinse0_time']
+            process_params['verbose'] = self.params['verbose']            
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_chemox = first_rinse0 + self.params['rinse0_baths']
         for i in np.arange(0,self.params['chemox_baths']):
-            self.batchprocesses.append(BatchProcess(self.env,"o" + str(i),self.params['batch_size'],self.params['chemox_time']))
+            process_params = {}
+            process_params['name'] = "o" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['chemox_time']
+            process_params['verbose'] = self.params['verbose']            
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_rinse1 = first_chemox + self.params['chemox_baths']
         for i in np.arange(0,self.params['rinse1_baths']):
-            self.batchprocesses.append(BatchProcess(self.env,"r" + str(i),self.params['batch_size'],self.params['rinse1_time']))
+            process_params = {}
+            process_params['name'] = "r" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['rinse1_time']
+            process_params['verbose'] = self.params['verbose']            
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_oxetch1 = first_rinse1 + self.params['rinse1_baths']
         for i in np.arange(0,self.params['oxetch1_baths']):
-            self.batchprocesses.append(BatchProcess(self.env,"h" + str(i),self.params['batch_size'],self.params['oxetch1_time']))
+            process_params = {}
+            process_params['name'] = "h" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['oxetch1_time']
+            process_params['verbose'] = self.params['verbose']            
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_rinse2 = first_oxetch1 + self.params['oxetch1_baths']            
         for i in np.arange(0,self.params['rinse2_baths']):
-            self.batchprocesses.append(BatchProcess(self.env,"r" + str(i),self.params['batch_size'],self.params['rinse2_time']))
+            process_params = {}
+            process_params['name'] = "r" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['rinse2_time']
+            process_params['verbose'] = self.params['verbose']            
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_dryer = first_rinse2 + self.params['rinse2_baths'] 
         for i in np.arange(0,self.params['dryer_count']):
-            self.batchprocesses.append(BatchProcess(self.env,"d" + str(i),self.params['batch_size'],self.params['dry_time']))
+            process_params = {}
+            process_params['name'] = "d" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['dry_time']
+            process_params['verbose'] = self.params['verbose']
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         ### Add output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -134,12 +179,16 @@ class BatchClean(QtCore.QObject):
         
         for i in np.arange(0,self.params['oxetch0_baths']):
             for j in np.arange(first_rinse0,first_rinse0+self.params['rinse0_baths']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer_time']])
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer0_time']])
         
         for i in np.arange(0,self.params['oxetch0_baths']):
-            batchconnections.append([self.input,self.batchprocesses[i],self.params['transfer_time']])
-        
-        self.transport0 = BatchTransport(self.env,batchconnections,"[" + self.params['name'] + "][cl0]",self.params['batch_size'],self.params['verbose'])
+            batchconnections.append([self.input,self.batchprocesses[i],self.params['transfer0_time']])
+
+        transport_params = {}
+        transport_params['name'] = "[" + self.params['name'] + "][cl0]"
+        transport_params['batch_size'] = self.params['batch_size']
+        transport_params['verbose'] = self.params['verbose']        
+        self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between first rinse, chemical oxidation and second rinse ###
         # First check whether batch can be brought to rinse/output, because that has priority
@@ -147,13 +196,17 @@ class BatchClean(QtCore.QObject):
 
         for i in np.arange(first_chemox,first_chemox+self.params['chemox_baths']):
             for j in np.arange(first_rinse1,first_rinse1+self.params['rinse1_baths']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer_time']])
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer1_time']])
 
         for i in np.arange(first_rinse0,first_rinse0+self.params['rinse0_baths']):
             for j in np.arange(first_chemox,first_chemox+self.params['chemox_baths']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer_time']])     
-        
-        self.transport1 = BatchTransport(self.env,batchconnections,"[" + self.params['name'] + "][cl1]",self.params['batch_size'],self.params['verbose'])
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer1_time']])     
+
+        transport_params = {}
+        transport_params['name'] = "[" + self.params['name'] + "][cl1]"
+        transport_params['batch_size'] = self.params['batch_size']
+        transport_params['verbose'] = self.params['verbose']        
+        self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between second rinse, second oxide etch and third rinse ###
         # First check whether batch can be brought to rinse/output, because that has priority
@@ -161,26 +214,34 @@ class BatchClean(QtCore.QObject):
 
         for i in np.arange(first_oxetch1,first_oxetch1+self.params['oxetch1_baths']):
             for j in np.arange(first_rinse2,first_rinse2+self.params['rinse2_baths']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer_time']])
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer2_time']])
 
         for i in np.arange(first_rinse1,first_rinse1+self.params['rinse1_baths']):
             for j in np.arange(first_oxetch1,first_oxetch1+self.params['oxetch1_baths']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer_time']])     
-        
-        self.transport2 = BatchTransport(self.env,batchconnections,"[" + self.params['name'] + "][cl2]",self.params['batch_size'],self.params['verbose'])
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer2_time']])     
+
+        transport_params = {}
+        transport_params['name'] = "[" + self.params['name'] + "][cl2]"
+        transport_params['batch_size'] = self.params['batch_size']
+        transport_params['verbose'] = self.params['verbose']         
+        self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
         ### Batch transporter between third rinse, dryers and output ###
         # First check whether batch can be brought to rinse/output, because that has priority
         batchconnections = []
 
         for i in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
-                batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer_time']])
+                batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer3_time']])
 
         for i in np.arange(first_rinse2,first_rinse2+self.params['rinse2_baths']):
             for j in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer_time']])    
-        
-        self.transport3 = BatchTransport(self.env,batchconnections,"[" + self.params['name'] + "][cl3]",self.params['batch_size'],self.params['verbose'])
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer3_time']])    
+
+        transport_params = {}
+        transport_params['name'] = "[" + self.params['name'] + "][cl3]"
+        transport_params['batch_size'] = self.params['batch_size']
+        transport_params['verbose'] = self.params['verbose']
+        self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
     def report(self):
         string = "[BatchClean][" + self.params['name'] + "] Units processed: " + str(self.transport3.transport_counter - self.output.container.level)

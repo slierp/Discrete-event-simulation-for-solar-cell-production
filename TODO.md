@@ -1,11 +1,9 @@
 TODO
 ====
 
-- Transfer 'verbose' level to BatchProcess and BatchTransport
-- Transfer signal/slot to same BatchProcess and BatchTransport
-- Change batchprocesses/batchconnections dicts to lists
+- Change batchconnections dicts to lists in TubeFurnace and PECVD (same as in Transport)
+- Implement flexible batchtex tool
 - Implement ion implant
-- Implement batchtex with two and four texture baths
 - Implement down-time schedules
 - Measure/store vital parameters in pandas DataFrame, eg:
   - Production volume vs time for each tool

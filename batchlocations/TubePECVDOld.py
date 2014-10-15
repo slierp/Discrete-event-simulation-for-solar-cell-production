@@ -60,36 +60,19 @@ class TubePECVD(QtCore.QObject):
             string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube PECVD"
             self.output_text.sig.emit(string)
         
-        ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['batch_size'],1)
 
-        ### Add batch processes ###
-        self.batchprocesses = []
- 
+        self.batchprocesses = {}
+        self.coolprocesses = {}  
         for i in np.arange(self.params['no_of_processes']):
-            #process_name = "t" + str(i)
-            #self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['process_time'],self.params['verbose'])
-            process_params = {}
-            process_params['name'] = "t" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['process_time']
-            process_params['verbose'] = self.params['verbose']
-            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))            
-
-        ### Add cooldown processes ###
-        self.coolprocesses = []            
+            process_name = "t" + str(i)
+            self.batchprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['process_time'],self.params['verbose'])
+            
         for i in np.arange(self.params['no_of_cooldowns']):
-            #process_name = "c" + str(i)
-            #self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['cool_time'],self.params['verbose'])
-            process_params = {}
-            process_params['name'] = "c" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['cool_time']
-            process_params['verbose'] = self.params['verbose']
-            self.coolprocesses.append(BatchProcess(self.env,self.output_text,process_params))            
-    
-        ### Add output ###
+            process_name = "c" + str(i)
+            self.coolprocesses[i] = BatchProcess(self.env,process_name,self.params['batch_size'],self.params['cool_time'],self.params['verbose'])
+               
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])        
      
         self.env.process(self.run_transport())   
@@ -103,7 +86,7 @@ class TubePECVD(QtCore.QObject):
         idle_item = []
         idle_item.append("TubePECVD")
         idle_item.append(self.params['name'])
-        for i in range(len(self.batchprocesses)):
+        for i in self.batchprocesses:
             idle_item.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
         self.idle_times.append(idle_item)                
 
@@ -141,7 +124,7 @@ class TubePECVD(QtCore.QObject):
                             string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown"
                             self.output_text.sig.emit(string)
 
-            for i in range(len(self.coolprocesses)):
+            for i in self.coolprocesses:
                 # check if we can unload a batch (should be followed by a re-load if possible)
                 if (self.coolprocesses[i].container.level > 0) & \
                         (self.boat_load_unload.container.level == 0) & \
@@ -171,7 +154,7 @@ class TubePECVD(QtCore.QObject):
                 yield self.load_in_out_end
                 self.load_in_start = self.env.event() # make new event                
 
-            for i in range(len(self.batchprocesses)):
+            for i in self.batchprocesses:
                 # check if we can load new wafers into a tube
                 if (self.batchprocesses[i].container.level == 0) & \
                         (self.boat_load_unload.container.level == self.params['batch_size']):
