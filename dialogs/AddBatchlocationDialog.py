@@ -45,6 +45,7 @@ class AddBatchlocationDialog(QtGui.QDialog):
         batchlocation_types.append("Buffer")        
         batchlocation_types.append("WaferUnstacker")
         batchlocation_types.append("BatchTex")
+        batchlocation_types.append("BatchClean")
         batchlocation_types.append("TubeFurnace")
         batchlocation_types.append("SingleSideEtch")
         batchlocation_types.append("TubePECVD")

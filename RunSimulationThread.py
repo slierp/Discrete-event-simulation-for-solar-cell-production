@@ -12,6 +12,7 @@ from batchlocations.WaferUnstacker import WaferUnstacker
 from batchlocations.Operator import Operator
 from batchlocations.WaferBin import WaferBin
 from batchlocations.BatchTex import BatchTex
+from batchlocations.BatchClean import BatchClean
 from batchlocations.TubeFurnace import TubeFurnace
 from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
@@ -19,6 +20,7 @@ from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 #import simpyx as simpy
 import simpy
+import cProfile, pstats, StringIO
 import numpy as np
 from PyQt4 import QtCore
 #from PyQt4 import QtGui # only needed when not running simulation in separate thread
@@ -34,7 +36,6 @@ class RunSimulationThread(QtCore.QThread):
 
     def __init__(self, _parent, _edit):
         QtCore.QThread.__init__(self, _parent)
-        #super(QtGui.QMainWindow, self).__init__(_parent) # interchange for QThread when not running simulation in separate thread
         self.parent = _parent
         self.edit = _edit
         self.stop_simulation = False        
@@ -67,6 +68,8 @@ class RunSimulationThread(QtCore.QThread):
                 self.batchlocations[i] = WaferUnstacker(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchTex"):
                 self.batchlocations[i] = BatchTex(self.env,self.output,self.batchlocations[i][1])
+            elif (self.batchlocations[i][0] == "BatchClean"):
+                self.batchlocations[i] = BatchClean(self.env,self.output,self.batchlocations[i][1])                
             elif (self.batchlocations[i][0] == "TubeFurnace"):
                 self.batchlocations[i] = TubeFurnace(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "SingleSideEtch"):
@@ -118,6 +121,10 @@ class RunSimulationThread(QtCore.QThread):
 
         self.output.sig.emit("0% progress: 0 hours / 0 produced")
 
+        ### Profiler start ###
+        #pr = cProfile.Profile()
+        #pr.enable()
+
         ### Run simulation ###
         prev_production_volume_update = 0
         prev_percentage_time = self.env.now
@@ -148,6 +155,14 @@ class RunSimulationThread(QtCore.QThread):
 
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update                
+
+        ### Profiler end ###
+        #pr.disable()
+        #s = StringIO.StringIO()
+        #sortby = 'tottime'
+        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        #ps.print_stats()
+        #print s.getvalue()
 
         ### Generate summary output in log tab ###
         for i, value in enumerate(self.batchlocations):

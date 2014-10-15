@@ -25,7 +25,7 @@ class Buffer(QtCore.QObject):
         self.params['name_desc'] = self.tr("Name of the individual batch location")
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
-        self.params['max_cassette_no'] = 20
+        self.params['max_cassette_no'] = 50
         self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions available")
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")

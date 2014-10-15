@@ -24,11 +24,11 @@ class BatchTex(QtCore.QObject):
         self.params = {}
         self.params['specification'] = self.tr("BatchTex consists of:\n")
         self.params['specification'] += self.tr("- Input container\n")
-        self.params['specification'] += self.tr("- Texturing baths (currently 3)\n")
-        self.params['specification'] += self.tr("- Rinse baths (currently 1)\n")
-        self.params['specification'] += self.tr("- Neutralization baths (currently 1)\n")
-        self.params['specification'] += self.tr("- Rinse baths (currently 1)\n")
-        self.params['specification'] += self.tr("- Dryers (currently 3)\n")
+        self.params['specification'] += self.tr("- Texturing baths (x3)\n")
+        self.params['specification'] += self.tr("- Rinse bath\n")
+        self.params['specification'] += self.tr("- Neutralization bath\n")
+        self.params['specification'] += self.tr("- Rinse bath\n")
+        self.params['specification'] += self.tr("- Dryers (x3)\n")
         self.params['specification'] += self.tr("- Output container\n")
         self.params['specification'] += "\n"
         self.params['specification'] += self.tr("There are three batch transporters:\n")        
@@ -48,7 +48,7 @@ class BatchTex(QtCore.QObject):
         self.params['rinse_time'] = 5*60
         self.params['rinse_time_desc'] = self.tr("Time for a single rinse cycle (seconds)")
         self.params['neutr_time'] = 5*60
-        self.params['neutr_time_desc'] = self.tr("Time for a single neutralizatin process (seconds)")
+        self.params['neutr_time_desc'] = self.tr("Time for a single neutralization process (seconds)")
         self.params['dry_time'] = 20*60
         self.params['dry_time_desc'] = self.tr("Time for a single dry cycle (seconds)")
         self.params['transfer_time'] = 60

@@ -11,6 +11,7 @@ from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferUnstacker import WaferUnstacker
 from batchlocations.WaferBin import WaferBin
 from batchlocations.BatchTex import BatchTex
+from batchlocations.BatchClean import BatchClean
 from batchlocations.TubeFurnace import TubeFurnace
 from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
@@ -48,6 +49,8 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
             curr_params = WaferUnstacker(env).params
         elif (batchlocation[0] == "BatchTex"):
             curr_params = BatchTex(env).params
+        elif (batchlocation[0] == "BatchClean"):
+            curr_params = BatchClean(env).params            
         elif (batchlocation[0] == "TubeFurnace"):
             curr_params = TubeFurnace(env).params
         elif (batchlocation[0] == "SingleSideEtch"):
@@ -78,7 +81,7 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
             vbox.addWidget(title_label)             
         
         self.strings = []
-        for i in curr_params:
+        for i in sorted(curr_params.keys()):
             if ("_desc" in i) | ('specification' in i) | ('name' in i):
                 continue
             elif isinstance(curr_params[i], str):
@@ -94,7 +97,7 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 vbox.addLayout(hbox)
         
         self.integers = []
-        for i in curr_params:
+        for i in sorted(curr_params.keys()):
             if isinstance(curr_params[i], int) & (not i == 'verbose'):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
@@ -115,7 +118,7 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 vbox.addLayout(hbox)
 
         self.doubles = []
-        for i in curr_params:
+        for i in sorted(curr_params.keys()):
             if isinstance(curr_params[i], float):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
@@ -133,7 +136,7 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 vbox.addLayout(hbox)
         
         self.booleans = []
-        for i in curr_params:
+        for i in sorted(curr_params.keys()):
             if isinstance(curr_params[i], bool):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)

@@ -65,6 +65,7 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations.append(["BatchTex", {'name' : '0'}])
         self.batchlocations.append(["TubeFurnace", {'name' : '0'}])
         self.batchlocations.append(["TubeFurnace", {'name' : '1'}])
+        self.batchlocations.append(["Buffer", {'name' : '0'}])
         self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
         self.batchlocations.append(["TubePECVD", {'name' : '0'}])
         self.batchlocations.append(["TubePECVD", {'name' : '1'}])

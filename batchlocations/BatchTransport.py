@@ -28,7 +28,7 @@ class BatchTransport(object):
     
     def run(self):
         while True:
-            for i in self.batchconnections:
+            for i in range(len(self.batchconnections)):
                 if isinstance(self.batchconnections[i][0],BatchContainer):
                     # load-in from BatchContainer to BatchProcess
                     if (self.batchconnections[i][0].container.level >= self.batch_size) & \
