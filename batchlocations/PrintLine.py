@@ -108,6 +108,10 @@ class PrintLine(QtCore.QObject):
     def run_belt(self, num):        
         while True:
             yield self.next_step[num]
+
+            if self.first_run:
+                self.start_time = self.env.now
+                self.first_run = False
                         
             if (num):
                 yield self.inputs[num].container.get(1)
@@ -163,12 +167,7 @@ class PrintLine(QtCore.QObject):
 
     def run_firing_furnace(self):
         while True:        
-            if (self.firing_input.container.level):
-
-                if self.first_run:
-                    self.start_time = self.env.now
-                    self.first_run = False 
-                
+            if (self.firing_input.container.level):                 
                 yield self.firing_input.container.get(1)
                 self.env.process(self.run_wafer_instance_firing())
                 yield self.env.timeout(60*self.params['firing_unit_distance']/self.params['firing_belt_speed']) # same lane cannot accept new unit until after x seconds

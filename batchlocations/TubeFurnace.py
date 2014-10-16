@@ -45,22 +45,35 @@ class TubeFurnace(QtCore.QObject):
         self.params['process_time_desc'] = self.tr("Time for a single process (seconds)")
         self.params['cool_time'] = 10*60
         self.params['cool_time_desc'] = self.tr("Time for a single cooldown (seconds)")
+        
         self.params['no_of_processes'] = 4
         self.params['no_of_processes_desc'] = self.tr("Number of process locations in the tool")
         self.params['no_of_cooldowns'] = 3
         self.params['no_of_cooldowns_desc'] = self.tr("Number of cooldown locations in the tool")
+        
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
         self.params['max_cassette_no'] = 5
         self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions at input and the same number at output")
+        
         self.params['no_of_boats'] = 6
         self.params['no_of_boats_desc'] = self.tr("Number of boats available")
-        self.params['transfer_time'] = 90
-        self.params['transfer_time_desc'] = self.tr("Time for boat transfer between any two locations")
-        self.params['load_time_per_cassette'] = 30
-        self.params['load_time_per_cassette_desc'] = self.tr("Time to transfer one cassette in or out of the boat (very critical for throughput)")
+        
+        self.params['transfer0_time'] = 90
+        self.params['transfer0_time_desc'] = self.tr("Time for boat transfer from load-in to process tube (seconds)")
+        self.params['transfer1_time'] = 90
+        self.params['transfer1_time_desc'] = self.tr("Time for boat transfer from process tube to cooldown (seconds)")
+        self.params['transfer2_time'] = 90
+        self.params['transfer2_time_desc'] = self.tr("Time for boat transfer from cooldown to load-out (seconds)")
+        
+        self.params['automation_loadsize'] = 50
+        self.params['automation_loadsize_desc'] = self.tr("Number of units per loading/unloading automation cycle")
+        self.params['automation_time'] = 30
+        self.params['automation_time_desc'] = self.tr("Time for a single loading/unloading automation cycle (seconds)")
+
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = self.tr("Wait period between boat transport attempts (seconds)")
+        
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
         self.params.update(_params)        
@@ -140,7 +153,7 @@ class TubeFurnace(QtCore.QObject):
                         yield request_output
 
                         yield batchconnections[i][0].container.get(self.params['batch_size'])
-                        yield self.env.timeout(self.params['transfer_time'])
+                        yield self.env.timeout(self.params['transfer1_time'])
                         yield batchconnections[i][1].container.put(self.params['batch_size'])
 
                         batchconnections[i][0].process_finished = 0
@@ -160,7 +173,7 @@ class TubeFurnace(QtCore.QObject):
                         yield request_input
 
                         yield self.coolprocesses[i].container.get(self.params['batch_size'])
-                        yield self.env.timeout(self.params['transfer_time'])
+                        yield self.env.timeout(self.params['transfer2_time'])
                         yield self.boat_load_unload.container.put(self.params['batch_size'])
                         
                         if (self.params['verbose']):
@@ -189,7 +202,7 @@ class TubeFurnace(QtCore.QObject):
                         yield request_output
                         
                         yield self.boat_load_unload.container.get(self.params['batch_size'])
-                        yield self.env.timeout(self.params['transfer_time'])
+                        yield self.env.timeout(self.params['transfer0_time'])
                         yield self.batchprocesses[i].container.put(self.params['batch_size'])
 
                         self.batchprocesses[i].start_process()
@@ -203,10 +216,11 @@ class TubeFurnace(QtCore.QObject):
     def run_load_in(self):
         while True:
             yield self.load_in_start
-            for i in np.arange(self.params['batch_size']/self.params['cassette_size']): # how to ensure it is an integer?
-                yield self.env.timeout(self.params['load_time_per_cassette'])
-                yield self.input.container.get(self.params['cassette_size'])            
-                yield self.boat_load_unload.container.put(self.params['cassette_size'])
+            for i in np.arange(self.params['batch_size'] // self.params['automation_loadsize']):
+                yield self.env.timeout(self.params['automation_time'])
+                yield self.input.container.get(self.params['automation_loadsize'])            
+                yield self.boat_load_unload.container.put(self.params['automation_loadsize'])
+            
             self.batches_loaded += 1
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event
@@ -218,11 +232,12 @@ class TubeFurnace(QtCore.QObject):
     def run_load_out(self):
         while True:
             yield self.load_out_start
-            for i in np.arange(self.params['batch_size']/self.params['cassette_size']): # how to ensure it is an integer?
-                yield self.env.timeout(self.params['load_time_per_cassette']) 
-                yield self.boat_load_unload.container.get(self.params['cassette_size']) 
-                yield self.output.container.put(self.params['cassette_size'])
-                self.transport_counter += self.params['cassette_size']
+            for i in np.arange(self.params['batch_size'] // self.params['automation_loadsize']):
+                yield self.env.timeout(self.params['automation_time']) 
+                yield self.boat_load_unload.container.get(self.params['automation_loadsize']) 
+                yield self.output.container.put(self.params['automation_loadsize'])
+                self.transport_counter += self.params['automation_loadsize']
+            
             self.batches_loaded -= 1
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event            
