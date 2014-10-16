@@ -119,17 +119,16 @@ class TubeFurnace(QtCore.QObject):
 
     def run_transport(self):
         
-        batchconnections = {}
+        batchconnections = []
         j = 0
         for i in np.arange(self.params['no_of_processes']*self.params['no_of_cooldowns']):
             if (i%self.params['no_of_processes'] == 0) & (i > 0):
                 j += 1
                 
-            batchconnections[i] = [self.batchprocesses[i%self.params['no_of_processes']],self.coolprocesses[j]]
-
+            batchconnections.append([self.batchprocesses[i%self.params['no_of_processes']],self.coolprocesses[j]])
         
         while True:
-            for i in batchconnections:
+            for i in range(len(batchconnections)):
                 # first check if we can move any batch from tube to cool_down
                 if (batchconnections[i][0].container.level > 0) & \
                         (batchconnections[i][1].container.level == 0) & \

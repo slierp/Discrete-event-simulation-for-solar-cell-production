@@ -1,8 +1,8 @@
 TODO
 ====
 
-- Change batchconnections dicts to lists in TubeFurnace and PECVD (same as in Transport)
-- Implement flexible batchtex tool
+- Fix >100% idle time bug in PrintLine
+- Try to speed up PrintLine
 - Implement ion implant
 - Implement down-time schedules
 - Measure/store vital parameters in pandas DataFrame, eg:
