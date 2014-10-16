@@ -5,6 +5,7 @@ TODO
 - Try to speed up PrintLine
 - Implement ion implant
 - Implement down-time schedules
+- Add calculation of nominal speed and generate utilization rate
 - Measure/store vital parameters in pandas DataFrame, eg:
   - Production volume vs time for each tool
   - Production throughput vs time for each tool

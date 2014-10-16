@@ -83,7 +83,12 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             vbox.addWidget(title_label)             
         
         self.strings = []
+        self.integers = []
+        self.doubles = []
+        self.booleans = []
+        
         for i in sorted(curr_params.keys()):
+        # Make QLineEdits for strings            
             if ("_desc" in i) | ('specification' in i):
                 continue
             elif isinstance(curr_params[i], str):
@@ -96,10 +101,10 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                     self.strings[-1].setToolTip(curr_params[i + "_desc"])
                 hbox.addWidget(label)
                 hbox.addWidget(self.strings[-1]) 
-                vbox.addLayout(hbox)
+                vbox.addLayout(hbox)               
         
-        self.integers = []
         for i in sorted(curr_params.keys()):
+        # Make QSpinBox or QDoubleSpinbox for integers and doubles
             if isinstance(curr_params[i], int) & (not i == 'verbose'):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
@@ -118,10 +123,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 hbox.addWidget(label)
                 hbox.addWidget(self.integers[-1])  
                 vbox.addLayout(hbox)
-
-        self.doubles = []
-        for i in sorted(curr_params.keys()):
-            if isinstance(curr_params[i], float):
+            elif isinstance(curr_params[i], float):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
                 self.doubles.append(QtGui.QDoubleSpinBox())
@@ -137,8 +139,8 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 hbox.addWidget(self.doubles[-1]) 
                 vbox.addLayout(hbox)
         
-        self.booleans = []
         for i in sorted(curr_params.keys()):
+        # Make QCheckBox for booleans
             if isinstance(curr_params[i], bool):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)

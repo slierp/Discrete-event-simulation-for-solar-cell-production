@@ -27,7 +27,8 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         self.spinbox0.setAccelerated(True)
         self.spinbox0.setMaximum(999999999)
         self.spinbox0.setValue(self.batchconnection[2])
-        self.spinbox0.setObjectName("Time for one transport")
+        label.setToolTip("Time for one transport")
+        self.spinbox0.setToolTip("Time for one transport")
         if (self.batchconnection[2] >= 100):
             self.spinbox0.setSingleStep(100)
         elif (self.batchconnection[2] >= 10):
@@ -42,7 +43,8 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999999999)
         self.spinbox1.setValue(self.batchconnection[3])
-        self.spinbox1.setObjectName("Time added for each added batch")
+        label.setToolTip("Time added for each additional batch")
+        self.spinbox1.setToolTip("Time added for each additional batch")
         if (self.batchconnection[3] >= 100):
             self.spinbox1.setSingleStep(100)
         elif (self.batchconnection[3] >= 10):

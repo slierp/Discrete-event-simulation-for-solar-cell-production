@@ -79,9 +79,14 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         else:
             title_label = QtGui.QLabel(self.tr("Edit settings:"))
             vbox.addWidget(title_label)             
-        
+
         self.strings = []
+        self.integers = []
+        self.doubles = []
+        self.booleans = []
+        
         for i in sorted(curr_params.keys()):
+        # Make QLineEdits for strings (excluding name)
             if ("_desc" in i) | ('specification' in i) | ('name' in i):
                 continue
             elif isinstance(curr_params[i], str):
@@ -96,8 +101,8 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 hbox.addWidget(self.strings[-1]) 
                 vbox.addLayout(hbox)
         
-        self.integers = []
         for i in sorted(curr_params.keys()):
+        # Make QSpinBox or QDoubleSpinbox for integers and doubles
             if isinstance(curr_params[i], int) & (not i == 'verbose'):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
@@ -116,10 +121,7 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 hbox.addWidget(label)
                 hbox.addWidget(self.integers[-1])  
                 vbox.addLayout(hbox)
-
-        self.doubles = []
-        for i in sorted(curr_params.keys()):
-            if isinstance(curr_params[i], float):
+            elif isinstance(curr_params[i], float):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
                 self.doubles.append(QtGui.QDoubleSpinBox())
@@ -135,8 +137,8 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 hbox.addWidget(self.doubles[-1]) 
                 vbox.addLayout(hbox)
         
-        self.booleans = []
         for i in sorted(curr_params.keys()):
+        # Make QCheckBox for booleans
             if isinstance(curr_params[i], bool):
                 hbox = QtGui.QHBoxLayout()
                 label = QtGui.QLabel(i)
