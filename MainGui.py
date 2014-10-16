@@ -44,6 +44,8 @@ class MainGui(QtGui.QMainWindow):
         self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
         self.simulation_thread.output.sig.connect(self.simulation_output)
         self.simulation_thread.idle.sig.connect(self.idle_times_output)
+        self.output_signal_counter = 0        
+        self.output_overload_signal_given = False        
 
         self.prev_dir_path = ""
         self.prev_save_path = ""
@@ -301,6 +303,7 @@ class MainGui(QtGui.QMainWindow):
             self.statusBar().showMessage(self.tr("All operators were removed"))
 
     def run_simulation(self):
+        self.output_signal_counter = 0
         RunSimulation(self)        
 
     def stop_simulation(self):
@@ -308,9 +311,16 @@ class MainGui(QtGui.QMainWindow):
         self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
 
     @QtCore.pyqtSlot(str)
-    def simulation_output(self,string):
-        self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
-        self.edit.insertPlainText(string + '\n')
+    def simulation_output(self,string):        
+        
+        if self.output_signal_counter < 1000:
+            self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
+            self.edit.insertPlainText(string + '\n')
+            self.output_signal_counter += 1
+        elif not self.output_overload_signal_given:
+            self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
+            self.edit.insertPlainText('Output overload\n') 
+            self.output_overload_signal_given = True
         #self.edit.insertHtml(QtCore.QString(string))
 
     @QtCore.pyqtSlot(list)

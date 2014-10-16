@@ -4,10 +4,6 @@ Created on Mon Aug 18 08:38:24 2014
 
 @author: rnaber
 
-TODO
-
-Implement shift changes, breaks, factory shut-downs...
-
 """
 
 from __future__ import division

@@ -31,7 +31,7 @@ class BatchTransport(QtCore.QObject):
         self.transport_counter = 0     
         
         if (self.params['verbose']):
-            string = str(self.env.now) + " - [BatchTransport]" + self.params['name'] + " Added transporter"
+            string = str(self.env.now) + " - [BatchTransport][" + self.params['name'] + "] Added transporter"
             self.output_text.sig.emit(string)
             
         self.env.process(self.run())
@@ -54,7 +54,7 @@ class BatchTransport(QtCore.QObject):
                             self.batchconnections[i][1].start_process()
                             
                             if (self.params['verbose']):
-                                string =  str(self.env.now) + " [BatchTransport]" + self.params['name'] + " Transport from "
+                                string =  str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
                                 string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
                                 self.output_text.sig.emit(string)                                    
 
@@ -74,7 +74,7 @@ class BatchTransport(QtCore.QObject):
                             self.batchconnections[i][0].process_finished = 0
                             
                             if (self.params['verbose']):
-                                string = str(self.env.now) + " [BatchTransport]" + self.params['name'] + " Transport from "
+                                string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
                                 string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
                                 self.output_text.sig.emit(string)                                     
                                 
@@ -101,7 +101,7 @@ class BatchTransport(QtCore.QObject):
                             self.batchconnections[i][1].start_process()
                             
                             if (self.params['verbose']):
-                                string = str(self.env.now) + " [BatchTransport]" + self.params['name'] + " Transport from "
+                                string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
                                 string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
                                 self.output_text.sig.emit(string)                                    
                     

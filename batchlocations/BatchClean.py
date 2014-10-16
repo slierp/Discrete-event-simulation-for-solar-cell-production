@@ -185,7 +185,7 @@ class BatchClean(QtCore.QObject):
             batchconnections.append([self.input,self.batchprocesses[i],self.params['transfer0_time']])
 
         transport_params = {}
-        transport_params['name'] = "[" + self.params['name'] + "][cl0]"
+        transport_params['name'] = "cl0"
         transport_params['batch_size'] = self.params['batch_size']
         transport_params['verbose'] = self.params['verbose']        
         self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
@@ -203,7 +203,7 @@ class BatchClean(QtCore.QObject):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer1_time']])     
 
         transport_params = {}
-        transport_params['name'] = "[" + self.params['name'] + "][cl1]"
+        transport_params['name'] = "cl1"
         transport_params['batch_size'] = self.params['batch_size']
         transport_params['verbose'] = self.params['verbose']        
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
@@ -221,7 +221,7 @@ class BatchClean(QtCore.QObject):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer2_time']])     
 
         transport_params = {}
-        transport_params['name'] = "[" + self.params['name'] + "][cl2]"
+        transport_params['name'] = "cl2"
         transport_params['batch_size'] = self.params['batch_size']
         transport_params['verbose'] = self.params['verbose']         
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
@@ -238,7 +238,7 @@ class BatchClean(QtCore.QObject):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer3_time']])    
 
         transport_params = {}
-        transport_params['name'] = "[" + self.params['name'] + "][cl3]"
+        transport_params['name'] = "cl3"
         transport_params['batch_size'] = self.params['batch_size']
         transport_params['verbose'] = self.params['verbose']
         self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
