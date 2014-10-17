@@ -314,6 +314,7 @@ class MainGui(QtGui.QMainWindow):
     def simulation_output(self,string):        
         
         if self.output_signal_counter < 1000:
+            # limit text output to 999 lines to prevent GUI from becoming unresponsive
             self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
             self.edit.insertPlainText(string + '\n')
             self.output_signal_counter += 1

@@ -42,7 +42,8 @@ class BatchTransport(QtCore.QObject):
                 if isinstance(self.batchconnections[i][0],BatchContainer):
                     # load-in from BatchContainer to BatchProcess
                     if (self.batchconnections[i][0].container.level >= self.params['batch_size']) & \
-                            self.batchconnections[i][1].space_available(self.params['batch_size']):
+                            self.batchconnections[i][1].space_available(self.params['batch_size']) & \
+                            self.batchconnections[i][1].status:
                                                   
                         with self.batchconnections[i][1].resource.request() as request_output:
                             yield request_output
@@ -59,10 +60,11 @@ class BatchTransport(QtCore.QObject):
                                 self.output_text.sig.emit(string)                                    
 
                 elif isinstance(self.batchconnections[i][1],BatchContainer):
-                    # load-out into BatchContainer to BatchProcess
+                    # load-out from BatchProcess into BatchContainer 
                     if (self.batchconnections[i][0].container.level >= self.params['batch_size']) & \
                             self.batchconnections[i][1].space_available(self.params['batch_size']) & \
-                            self.batchconnections[i][0].process_finished:
+                            self.batchconnections[i][0].process_finished & \
+                            self.batchconnections[i][0].status:
 
                         with self.batchconnections[i][0].resource.request() as request_input:
                             yield request_input
@@ -72,6 +74,7 @@ class BatchTransport(QtCore.QObject):
                             self.transport_counter += self.params['batch_size']
                             yield self.batchconnections[i][1].container.put(self.params['batch_size'])
                             self.batchconnections[i][0].process_finished = 0
+                            self.batchconnections[i][0].check_downtime()
                             
                             if (self.params['verbose']):
                                 string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
@@ -84,7 +87,8 @@ class BatchTransport(QtCore.QObject):
                     # only call if you're sure in- and output are BatchProcess
                     if (self.batchconnections[i][0].container.level >= self.params['batch_size']) & \
                             self.batchconnections[i][1].space_available(self.params['batch_size']) & \
-                            self.batchconnections[i][0].process_finished:                           
+                            self.batchconnections[i][0].process_finished & \
+                            self.batchconnections[i][0].status & self.batchconnections[i][1].status:
                         #parentheses are crucial
                     
                         with self.batchconnections[i][0].resource.request() as request_input, \
@@ -97,7 +101,8 @@ class BatchTransport(QtCore.QObject):
                             self.transport_counter += self.params['batch_size']                            
                             yield self.batchconnections[i][1].container.put(self.params['batch_size'])                        
 
-                            self.batchconnections[i][0].process_finished = 0                    
+                            self.batchconnections[i][0].process_finished = 0
+                            self.batchconnections[i][0].check_downtime()
                             self.batchconnections[i][1].start_process()
                             
                             if (self.params['verbose']):

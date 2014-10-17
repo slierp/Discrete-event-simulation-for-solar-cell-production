@@ -48,7 +48,11 @@ class BatchTex(QtCore.QObject):
         self.params['tex_baths'] = 3
         self.params['tex_baths_desc'] = self.tr("Number of baths for alkaline texture")         
         self.params['tex_time'] = 20*60
-        self.params['tex_time_desc'] = self.tr("Time for a single alkaline texturing process (seconds)")        
+        self.params['tex_time_desc'] = self.tr("Time for a single alkaline texturing process (seconds)")
+        self.params['tex_downtime_runs'] = 80
+        self.params['tex_downtime_runs_desc'] = self.tr("Number of texturing processes before downtime")
+        self.params['tex_downtime_duration'] = 60*60
+        self.params['tex_downtime_duration_desc'] = self.tr("Time for a single texturing process downtime cycle (seconds)")
 
         self.params['rinse0_baths'] = 1
         self.params['rinse0_baths_desc'] = self.tr("Number of rinse baths after texture")
@@ -98,6 +102,8 @@ class BatchTex(QtCore.QObject):
             process_params['name'] = "t" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['tex_time']
+            process_params['downtime_runs'] = self.params['tex_downtime_runs']
+            process_params['downtime_duration'] = self.params['tex_downtime_duration']
             process_params['verbose'] = self.params['verbose']
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
