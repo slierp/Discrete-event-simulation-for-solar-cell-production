@@ -76,13 +76,11 @@ class PrintLine(QtCore.QObject):
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         
-        ### List of lists represents dryers ###
-        self.dryers = []
-        for i in np.arange(self.params['no_print_steps']):
-            self.dryers.append([])        
+        ### Array of zeroes represents dryers ###
+        self.dryers = np.zeros((self.params['no_print_steps'],self.params['time_dry']))
 
         ### List represents single lane firing furnace ###
-        self.firing_lane = []
+        self.firing_lane = np.zeros((1,self.params['firing_tool_length']//self.params['firing_unit_distance']))
         
         ### Infinite output container ###
         self.output = InfiniteContainer(self.env,"output")
@@ -171,7 +169,8 @@ class PrintLine(QtCore.QObject):
                     string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
                     self.output_text.sig.emit(string)
                     
-                self.dryers[num].insert(0,0)
+                #self.dryers[num].insert(0,0)
+                self.dryers[num][0] = 1
                 
             else:
                 # if not printing, delay for time needed to load one wafer
@@ -182,55 +181,50 @@ class PrintLine(QtCore.QObject):
 
     def run_dryers(self):
         # Updates drying time for all wafers in dryers
-        while True:
-            for i in np.arange(len(self.dryers)):
-                for j in np.arange(len(self.dryers[i])):
-                    self.dryers[i][j] += 1
-            yield self.env.timeout(1)
+        while True:            
+            self.dryers = np.roll(self.dryers,1)
+            yield self.env.timeout(1)              
 
     def run_dryer_load_out(self):
         # Places wafers into output when they have reached drying time
-        while True:            
-            for i in np.arange(len(self.dryers)):
-                if len(self.dryers[i]):
-                    if (self.dryers[i][-1] >= self.params['time_dry']):
-                        self.dryers[i].pop()
-                        
-                        if (i < (self.params['no_print_steps']-1)):
-                            # go to next printer
-                            yield self.inputs[i+1].container.put(1)
-                        else:
-                            # go to firing furnace
-                            self.firing_lane.insert(0,0)
+        while True:
+            for i,row in enumerate(self.dryers):
+                if row[-1]:
+                    row[-1] = 0
 
+                    if (i < (self.params['no_print_steps']-1)):
+                        #go to next printer
+                        yield self.inputs[i+1].container.put(1)
+                    else:
+                        # go to firing furnace
+                        self.firing_lane[0][0] = 1
+                        # yield time out to prevent loading wafers on top of each other?
+                        
                     if (self.params['verbose']):
                         string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(i)
-                        self.output_text.sig.emit(string)
+                        self.output_text.sig.emit(string)                        
 
             yield self.env.timeout(1)
 
     def run_firing_lane(self):
         # Updates position for all wafers in firing lane
-        while True:
-            for i in np.arange(len(self.firing_lane)):
-                self.firing_lane[i] += self.params['firing_belt_speed']/60
-                    
-            yield self.env.timeout(1)
+        while True:                    
+            self.firing_lane = np.roll(self.firing_lane,1)
+            yield self.env.timeout(60*self.params['firing_unit_distance']/self.params['firing_belt_speed'])            
 
     def run_firing_load_out(self):
         # Places wafers into output when they have reached tool length
         while True:            
-            if len(self.firing_lane):
-                if (self.firing_lane[-1] >= self.params['firing_tool_length']):
-                    self.firing_lane.pop()                
-                    self.output.container.put(1)
-                    
-                    if (self.params['verbose']):
-                        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
-                        self.output_text.sig.emit(string)                    
-
-            yield self.env.timeout(1)
-
+            if self.firing_lane[0][-1]:        
+                self.firing_lane[0][-1] = 0
+                yield self.output.container.put(1)
+                
+                if (self.params['verbose']):
+                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
+                    self.output_text.sig.emit(string)   
+                
+            yield self.env.timeout(1) #60*self.params['firing_unit_distance']/self.params['firing_belt_speed'])        
+            
 class InfiniteContainer(object):
     
     def __init__(self, env, name=""):        
