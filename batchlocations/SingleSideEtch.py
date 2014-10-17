@@ -65,13 +65,23 @@ class SingleSideEtch(QtCore.QObject):
             string = str(self.env.now) + " - [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
             self.output_text.sig.emit(string)
         
-        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])                  
+        ### Input ###
+        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+
+        ### List of list represents lanes ###
+        self.lanes = []
+        for i in np.arange(self.params['no_of_lanes']):
+            self.lanes.append([])
+
+        ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
         
         self.idle_times_internal = {}
         for i in np.arange(self.params['no_of_lanes']):
-            self.env.process(self.run_one_lane(i))
+            self.env.process(self.run_lane_load_in(i))
             self.idle_times_internal[i] = 0
+        self.env.process(self.run_rollers())
+        self.env.process(self.run_lane_load_out())
 
     def report(self):
         string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
@@ -85,7 +95,8 @@ class SingleSideEtch(QtCore.QObject):
             idle_item.append(["l" + str(i),np.round(idle_time,1)])
         self.idle_times.append(idle_item) 
 
-    def run_one_lane(self, lane_number):       
+    def run_lane_load_in(self, lane_number):
+        # Loads wafers in self.lanes if available, times out otherwise
         while True:
             if (self.input.container.level > 0):
                 if self.first_run:
@@ -93,17 +104,33 @@ class SingleSideEtch(QtCore.QObject):
                     self.first_run = False                
                 
                 yield self.input.container.get(1)
-                self.env.process(self.run_wafer_instance(lane_number))
+                self.lanes[lane_number].insert(0,0)
+                
                 yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed']) # same lane cannot accept new unit until after x seconds
             else:                
                 yield self.env.timeout(1)
                 self.idle_times_internal[lane_number] += 1
-                
-    def run_wafer_instance(self, lane_number):
-        yield self.env.timeout(60*self.params['tool_length']/self.params['belt_speed'])
-        yield self.output.container.put(1) 
-        self.transport_counter += 1
-        
-        if (self.params['verbose']) & ((self.transport_counter % self.params['cassette_size']) == 0):            
-            string = str(np.around(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "] Processed " + str(self.params['cassette_size']) + " units"
-            self.output_text.sig.emit(string)
+            
+    def run_rollers(self):
+        # Updates positions of all wafers in the lanes
+        while True:
+            for i in np.arange(len(self.lanes)):
+                for j in np.arange(len(self.lanes[i])):
+                    self.lanes[i][j] += self.params['belt_speed']/60
+            yield self.env.timeout(1)
+
+    def run_lane_load_out(self):
+        # Places wafers into output when they have reached tool_length
+        while True:            
+            for i in np.arange(len(self.lanes)):
+                if len(self.lanes[i]):
+                    if (self.lanes[i][-1] >= self.params['tool_length']):
+                        self.lanes[i].pop()
+                        yield self.output.container.put(1)
+                        self.transport_counter += 1               
+
+            if (self.params['verbose']) & ((self.transport_counter % self.params['cassette_size']) == 0):            
+                string = str(np.around(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "] Processed " + str(self.params['cassette_size']) + " units"
+                self.output_text.sig.emit(string)
+
+            yield self.env.timeout(1)
