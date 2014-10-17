@@ -73,7 +73,18 @@ class PrintLine(QtCore.QObject):
             string = str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"
             self.output_text.sig.emit(string)
 
+        ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        
+        ### List of lists represents dryers ###
+        self.dryers = []
+        for i in np.arange(self.params['no_print_steps']):
+            self.dryers.append([])        
+
+        ### List represents single lane firing furnace ###
+        self.firing_lane = []
+        
+        ### Infinite output container ###
         self.output = InfiniteContainer(self.env,"output")
 
         self.start_time = []
@@ -95,8 +106,11 @@ class PrintLine(QtCore.QObject):
             self.env.process(self.run_belt(i))
             self.env.process(self.run_printer(i))
 
-        self.firing_input = BatchContainer(self.env,"firing_input",1,1)
-        self.env.process(self.run_firing_furnace())
+        self.env.process(self.run_dryers())
+        self.env.process(self.run_dryer_load_out())
+        
+        self.env.process(self.run_firing_lane())
+        self.env.process(self.run_firing_load_out())
 
     def report(self):
         string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
@@ -156,7 +170,9 @@ class PrintLine(QtCore.QObject):
                 if (self.params['verbose']):
                     string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
                     self.output_text.sig.emit(string)
-                self.env.process(self.run_wafer_instance_drying(num))
+                    
+                self.dryers[num].insert(0,0)
+                
             else:
                 # if not printing, delay for time needed to load one wafer
                 yield self.env.timeout(self.params['time_step'])
@@ -164,44 +180,56 @@ class PrintLine(QtCore.QObject):
                 if not self.first_run[num]:
                     self.idle_times_internal[num] += self.params['time_step']
 
-    def run_wafer_instance_drying(self, num):        
-        yield self.env.timeout(self.params['time_dry'])
-        
-        if (self.params['verbose']):
-            string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
-            self.output_text.sig.emit(string)
-        
-        if (num+1 < self.params['no_print_steps']):
-            # go to next printer
-            yield self.inputs[num+1].container.put(1)
-        else:
-            # go to firing furnace
-            yield self.firing_input.container.put(1)            
+    def run_dryers(self):
+        # Updates drying time for all wafers in dryers
+        while True:
+            for i in np.arange(len(self.dryers)):
+                for j in np.arange(len(self.dryers[i])):
+                    self.dryers[i][j] += 1
+            yield self.env.timeout(1)
 
-    def run_firing_furnace(self):
-        while True:        
-            if (self.firing_input.container.level):
+    def run_dryer_load_out(self):
+        # Places wafers into output when they have reached drying time
+        while True:            
+            for i in np.arange(len(self.dryers)):
+                if len(self.dryers[i]):
+                    if (self.dryers[i][-1] >= self.params['time_dry']):
+                        self.dryers[i].pop()
+                        
+                        if (i < (self.params['no_print_steps']-1)):
+                            # go to next printer
+                            yield self.inputs[i+1].container.put(1)
+                        else:
+                            # go to firing furnace
+                            self.firing_lane.insert(0,0)
 
-                if self.first_run[len(self.first_run)-1]:
-                    self.start_time[len(self.start_time)-1] = self.env.now
-                    self.first_run[len(self.first_run)-1] = False
-                 
-                yield self.firing_input.container.get(1)
-                self.env.process(self.run_wafer_instance_firing())
-                yield self.env.timeout(60*self.params['firing_unit_distance']/self.params['firing_belt_speed']) # same lane cannot accept new unit until after x seconds
-            else:
-                yield self.env.timeout(1) # check every second for new wafers
-                
-                if not self.first_run[len(self.first_run)-1]:
-                    self.idle_times_internal[len(self.idle_times_internal)-1] += 1
-            
-    def run_wafer_instance_firing(self):
-        yield self.env.timeout(60*self.params['firing_tool_length']/self.params['firing_belt_speed'])        
-        yield self.output.container.put(1)
-        
-        if (self.params['verbose']):
-            string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
-            self.output_text.sig.emit(string)
+                    if (self.params['verbose']):
+                        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(i)
+                        self.output_text.sig.emit(string)
+
+            yield self.env.timeout(1)
+
+    def run_firing_lane(self):
+        # Updates position for all wafers in firing lane
+        while True:
+            for i in np.arange(len(self.firing_lane)):
+                self.firing_lane[i] += self.params['firing_belt_speed']/60
+                    
+            yield self.env.timeout(1)
+
+    def run_firing_load_out(self):
+        # Places wafers into output when they have reached tool length
+        while True:            
+            if len(self.firing_lane):
+                if (self.firing_lane[-1] >= self.params['firing_tool_length']):
+                    self.firing_lane.pop()                
+                    self.output.container.put(1)
+                    
+                    if (self.params['verbose']):
+                        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
+                        self.output_text.sig.emit(string)                    
+
+            yield self.env.timeout(1)
 
 class InfiniteContainer(object):
     

@@ -1,7 +1,7 @@
 TODO
 ====
 
-- Implement speed up of inline tools, similar way to SSE
+- Speed up array operations in SSE and PrintLine
 - Implement down-time settings for whole tools (SSE in particular)
 - Implement down-time settings for tube furnace and PECVD
 - Implement ion implant
