@@ -34,6 +34,9 @@ class SingleSideEtch(QtCore.QObject):
         self.params['specification'] += self.tr("There are several of types of automation. ")
         self.params['specification'] += self.tr("Assumed now is that each lane is fed separately with new wafers, ")
         self.params['specification'] += self.tr("with no interruption between cassettes (i.e. cassettes stacked on top of each other).\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("There is a downtime procedure defined for the whole tool, during which the ")         
+        self.params['specification'] += self.tr("etching solution is replaced.")          
 
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual batch location")
@@ -53,7 +56,7 @@ class SingleSideEtch(QtCore.QObject):
         self.params['downtime_volume'] = 100000
         self.params['downtime_volume_desc'] = self.tr("Number of entered wafers before downtime")
         self.params['downtime_duration'] = 60*60
-        self.params['downtime_duration_desc'] = self.tr("Time for a single machine downtime cycle (seconds)")
+        self.params['downtime_duration_desc'] = self.tr("Time for a single tool downtime cycle (seconds)")
         
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")

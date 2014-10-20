@@ -35,7 +35,10 @@ class TubePECVD(QtCore.QObject):
         self.params['specification'] += "\n"
         self.params['specification'] += self.tr("The number of batches in the system is limited by the no_of_boats variable.\n")
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).")
+        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).\n")
+        self.params['specification'] += "\n"        
+        self.params['specification'] += self.tr("There is no tool downtime defined because boat cleaning does not impede ")
+        self.params['specification'] += self.tr("ongoing production, while the preventive maintenance needed is very infrequent.")        
 
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual batch location")

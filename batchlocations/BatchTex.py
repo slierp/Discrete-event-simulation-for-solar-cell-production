@@ -34,7 +34,10 @@ class BatchTex(QtCore.QObject):
         self.params['specification'] += self.tr("There are three batch transporters:\n")        
         self.params['specification'] += self.tr("- Between input, texture and first rinse\n")
         self.params['specification'] += self.tr("- Between first rinse, neutralization, second rinse and the dryers\n")
-        self.params['specification'] += self.tr("- Between dryers and output")        
+        self.params['specification'] += self.tr("- Between dryers and output\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("There is a downtime procedure defined for the texturing baths, during which the ")         
+        self.params['specification'] += self.tr("texturing solution is replaced.")        
 
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual batch location")

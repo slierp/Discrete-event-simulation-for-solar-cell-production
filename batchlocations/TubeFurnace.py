@@ -35,7 +35,10 @@ class TubeFurnace(QtCore.QObject):
         self.params['specification'] += "\n"
         self.params['specification'] += self.tr("The number of batches in the system is limited by the no_of_boats variable.\n")
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).")
+        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).\n")
+        self.params['specification'] += "\n"
+        self.params['specification'] += self.tr("Tool downtime is defined as a procedure where the whole tool is put offline for a short period ")
+        self.params['specification'] += self.tr("during which preventive maintenance is performed.")
 
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual batch location")
@@ -45,6 +48,11 @@ class TubeFurnace(QtCore.QObject):
         self.params['process_time_desc'] = self.tr("Time for a single process (seconds)")
         self.params['cool_time'] = 10*60
         self.params['cool_time_desc'] = self.tr("Time for a single cooldown (seconds)")
+
+        self.params['downtime_runs'] = 1000
+        self.params['downtime_runs_desc'] = self.tr("Number of furnace processes before downtime")       
+        self.params['downtime_duration'] = 60*60
+        self.params['downtime_duration_desc'] = self.tr("Time for a single tool downtime cycle (seconds)")
         
         self.params['no_of_processes'] = 4
         self.params['no_of_processes_desc'] = self.tr("Number of process locations in the tool")
@@ -80,6 +88,7 @@ class TubeFurnace(QtCore.QObject):
 
         self.transport_counter = 0
         self.batches_loaded = 0
+        self.process_counter = 0        
         self.load_in_start = self.env.event()
         self.load_out_start = self.env.event()
         self.load_in_out_end = self.env.event()
@@ -141,6 +150,16 @@ class TubeFurnace(QtCore.QObject):
             batchconnections.append([self.batchprocesses[i%self.params['no_of_processes']],self.coolprocesses[j]])
         
         while True:
+            if (self.params['downtime_runs'] > 0) & (self.process_counter >= self.params['downtime_runs']) & \
+                (self.batches_loaded == 0):
+                    # if downtime is needed and all batches have been unloaded, enter downtime
+                    yield self.env.timeout(self.params['downtime_duration'])
+                    self.process_counter = 0
+                    
+                    if (self.params['verbose']):
+                        string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] End downtime"
+                        self.output_text.sig.emit(string)
+            
             for i in range(len(batchconnections)):
                 # first check if we can move any batch from tube to cool_down
                 if (batchconnections[i][0].container.level > 0) & \
@@ -185,8 +204,11 @@ class TubeFurnace(QtCore.QObject):
                         yield self.load_out_start.succeed()
                         yield self.load_in_out_end
                         self.load_out_start = self.env.event()                    
-            
-            if (self.batches_loaded < self.params['no_of_boats']) & (self.input.container.level >= self.params['batch_size']) & \
+
+            if (self.params['downtime_runs'] > 0) & (self.process_counter >= self.params['downtime_runs']):
+                # do not perform load-in if machine needs to enter downtime
+                pass            
+            elif (self.batches_loaded < self.params['no_of_boats']) & (self.input.container.level >= self.params['batch_size']) & \
                     (self.boat_load_unload.container.level == 0):
                 # ask for more wafers if there is a boat and wafers available
                 yield self.load_in_start.succeed()
@@ -206,6 +228,7 @@ class TubeFurnace(QtCore.QObject):
                         yield self.batchprocesses[i].container.put(self.params['batch_size'])
 
                         self.batchprocesses[i].start_process()
+                        self.process_counter += 1
                         
                         if (self.params['verbose']):
                             string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
