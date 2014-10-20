@@ -4,10 +4,6 @@ Created on Mon Aug 18 13:55:53 2014
 
 @author: rnaber
 
-TODO
-Output put action should yield to two things: put and timer
-If time_limit is reached because there is no output space available, destroy wafer?
-
 """
 
 from __future__ import division
@@ -53,16 +49,23 @@ class SingleSideEtch(QtCore.QObject):
         self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions at input and the same number at output")
+        
+        self.params['downtime_volume'] = 100000
+        self.params['downtime_volume_desc'] = self.tr("Number of entered wafers before downtime")
+        self.params['downtime_duration'] = 60*60
+        self.params['downtime_duration_desc'] = self.tr("Time for a single machine downtime cycle (seconds)")
+        
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
         self.params.update(_params)         
         
         self.transport_counter = 0
         self.start_time = self.env.now
-        self.first_run = True        
+        self.first_run = True
+        self.process_counter = 0      
         
         if (self.params['verbose']):
-            string = str(self.env.now) + " - [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
+            string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
             self.output_text.sig.emit(string)
         
         ### Input ###
@@ -91,18 +94,28 @@ class SingleSideEtch(QtCore.QObject):
         for i in self.idle_times_internal:
             idle_time = 100*self.idle_times_internal[i]/(self.env.now-self.start_time)
             idle_item.append(["l" + str(i),np.round(idle_time,1)])
-        self.idle_times.append(idle_item) 
+        self.idle_times.append(idle_item)
 
     def run_lane_load_in(self, lane_number):
         # Loads wafers in self.lanes if available, times out otherwise
+            
         while True:
-            if (self.input.container.level > 0):
+            if (self.params['downtime_volume'] > 0) & (self.process_counter >= self.params['downtime_volume']):
+                yield self.env.timeout(self.params['downtime_duration'])
+                self.idle_times_internal[lane_number] += self.params['downtime_duration']
+                self.process_counter = 0
+                
+                if (self.params['verbose']):
+                    string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] End downtime"
+                    self.output_text.sig.emit(string)
+            elif (self.input.container.level > 0):
                 if self.first_run:
                     self.start_time = self.env.now
                     self.first_run = False                
                 
                 yield self.input.container.get(1)
                 self.lanes[lane_number][0] = 1
+                self.process_counter += 1
                 
                 yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed']) # same lane cannot accept new unit until after x seconds
             else:                

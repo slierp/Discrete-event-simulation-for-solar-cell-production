@@ -20,7 +20,7 @@ from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 #import simpyx as simpy
 import simpy
-#import cProfile, pstats, StringIO
+import cProfile, pstats, StringIO
 import numpy as np
 from PyQt4 import QtCore
 #from PyQt4 import QtGui # only needed when not running simulation in separate thread
@@ -122,8 +122,8 @@ class RunSimulationThread(QtCore.QThread):
         self.output.sig.emit("0% progress: 0 hours / 0 produced")
 
         ### Profiler start ###
-        #pr = cProfile.Profile()
-        #pr.enable()
+        pr = cProfile.Profile()
+        pr.enable()
 
         ### Run simulation ###
         prev_production_volume_update = 0
@@ -157,12 +157,12 @@ class RunSimulationThread(QtCore.QThread):
                 prev_production_volume_update = percentage_production_volume_update                
 
         ### Profiler end ###
-        #pr.disable()
-        #s = StringIO.StringIO()
-        #sortby = 'tottime'
-        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        #ps.print_stats()
-        #print s.getvalue()
+        pr.disable()
+        s = StringIO.StringIO()
+        sortby = 'tottime'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print s.getvalue()
 
         ### Generate summary output in log tab ###
         for i, value in enumerate(self.batchlocations):

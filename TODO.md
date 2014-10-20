@@ -1,7 +1,6 @@
 TODO
 ====
 
-- Implement down-time settings for whole tools (SSE in particular)
 - Implement down-time settings for tube furnace and PECVD
 - Implement ion implant
 - Add calculation of nominal speed and generate utilization rate

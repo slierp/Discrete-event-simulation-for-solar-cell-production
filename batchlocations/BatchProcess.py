@@ -99,7 +99,6 @@ class BatchProcess(QtCore.QObject):
                     yield request
                     self.status = 0                   
                     yield self.env.timeout(self.params['downtime_duration'])
-                    self.process_time_counter += self.params['downtime_duration']
                     self.status = 1
                     self.process_counter = 0
                     self.last_downtime = self.env.now
@@ -114,7 +113,6 @@ class BatchProcess(QtCore.QObject):
             yield request
             self.status = 0                   
             yield self.env.timeout(self.params['downtime_duration'])
-            self.process_time_counter += self.params['downtime_duration']
             self.status = 1
             self.process_counter = 0
             self.last_downtime = self.env.now
