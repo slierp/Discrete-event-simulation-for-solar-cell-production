@@ -115,7 +115,7 @@ class SingleSideEtch(QtCore.QObject):
         while True:
             if (self.params['downtime_volume'] > 0) & (self.process_counter >= self.params['downtime_volume']):
                 yield self.env.timeout(self.params['downtime_duration'])
-                for i in self.params['no_of_lanes']:
+                for i in np.arange(0,self.params['no_of_lanes']):
                     self.idle_times_internal[i] += self.params['downtime_duration']
                 self.process_counter = 0
                 
