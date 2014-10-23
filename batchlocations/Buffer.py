@@ -17,6 +17,7 @@ class Buffer(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.idle_times = []
+        self.utilization = []      
         
         self.params = {}
         self.params['specification'] = self.tr("Buffer consists of:\n")

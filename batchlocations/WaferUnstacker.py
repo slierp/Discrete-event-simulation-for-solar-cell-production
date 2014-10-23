@@ -19,6 +19,7 @@ class WaferUnstacker(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.idle_times = []
+        self.utilization = []        
         self.next_step = self.env.event()        
         
         self.params = {}

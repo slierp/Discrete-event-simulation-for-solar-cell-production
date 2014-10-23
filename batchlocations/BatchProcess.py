@@ -15,8 +15,7 @@ class BatchProcess(QtCore.QObject):
     def __init__(self,  _env, _output=None, _params = {}):
         QtCore.QObject.__init__(self)
         self.env = _env
-        self.output_text = _output
-        self.idle_times = []     
+        self.output_text = _output       
 
         self.params = {}
         self.params['name'] = ""

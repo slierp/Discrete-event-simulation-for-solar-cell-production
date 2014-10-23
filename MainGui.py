@@ -43,7 +43,7 @@ class MainGui(QtGui.QMainWindow):
         self.simulation_thread = RunSimulationThread(self,self.edit)
         self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
         self.simulation_thread.output.sig.connect(self.simulation_output)
-        self.simulation_thread.idle.sig.connect(self.idle_times_output)
+        self.simulation_thread.util.sig.connect(self.utilization_output)
         self.output_signal_counter = 0        
         self.output_overload_signal_given = False        
 
@@ -325,21 +325,25 @@ class MainGui(QtGui.QMainWindow):
         #self.edit.insertHtml(QtCore.QString(string))
 
     @QtCore.pyqtSlot(list)
-    def idle_times_output(self,idle_times):
+    def utilization_output(self,utilization):
 
-        for i, row in enumerate(idle_times):
-            item0 = QtGui.QTableWidgetItem(idle_times[i][0])
-            item1 = QtGui.QTableWidgetItem(idle_times[i][1])
+        for i, value in enumerate(utilization):
+            item0 = QtGui.QTableWidgetItem(utilization[i][0])
+            item1 = QtGui.QTableWidgetItem(utilization[i][1])
+            item2 = QtGui.QTableWidgetItem(str(int(utilization[i][2])))
+            item3 = QtGui.QTableWidgetItem(str(int(utilization[i][3])) + "%")
             self.table_widget.setItem(i, 0, item0)
             self.table_widget.setItem(i, 1, item1)
+            self.table_widget.setItem(i, 2, item2)
+            self.table_widget.setItem(i, 3, item3)            
             
-            for j in np.arange(2,len(idle_times[i])):
-                item = QtGui.QTableWidgetItem(str(idle_times[i][j][0]) + "-" + str(idle_times[i][j][1]) + "%")
+            for j in np.arange(4,len(utilization[i])):
+                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + "-" + str(utilization[i][j][1]) + "%")
                 self.table_widget.setItem(i, j, item)
                 
-                if (idle_times[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
-                elif (idle_times[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
-                elif (idle_times[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
+                if (utilization[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
+                elif (utilization[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
+                elif (utilization[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
                 else: color_code = QtGui.QColor(255,100,100)
                     
                 self.table_widget.item(i, j).setBackground(color_code)
@@ -497,21 +501,21 @@ class MainGui(QtGui.QMainWindow):
         toolbar_hbox.addWidget(self.sim_time_combo)        
         
         bottom_tabwidget = QtGui.QTabWidget()
-        bottom_tabwidget.addTab(self.edit, QtCore.QString("Log"))
+        bottom_tabwidget.addTab(self.edit, QtCore.QString("Activity log"))
 
         ##### Idle time tab #####       
         self.table_widget.setRowCount(64)
         self.table_widget.setColumnCount(35)
         self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
 
-        headerlabels = ['Tool type','Name']
-        for i in np.arange(2,35):
-            headerlabels.append("Process " + str(i-2))
+        headerlabels = ['Tool type','Name','Nominal','Util rate']
+        for i in np.arange(4,35):
+            headerlabels.append("Process " + str(i-4))
         self.table_widget.setHorizontalHeaderLabels(headerlabels)
         self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
         self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
                 
-        bottom_tabwidget.addTab(self.table_widget, QtCore.QString("Idle"))
+        bottom_tabwidget.addTab(self.table_widget, QtCore.QString("Utilization"))
         
         ##### Main layout #####
         top_hbox = QtGui.QHBoxLayout()

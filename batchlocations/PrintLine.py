@@ -22,7 +22,7 @@ class PrintLine(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.idle_times = []
+        self.utilization = []
         
         self.params = {}
         self.params['specification'] = self.tr("PrintLine consists of:\n")
@@ -62,8 +62,8 @@ class PrintLine(QtCore.QObject):
         self.params['firing_tool_length_desc'] = self.tr("Distance between firing furnace input and output (meters)")
         self.params['firing_belt_speed'] = 5.0 # 5 is roughly 200 ipm
         self.params['firing_belt_speed_desc'] = self.tr("Speed at which all units travel (meters per minute)")
-        self.params['firing_unit_distance'] = 0.2
-        self.params['firing_unit_distance_desc'] = self.tr("Minimal distance between wafers (meters)")
+        #self.params['firing_unit_distance'] = 0.2
+        #self.params['firing_unit_distance_desc'] = self.tr("Minimal distance between wafers (meters)")
         
         self.params['verbose'] = False
         self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
@@ -75,12 +75,15 @@ class PrintLine(QtCore.QObject):
 
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+
+        ### Array of zeroes represents belts ###
+        self.belts = np.zeros((self.params['no_print_steps'],self.params['units_on_belt_input']))
         
         ### Array of zeroes represents dryers ###
         self.dryers = np.zeros((self.params['no_print_steps'],self.params['time_dry']))
 
         ### List represents single lane firing furnace ###
-        self.firing_lane = np.zeros((1,self.params['firing_tool_length']//self.params['firing_unit_distance']))
+        self.firing_lane = np.zeros((1,60*self.params['firing_tool_length']//self.params['firing_belt_speed']))
         
         ### Infinite output container ###
         self.output = InfiniteContainer(self.env,"output")
@@ -93,20 +96,14 @@ class PrintLine(QtCore.QObject):
             self.first_run.append(True)
             self.start_time.append(0)
 
-        self.next_step = {} # trigger events
-        self.belts = {} # belts preceeding printers
-        self.inputs = {} # cassette-like input before belts
+        self.next_step = self.env.event() # triggers load-in from cassette
 
         for i in np.arange(self.params['no_print_steps']):
-            self.next_step[i] = self.env.event()
-            self.belts[i] = BatchContainer(self.env,"belt_input",self.params['units_on_belt_input'],1)
-            self.inputs[i] = BatchContainer(self.env,"input",self.params['cassette_size'],1) # buffer inside printer line            
-            self.env.process(self.run_belt(i))
             self.env.process(self.run_printer(i))
+            self.env.process(self.run_dryer_load_out(i))
 
-        self.env.process(self.run_dryers())
-        self.env.process(self.run_dryer_load_out())
-        
+        self.env.process(self.run_belt())
+        self.env.process(self.run_dryers())        
         self.env.process(self.run_firing_lane())
         self.env.process(self.run_firing_load_out())
 
@@ -114,66 +111,96 @@ class PrintLine(QtCore.QObject):
         string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
         self.output_text.sig.emit(string)
         
-        idle_item = []
-        idle_item.append("PrintLine")
-        idle_item.append(self.params['name'])
+        self.utilization.append("PrintLine")
+        self.utilization.append(self.params['name'])
+        self.utilization.append(self.nominal_throughput())
+        production_volume = self.output.container.level
+        production_hours = (self.env.now - self.start_time[0])/3600
+        self.utilization.append(np.round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        
         for i in range(len(self.idle_times_internal)):
             if self.first_run[i]:
                 idle_time = 100.0
             else:
                 idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time[i])
-            idle_item.append(["p" + str(i),np.round(idle_time,1)])
+            self.utilization.append(["p" + str(i),np.round(idle_time,1)])
         
-        idle_item[len(idle_item)-1][0] = "f0"
-        self.idle_times.append(idle_item) 
+        self.utilization[len(self.utilization)-1][0] = "f0"
 
-    def run_belt(self, num):        
+    def run_belt(self): # For first belt      
         while True:
-            yield self.next_step[num]
-                        
-            if (num):
-                yield self.inputs[num].container.get(1)
-            else:                
-                yield self.input.container.get(1)
-                
+            yield self.next_step
+
+            yield self.input.container.get(1)
             yield self.env.timeout(self.params['time_cassette_to_belt']) 
-            yield self.belts[num].container.put(1)
-            
+            self.belts[0][0] = 1
+                                                 
             if (self.params['verbose']):
-                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer on printer belt " + str(num)
+                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
                 self.output_text.sig.emit(string)
             
     def run_printer(self, num):        
         while True:
-            if (not num):
-                input_check = (self.input.container.level > 0)
+            if num > 0:
+                input_check = False
             else:
-                input_check = (self.inputs[num].container.level > 0)
+                input_check = (self.input.container.level > 0)
             
-            if (self.belts[num].space_available(1)) & (input_check):
-                yield self.next_step[num].succeed()
-                self.next_step[num] = self.env.event() # make new event
-
-            if (not self.belts[num].space_available(1)) | ((not input_check) & (self.belts[num].container.level > 0)):
-                # if belt is fully loaded print one
-                # else if input is empty but still wafers present on belt, continue printing until empty
+            if (self.belts[num][-1] > 0):
+                # if last belt position contains a wafer, start printing
             
                 if self.first_run[num]:
                     self.start_time[num] = self.env.now
                     self.first_run[num] = False            
             
-                yield self.belts[num].container.get(1)
-                yield self.env.timeout(self.params['time_print'])
+                # remove wafer from belt
+                self.belts[num][-1] = 0
+
+                # move belt and try to load new wafer
+                self.belts[num] = np.roll(self.belts[num],1)                
+                if input_check:
+                    yield self.next_step.succeed()               
+                    self.next_step = self.env.event()
+                
+                # perform print
+                time_out = []
+                time_out.append(self.params['time_print'])
+                time_out.append(self.params['time_step'])
+                yield self.env.timeout(np.max(time_out))
                 
                 if (self.params['verbose']):
                     string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
                     self.output_text.sig.emit(string)
-                    
-                #self.dryers[num].insert(0,0)
+
+                # place wafer in dryer after printing                    
                 self.dryers[num][0] = 1
+
+            elif input_check:
+                # if cannot print but there are wafers available in input or on belt
+
+                self.belts[num] = np.roll(self.belts[num],1)            
+                yield self.next_step.succeed()
+                self.next_step = self.env.event() # make new event
+
+                time_out = []
+                time_out.append(self.params['time_cassette_to_belt'])
+                time_out.append(self.params['time_step'])
+                yield self.env.timeout(np.max(time_out))                                                              
+
+                if not self.first_run[num]:
+                    self.idle_times_internal[num] += self.params['time_step']               
+
+            elif (np.sum(self.belts[num]) > 0):
+                
+                self.belts[num] = np.roll(self.belts[num],1)
+                
+                yield self.env.timeout(self.params['time_step'])                                
+
+                if not self.first_run[num]:
+                    self.idle_times_internal[num] += self.params['time_step']
                 
             else:
-                # if not printing, delay for time needed to load one wafer
+                # if cannot print and no wafers available
                 yield self.env.timeout(self.params['time_step'])
                 
                 if not self.first_run[num]:
@@ -183,34 +210,36 @@ class PrintLine(QtCore.QObject):
         # Updates drying time for all wafers in dryers
         while True:            
             self.dryers = np.roll(self.dryers,1)
-            yield self.env.timeout(1)              
+            yield self.env.timeout(1.0)              
 
-    def run_dryer_load_out(self):
+    def run_dryer_load_out(self,num):
         # Places wafers into output when they have reached drying time
         while True:
-            for i,row in enumerate(self.dryers):
-                if row[-1]:
-                    row[-1] = 0
+            if self.dryers[num][-1] > 0:
+                self.dryers[num][-1] = 0
 
-                    if (i < (self.params['no_print_steps']-1)):
-                        #go to next printer
-                        yield self.inputs[i+1].container.put(1)
-                    else:
-                        # go to firing furnace
-                        self.firing_lane[0][0] = 1
-                        # yield time out to prevent loading wafers on top of each other?
+                if (num < (self.params['no_print_steps']-1)):
+                    #go to next printer
+                    self.belts[num+1][0] = 1
+                else:
+                    # go to firing furnace
+                    self.firing_lane[0][0] = 1
+
+                    if self.first_run[num+1]:
+                        self.start_time[num+1] = self.env.now
+                        self.first_run[num+1] = False
                         
-                    if (self.params['verbose']):
-                        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(i)
-                        self.output_text.sig.emit(string)                        
+                if (self.params['verbose']):
+                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
+                    self.output_text.sig.emit(string)                        
 
-            yield self.env.timeout(1)
+            yield self.env.timeout(1.0)
 
     def run_firing_lane(self):
         # Updates position for all wafers in firing lane
         while True:                    
             self.firing_lane = np.roll(self.firing_lane,1)
-            yield self.env.timeout(60*self.params['firing_unit_distance']/self.params['firing_belt_speed'])            
+            yield self.env.timeout(1.0)  
 
     def run_firing_load_out(self):
         # Places wafers into output when they have reached tool length
@@ -222,8 +251,14 @@ class PrintLine(QtCore.QObject):
                 if (self.params['verbose']):
                     string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
                     self.output_text.sig.emit(string)   
+            else:
+                if not self.first_run[self.params['no_print_steps']]:
+                    self.idle_times_internal[self.params['no_print_steps']] += 1.0
                 
-            yield self.env.timeout(1) #60*self.params['firing_unit_distance']/self.params['firing_belt_speed'])        
+            yield self.env.timeout(1.0)       
+
+    def nominal_throughput(self):
+        return 3600/self.params['time_print']
             
 class InfiniteContainer(object):
     

@@ -69,9 +69,9 @@ class RunSimulation(QtCore.QObject):
             # clear idle tab and reset headers
             self.parent.table_widget.clear()
         
-            headerlabels = ['Tool type','Name']
-            for i in np.arange(2,35):
-                headerlabels.append("Process " + str(i-2))
+            headerlabels = ['Tool type','Name','Nominal','Util rate']
+            for i in np.arange(4,35):
+                headerlabels.append("Process " + str(i-4))
             self.parent.table_widget.setHorizontalHeaderLabels(headerlabels)
             self.parent.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
             self.parent.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)

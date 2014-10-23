@@ -17,7 +17,7 @@ class SingleSideEtch(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.idle_times = []
+        self.utilization = []       
         
         self.params = {}
         self.params['specification'] = self.tr("SingleSideEtch consists of:\n")
@@ -74,75 +74,92 @@ class SingleSideEtch(QtCore.QObject):
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
 
-        ### Array of zeros represents lanes ###
+        ### Array of zeroes represents lanes ###
         self.lanes = np.zeros((self.params['no_of_lanes'],self.params['tool_length']//self.params['unit_distance']))
 
         ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
         
         self.idle_times_internal = {}
+        
         for i in np.arange(self.params['no_of_lanes']):
             self.env.process(self.run_lane_load_in(i))
             self.idle_times_internal[i] = 0
-        self.env.process(self.run_rollers())
+
+        self.env.process(self.run_lanes())
         self.env.process(self.run_lane_load_out())
 
     def report(self):
-        string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+        string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
         self.output_text.sig.emit(string)
 
-        idle_item = []
-        idle_item.append("SingleSideEtch")
-        idle_item.append(self.params['name'])
-        for i in self.idle_times_internal:
-            idle_time = 100*self.idle_times_internal[i]/(self.env.now-self.start_time)
-            idle_item.append(["l" + str(i),np.round(idle_time,1)])
-        self.idle_times.append(idle_item)
+        self.utilization.append("SingleSideEtch")
+        self.utilization.append(self.params['name'])
+        self.utilization.append(self.nominal_throughput())
+        production_volume = self.transport_counter - self.output.container.level
+        production_hours = (self.env.now - self.start_time)/3600
+        self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())               
+
+        for i in range(len(self.idle_times_internal)):
+            if self.first_run:
+                idle_time = 100.0
+            else:
+                idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time)
+            self.utilization.append(["l" + str(i),np.round(idle_time,1)])
 
     def run_lane_load_in(self, lane_number):
-        # Loads wafers in self.lanes if available, times out otherwise
-            
+        # Loads wafers if available
+        # Implementation optimized for minimal timeouts
+        # All processes timeout with the same duration
+    
         while True:
             if (self.params['downtime_volume'] > 0) & (self.process_counter >= self.params['downtime_volume']):
                 yield self.env.timeout(self.params['downtime_duration'])
-                self.idle_times_internal[lane_number] += self.params['downtime_duration']
+                for i in self.params['no_of_lanes']:
+                    self.idle_times_internal[i] += self.params['downtime_duration']
                 self.process_counter = 0
                 
                 if (self.params['verbose']):
                     string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] End downtime"
                     self.output_text.sig.emit(string)
-            elif (self.input.container.level > 0):
+
+            if (self.input.container.level > lane_number):
+                # all lanes are started simultaneously, so only continue if there are enough wafers for this particular lane
                 if self.first_run:
                     self.start_time = self.env.now
-                    self.first_run = False                
+                    self.first_run = False
                 
-                yield self.input.container.get(1)
+                yield self.input.container.get(1)            
+                #self.env.process(self.run_wafer_instance())
                 self.lanes[lane_number][0] = 1
-                self.process_counter += 1
+                self.process_counter += 1               
                 
-                yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed']) # same lane cannot accept new unit until after x seconds
-            else:                
-                yield self.env.timeout(1)
-                self.idle_times_internal[lane_number] += 1
-            
-    def run_rollers(self):
-        # Updates positions of all wafers in the lanes
-        while True:            
+                if self.params['verbose']:
+                    if ((self.process_counter % self.params['cassette_size']) == 0):            
+                        string = str(np.around(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+                        string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number)
+                        self.output_text.sig.emit(string)
+                        
+            elif not self.first_run:
+                # start counting down-time after first run
+                self.idle_times_internal[lane_number] += 60*self.params['unit_distance']/self.params['belt_speed']
+                        
+            yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed'])
+
+    def run_lanes(self):
+        while True:
             self.lanes = np.roll(self.lanes,1)
             yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed'])
 
     def run_lane_load_out(self):
-        # Places wafers into output when they have reached tool_length
-        while True:               
-            for row in self.lanes:
-                if row[-1]:
-                    row[-1] = 0
+        while True:
+            for i in np.arange(0,self.params['no_of_lanes']):
+                if self.lanes[i][-1] == 1:
+                    self.lanes[i][-1] = 0
                     yield self.output.container.put(1)
                     self.transport_counter += 1
                     
-                    if self.params['verbose']:
-                        if ((self.transport_counter % self.params['cassette_size']) == 0) & self.transport_counter:            
-                            string = str(np.around(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "] Processed " + str(self.params['cassette_size']) + " units"
-                            self.output_text.sig.emit(string)
-
             yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed'])
+
+    def nominal_throughput(self):       
+        return self.params['no_of_lanes']*60*self.params['belt_speed']/self.params['unit_distance']

@@ -20,6 +20,7 @@ class BatchTex(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.idle_times = []
+        self.utilization = []
         
         self.params = {}
         self.params['specification'] = self.tr("BatchTex consists of:\n")
@@ -208,9 +209,23 @@ class BatchTex(QtCore.QObject):
         string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
         self.output_text.sig.emit(string)        
 
-        idle_item = []
-        idle_item.append("BatchTex")
-        idle_item.append(self.params['name'])
+        self.utilization.append("BatchTex")
+        self.utilization.append(self.params['name'])
+        self.utilization.append(self.nominal_throughput())
+        production_volume = self.transport2.transport_counter - self.output.container.level
+        production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
+        self.utilization.append(np.round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        
         for i in range(len(self.batchprocesses)):
-            idle_item.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
-        self.idle_times.append(idle_item)                 
+            self.utilization.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
+        
+    def nominal_throughput(self):
+        throughputs = []        
+        throughputs.append(self.params['batch_size']*self.params['tex_baths']*3600/self.params['tex_time'])
+        throughputs.append(self.params['batch_size']*self.params['rinse0_baths']*3600/self.params['rinse0_time'])
+        throughputs.append(self.params['batch_size']*self.params['neutr_baths']*3600/self.params['neutr_time'])
+        throughputs.append(self.params['batch_size']*self.params['rinse1_baths']*3600/self.params['rinse1_time'])
+        throughputs.append(self.params['batch_size']*self.params['dryer_count']*3600/self.params['dry_time'])
+        return min(throughputs)        
+        
+        

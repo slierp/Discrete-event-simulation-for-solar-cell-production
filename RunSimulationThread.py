@@ -20,7 +20,7 @@ from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 #import simpyx as simpy
 import simpy
-import cProfile, pstats, StringIO
+#import cProfile, pstats, StringIO
 import numpy as np
 from PyQt4 import QtCore
 #from PyQt4 import QtGui # only needed when not running simulation in separate thread
@@ -41,7 +41,7 @@ class RunSimulationThread(QtCore.QThread):
         self.stop_simulation = False        
         self.signal = StringSignal()        
         self.output = StringSignal()
-        self.idle = ListSignal()
+        self.util = ListSignal()
 
     def make_unique(self,nonunique):
         unique = []
@@ -111,10 +111,7 @@ class RunSimulationThread(QtCore.QThread):
         
         percentage_updates = []
         for i in np.arange(0,10):
-            if (len(percentage_updates)):
-                percentage_updates.append(percentage_updates[i-1] + (self.params['time_limit'] // 10))
-            else:
-                percentage_updates.append(self.params['time_limit'] // 10)    
+            percentage_updates.append((i+1) * self.params['time_limit'] / 10)    
                 
         updates_list = hourly_updates + percentage_updates
         updates_list = self.make_unique(updates_list)
@@ -122,8 +119,8 @@ class RunSimulationThread(QtCore.QThread):
         self.output.sig.emit("0% progress: 0 hours / 0 produced")
 
         ### Profiler start ###
-        pr = cProfile.Profile()
-        pr.enable()
+        #pr = cProfile.Profile()
+        #pr.enable()
 
         ### Run simulation ###
         prev_production_volume_update = 0
@@ -139,7 +136,7 @@ class RunSimulationThread(QtCore.QThread):
             if (i == self.params['time_limit']):                
                 string = "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
                 self.output.sig.emit(string)                            
-            elif (i % (self.params['time_limit'] // 10) == 0):
+            elif i in percentage_updates: #% (self.params['time_limit'] // 10) == 0):
                 
                 l_loc = len(self.locationgroups)
                 percentage_production_volume_update = 0
@@ -150,19 +147,19 @@ class RunSimulationThread(QtCore.QThread):
                 percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
                 
                 string = str(np.round(100*i/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours / "
-                string += str(percentage_production_volume_update) + " produced (" + str(np.round(percentage_wph_update).astype(int)) + " wph)"
+                string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
                 self.output.sig.emit(string)
 
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update                
 
         ### Profiler end ###
-        pr.disable()
-        s = StringIO.StringIO()
-        sortby = 'tottime'
-        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        ps.print_stats()
-        print s.getvalue()
+        #pr.disable()
+        #s = StringIO.StringIO()
+        #sortby = 'tottime'
+        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        #ps.print_stats()
+        #print s.getvalue()
 
         ### Generate summary output in log tab ###
         for i, value in enumerate(self.batchlocations):
@@ -171,13 +168,12 @@ class RunSimulationThread(QtCore.QThread):
         for i, value in enumerate(self.operators):
             self.operators[i].report()
 
-        ### Generate idle time output for special tab ###
-        idle_times = []
+        ### Generate utilization output for special tab ###
+        utilization_list = []
         for i, value in enumerate(self.batchlocations):
-            if len(self.batchlocations[i].idle_times):
-                for j, value2 in enumerate(self.batchlocations[i].idle_times):
-                    idle_times.append(self.batchlocations[i].idle_times[j])
-        self.idle.sig.emit(idle_times)
+            if len(self.batchlocations[i].utilization):
+                utilization_list.append(self.batchlocations[i].utilization)
+        self.util.sig.emit(utilization_list)
 
         ### Calculate sum of all produced cells ###
         prod_vol = 0
