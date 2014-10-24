@@ -1,7 +1,7 @@
 Discrete-event-simulation-for-solar-cell-production
 ===================================================
 
-The goal of this Python program is to be a platform for the simulation of the logistic aspects of (silicon) solar cell production lines. It is based on the Python package SimPy that enables discrete event simulation. The program can simulate every wafer movement within a production line with this technique.
+The goal of this Python program is to be a platform for the simulation of the logistic aspects of (silicon) solar cell production lines. It is based on the Python package SimPy that enables discrete event simulation. The program can simulate every automation, process or transport event within a production line.
 
 <b>Features</b>
 - Graphical user interface to define production lines 
