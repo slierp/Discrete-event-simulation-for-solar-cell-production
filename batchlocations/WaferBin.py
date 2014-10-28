@@ -37,7 +37,7 @@ class WaferBin(QtCore.QObject):
         if (self.params['verbose']):
             string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin"
             self.output_text.sig.emit(string)
-        
+      
         self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")
         

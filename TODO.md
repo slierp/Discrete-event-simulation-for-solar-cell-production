@@ -1,11 +1,9 @@
 TODO
 ====
 
+- Re-implement operators slightly: two modi, one to get wafers, one to enter wafers
+- Render message when throughput is (momentarily) limited by full output
 - Fix bug with >100% util rate BatchClean
-- See how operators interact when they claim wafers from the same machine at the same time
 - Implement ion implant
-- Measure/store vital parameters in pandas DataFrame, eg:
-  - Production volume vs time for each tool
-  - Production throughput vs time for each tool
-  - Buffer sizes in between all tools vs time
-- Add load/save feature for individual tools?
+- Extract waiting times between tools/processes somehow; have operators make note of times for example or implement stores instead of containers
+- Add load/save feature for individual tools

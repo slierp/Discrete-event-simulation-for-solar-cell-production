@@ -64,16 +64,29 @@ class Operator(QtCore.QObject):
                         # abort transport if not enough batches available
                         continue
                     
-                    yield self.batchconnections[i][0].output.container.get(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
-                    yield self.env.timeout(self.batchconnections[i][2] + self.batchconnections[i][3]*no_batches_for_transport)
-                    self.transport_counter += no_batches_for_transport*self.batchconnections[i][0].output.batch_size
-                    yield self.batchconnections[i][1].input.container.put(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
-                    continue_loop = True
+                    request_time  = self.env.now
+                    with self.batchconnections[i][0].output.oper_resource.request() as request_input, \
+                        self.batchconnections[i][1].input.oper_resource.request() as request_output:
+                        yield request_input
+                        yield request_output
+                        
+                        if (self.env.now > request_time):
+                            # if requests were not immediately granted, we cannot be sure if the source and destination
+                            # have not changed, so abort
+                            continue
+                        
+                        yield self.batchconnections[i][0].output.container.get(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)                                          
+                    
+                        yield self.env.timeout(self.batchconnections[i][2] + self.batchconnections[i][3]*no_batches_for_transport)
+                        self.transport_counter += no_batches_for_transport*self.batchconnections[i][0].output.batch_size                    
+                        yield self.batchconnections[i][1].input.container.put(no_batches_for_transport*self.batchconnections[i][0].output.batch_size)
+                    
+                        continue_loop = True
 
-                    if (self.params['verbose']):
-                        string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
-                        string += str(no_batches_for_transport)
-                        self.output_text.sig.emit(string)                              
+                        if (self.params['verbose']):
+                            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
+                            string += str(no_batches_for_transport)
+                            self.output_text.sig.emit(string)                              
 
             if (continue_loop):
                 continue_loop = False

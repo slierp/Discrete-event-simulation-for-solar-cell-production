@@ -21,6 +21,7 @@ class BatchContainer(object):
         self.buffer_size = batch_size*max_batch_no        
         self.process_counter = 0 # for counting processed units
         self.container = simpy.Container(self.env,self.batch_size*max_batch_no,init=0)
+        self.oper_resource = simpy.Resource(self.env, 1) # resource to disentangle multiple operators       
             
     def space_available(self,added_units):
         if ((self.container.level + added_units) <= (self.buffer_size)):
