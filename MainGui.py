@@ -33,12 +33,13 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell production simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
+        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
         
         self.table_widget = QtGui.QTableWidget()        
+        self.clip = QtGui.QApplication.clipboard()
 
         self.simulation_thread = RunSimulationThread(self,self.edit)
         self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
@@ -309,6 +310,21 @@ class MainGui(QtGui.QMainWindow):
     def stop_simulation(self):
         self.simulation_thread.stop_simulation = True
         self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
+
+    def keyPressEvent(self, e):
+        if (e.modifiers() & QtCore.Qt.ControlModifier): # Ctrl
+            selected = self.table_widget.selectedRanges()                 
+ 
+            if e.key() == QtCore.Qt.Key_C: # Copy
+                s = ""
+                for r in xrange(selected[0].topRow(),selected[0].bottomRow()+1):
+                    for c in xrange(selected[0].leftColumn(),selected[0].rightColumn()+1):
+                        try:
+                            s += str(self.table_widget.item(r,c).text()) + "\t"
+                        except AttributeError:
+                            s += "\t"
+                    s = s[:-1] + "\n" #eliminate last '\t'
+                self.clip.setText(s)
 
     @QtCore.pyqtSlot(str)
     def simulation_output(self,string):        
