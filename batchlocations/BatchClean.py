@@ -36,8 +36,8 @@ class BatchClean(QtCore.QObject):
         self.params['specification'] += self.tr("There are four batch transporters:\n")        
         self.params['specification'] += self.tr("- Between input, first oxide etch and first rinse\n")
         self.params['specification'] += self.tr("- Between first rinse, chemical oxidation and second rinse\n")
-        self.params['specification'] += self.tr("- Between second rinse, second oxide etch and third rinse\n")
-        self.params['specification'] += self.tr("- Between third rinse, dryers and output")
+        self.params['specification'] += self.tr("- Between second rinse, second oxide etch, third rinse and dryers\n")
+        self.params['specification'] += self.tr("- Between dryers and output")
         
         self.params['name'] = ""
         self.params['name_desc'] = self.tr("Name of the individual batch location")
@@ -208,9 +208,13 @@ class BatchClean(QtCore.QObject):
         transport_params['verbose'] = self.params['verbose']        
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
-        ### Batch transporter between second rinse, second oxide etch and third rinse ###
+        ### Batch transporter between second rinse, second oxide etch, third rinse and dryers ###
         # First check whether batch can be brought to rinse/output, because that has priority
         batchconnections = []
+
+        for i in np.arange(first_rinse2,first_rinse2+self.params['rinse2_baths']):
+            for j in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
+                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer2_time']])
 
         for i in np.arange(first_oxetch1,first_oxetch1+self.params['oxetch1_baths']):
             for j in np.arange(first_rinse2,first_rinse2+self.params['rinse2_baths']):
@@ -226,16 +230,12 @@ class BatchClean(QtCore.QObject):
         transport_params['verbose'] = self.params['verbose']         
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
-        ### Batch transporter between third rinse, dryers and output ###
-        # First check whether batch can be brought to rinse/output, because that has priority
+        ### Batch transporter between dryers and output ###
+        # First check whether batch can be brought to output, because that has priority
         batchconnections = []
 
         for i in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
-                batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer3_time']])
-
-        for i in np.arange(first_rinse2,first_rinse2+self.params['rinse2_baths']):
-            for j in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
-                batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer3_time']])    
+                batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer3_time']])    
 
         transport_params = {}
         transport_params['name'] = "cl3"

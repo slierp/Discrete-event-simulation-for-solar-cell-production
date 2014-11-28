@@ -33,7 +33,7 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell production simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
