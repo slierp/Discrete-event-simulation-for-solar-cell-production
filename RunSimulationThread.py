@@ -146,7 +146,8 @@ class RunSimulationThread(QtCore.QThread):
                 percentage_wph_update = (percentage_production_volume_update - prev_production_volume_update)
                 percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
                 
-                string = str(np.round(100*i/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours / "
+                # float needed for very large integer division                
+                string = str(np.round(100*float(i)/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours / "
                 string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
                 self.output.sig.emit(string)
 
