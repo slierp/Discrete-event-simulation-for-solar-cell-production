@@ -1,20 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Aug 17 14:56:30 2014
-
-@author: rnaber
-"""
-
 from __future__ import division
-from PyQt4 import QtCore
 from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
 
-class BatchTransport(QtCore.QObject):
+class BatchTransport(object):
     # For simple one-way transports
 
     def __init__(self,  _env, _batchconnections, _output=None, _params = {}):
-        QtCore.QObject.__init__(self)
         self.env = _env
         self.batchconnections = _batchconnections        
         self.output_text = _output        
@@ -29,9 +21,9 @@ class BatchTransport(QtCore.QObject):
         self.name = self.params['name'] # for backward compatibility / to be removed
         self.transport_counter = 0     
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [BatchTransport][" + self.params['name'] + "] Added transporter"
-            self.output_text.sig.emit(string)
+        #if (self.params['verbose']):
+        #    string = str(self.env.now) + " - [BatchTransport][" + self.params['name'] + "] Added transporter"
+        #    self.output_text.sig.emit(string)
             
         self.env.process(self.run())
     
@@ -53,10 +45,10 @@ class BatchTransport(QtCore.QObject):
                             yield self.batchconnections[i][1].container.put(self.params['batch_size'])
                             self.batchconnections[i][1].start_process()
                             
-                            if (self.params['verbose']):
-                                string =  str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
-                                string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
-                                self.output_text.sig.emit(string)                                    
+                            #if (self.params['verbose']):
+                            #    string =  str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
+                            #    string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
+                            #    self.output_text.sig.emit(string)                                    
 
                 elif isinstance(self.batchconnections[i][1],BatchContainer):
                     # load-out from BatchProcess into BatchContainer 
@@ -75,10 +67,10 @@ class BatchTransport(QtCore.QObject):
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
                             
-                            if (self.params['verbose']):
-                                string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
-                                string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
-                                self.output_text.sig.emit(string)                                     
+                            #if (self.params['verbose']):
+                            #    string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
+                            #    string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
+                            #    self.output_text.sig.emit(string)                                     
                                 
                 elif (isinstance(self.batchconnections[i][0],BatchProcess)) & \
                         (isinstance(self.batchconnections[i][1],BatchProcess)):
@@ -104,10 +96,10 @@ class BatchTransport(QtCore.QObject):
                             self.batchconnections[i][0].check_downtime()
                             self.batchconnections[i][1].start_process()
                             
-                            if (self.params['verbose']):
-                                string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
-                                string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
-                                self.output_text.sig.emit(string)                                    
+                            #if (self.params['verbose']):
+                            #    string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from "
+                            #    string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
+                            #    self.output_text.sig.emit(string)                                    
                     
             yield self.env.timeout(self.params['wait_time'])
             

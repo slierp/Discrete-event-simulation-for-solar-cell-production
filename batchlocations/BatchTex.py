@@ -1,99 +1,89 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 18 13:55:53 2014
-
-@author: rnaber
-
-"""
-
 from __future__ import division
-from PyQt4 import QtCore
 from batchlocations.BatchTransport import BatchTransport
 from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
-import numpy as np
 
-class BatchTex(QtCore.QObject):
+class BatchTex(object):
         
     def __init__(self, _env, _output=None, _params = {}):
-        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.idle_times = []
         self.utilization = []
         
         self.params = {}
-        self.params['specification'] = self.tr("BatchTex consists of:\n")
-        self.params['specification'] += self.tr("- Input container\n")
-        self.params['specification'] += self.tr("- Texturing baths\n")
-        self.params['specification'] += self.tr("- Rinse baths\n")
-        self.params['specification'] += self.tr("- Neutralization baths\n")
-        self.params['specification'] += self.tr("- Rinse baths\n")
-        self.params['specification'] += self.tr("- Dryers\n")
-        self.params['specification'] += self.tr("- Output container\n")
+        self.params['specification'] = "BatchTex consists of:\n"
+        self.params['specification'] += "- Input container\n"
+        self.params['specification'] += "- Texturing baths\n"
+        self.params['specification'] += "- Rinse baths\n"
+        self.params['specification'] += "- Neutralization baths\n"
+        self.params['specification'] += "- Rinse baths\n"
+        self.params['specification'] += "- Dryers\n"
+        self.params['specification'] += "- Output container\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("There are three batch transporters:\n")        
-        self.params['specification'] += self.tr("- Between input, texture and first rinse\n")
-        self.params['specification'] += self.tr("- Between first rinse, neutralization, second rinse and the dryers\n")
-        self.params['specification'] += self.tr("- Between dryers and output\n")
+        self.params['specification'] += "There are three batch transporters:\n"
+        self.params['specification'] += "- Between input, texture and first rinse\n"
+        self.params['specification'] += "- Between first rinse, neutralization, second rinse and the dryers\n"
+        self.params['specification'] += "- Between dryers and output\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("There is a downtime procedure defined for the texturing baths, during which the ")         
-        self.params['specification'] += self.tr("texturing solution is replaced.")        
+        self.params['specification'] += "There is a downtime procedure defined for the texturing baths, during which the "
+        self.params['specification'] += "texturing solution is replaced."
 
         self.params['name'] = ""
-        self.params['name_desc'] = self.tr("Name of the individual batch location")
+        self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 400
-        self.params['batch_size_desc'] = self.tr("Number of units in a single process batch")
+        self.params['batch_size_desc'] = "Number of units in a single process batch"
         self.params['cassette_size'] = 100
-        self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
+        self.params['cassette_size_desc'] = "Number of units in a single cassette"
         self.params['max_cassette_no'] = 8
-        self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions at input and the same number at output")
+        self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         
         self.params['tex_baths'] = 3
-        self.params['tex_baths_desc'] = self.tr("Number of baths for alkaline texture")         
+        self.params['tex_baths_desc'] = "Number of baths for alkaline texture"
         self.params['tex_time'] = 20*60
-        self.params['tex_time_desc'] = self.tr("Time for a single alkaline texturing process (seconds)")
+        self.params['tex_time_desc'] = "Time for a single alkaline texturing process (seconds)"
         self.params['tex_downtime_runs'] = 80
-        self.params['tex_downtime_runs_desc'] = self.tr("Number of texturing processes before downtime")
+        self.params['tex_downtime_runs_desc'] = "Number of texturing processes before downtime"
         self.params['tex_downtime_duration'] = 60*60
-        self.params['tex_downtime_duration_desc'] = self.tr("Time for a single texturing process downtime cycle (seconds)")
+        self.params['tex_downtime_duration_desc'] = "Time for a single texturing process downtime cycle (seconds)"
 
         self.params['rinse0_baths'] = 1
-        self.params['rinse0_baths_desc'] = self.tr("Number of rinse baths after texture")
+        self.params['rinse0_baths_desc'] = "Number of rinse baths after texture"
         self.params['rinse0_time'] = 5*60
-        self.params['rinse0_time_desc'] = self.tr("Time for a single rinse cycle after texture (seconds)") 
+        self.params['rinse0_time_desc'] = "Time for a single rinse cycle after texture (seconds)"
 
         self.params['neutr_baths'] = 1
-        self.params['neutr_baths_desc'] = self.tr("Number of baths for HCl neutralization")         
+        self.params['neutr_baths_desc'] = "Number of baths for HCl neutralization"
         self.params['neutr_time'] = 5*60
-        self.params['neutr_time_desc'] = self.tr("Time for a single HCl neutralization process (seconds)") 
+        self.params['neutr_time_desc'] = "Time for a single HCl neutralization process (seconds)"
 
         self.params['rinse1_baths'] = 1
-        self.params['rinse1_baths_desc'] = self.tr("Number of rinse baths after neutralization")
+        self.params['rinse1_baths_desc'] = "Number of rinse baths after neutralization"
         self.params['rinse1_time'] = 5*60
-        self.params['rinse1_time_desc'] = self.tr("Time for a single rinse cycle after neutralization (seconds)")
+        self.params['rinse1_time_desc'] = "Time for a single rinse cycle after neutralization (seconds)"
 
         self.params['dryer_count'] = 3
-        self.params['dryer_count_desc'] = self.tr("Number of dryers")        
+        self.params['dryer_count_desc'] = "Number of dryers"
         self.params['dry_time'] = 20*60
-        self.params['dry_time_desc'] = self.tr("Time for a single dry cycle (seconds)")
+        self.params['dry_time_desc'] = "Time for a single dry cycle (seconds)"
 
         self.params['transfer0_time'] = 60
-        self.params['transfer0_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")
+        self.params['transfer0_time_desc'] = "Time for single transfer by transporter (seconds)"
         
         self.params['transfer1_time'] = 60
-        self.params['transfer1_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")
+        self.params['transfer1_time_desc'] = "Time for single transfer by transporter (seconds)"
 
         self.params['transfer2_time'] = 60
-        self.params['transfer2_time_desc'] = self.tr("Time for single transfer by transporter (seconds)")
+        self.params['transfer2_time_desc'] = "Time for single transfer by transporter (seconds)"
         
         self.params['verbose'] = False
-        self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
+        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)        
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
-            self.output_text.sig.emit(string)
+        #if (self.params['verbose']):
+        #    string = str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
+        #    self.output_text.sig.emit(string)
         
         ### Add input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -101,7 +91,7 @@ class BatchTex(QtCore.QObject):
         self.batchprocesses = []
 
         ### Texturing baths ###
-        for i in np.arange(0,self.params['tex_baths']):
+        for i in range(0,self.params['tex_baths']):
             process_params = {}
             process_params['name'] = "t" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -113,7 +103,7 @@ class BatchTex(QtCore.QObject):
 
         ### First rinse baths ###
         first_rinse0 = self.params['tex_baths'] 
-        for i in np.arange(0,self.params['rinse0_baths']):
+        for i in range(0,self.params['rinse0_baths']):
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -123,7 +113,7 @@ class BatchTex(QtCore.QObject):
 
         ### Neutralization baths ###
         first_neutr = first_rinse0 + self.params['rinse0_baths'] 
-        for i in np.arange(0,self.params['neutr_baths']):
+        for i in range(0,self.params['neutr_baths']):
             process_params = {}
             process_params['name'] = "n" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -133,7 +123,7 @@ class BatchTex(QtCore.QObject):
 
         ### Second rinse baths ###
         first_rinse1 = first_neutr + self.params['neutr_baths'] 
-        for i in np.arange(0,self.params['rinse1_baths']):       
+        for i in range(0,self.params['rinse1_baths']):       
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -143,7 +133,7 @@ class BatchTex(QtCore.QObject):
 
         ### Dryers ### 
         first_dryer = first_rinse1 + self.params['rinse1_baths']       
-        for i in np.arange(0,self.params['dryer_count']):
+        for i in range(0,self.params['dryer_count']):
             process_params = {}
             process_params['name'] = "d" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -158,11 +148,11 @@ class BatchTex(QtCore.QObject):
         # First check whether batch can be brought to rinse, because that has priority
         batchconnections = []
 
-        for i in np.arange(0,self.params['tex_baths']):
-            for j in np.arange(first_rinse0,first_rinse0+self.params['rinse0_baths']):
+        for i in range(0,self.params['tex_baths']):
+            for j in range(first_rinse0,first_rinse0+self.params['rinse0_baths']):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer0_time']])
         
-        for i in np.arange(0,self.params['tex_baths']):
+        for i in range(0,self.params['tex_baths']):
             batchconnections.append([self.input,self.batchprocesses[i],self.params['transfer0_time']])
 
         transport_params = {}
@@ -175,16 +165,16 @@ class BatchTex(QtCore.QObject):
         # First check whether batch can be brought to rinse or dry, because that has priority
         batchconnections = []
 
-        for i in np.arange(first_rinse1,first_rinse1+self.params['rinse1_baths']):
-            for j in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
+        for i in range(first_rinse1,first_rinse1+self.params['rinse1_baths']):
+            for j in range(first_dryer,first_dryer+self.params['dryer_count']):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer1_time']])
 
-        for i in np.arange(first_neutr,first_neutr+self.params['neutr_baths']):
-            for j in np.arange(first_rinse1,first_rinse1+self.params['rinse1_baths']):
+        for i in range(first_neutr,first_neutr+self.params['neutr_baths']):
+            for j in range(first_rinse1,first_rinse1+self.params['rinse1_baths']):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer1_time']])
 
-        for i in np.arange(first_rinse0,first_rinse0+self.params['rinse0_baths']):
-            for j in np.arange(first_neutr,first_neutr+self.params['neutr_baths']):
+        for i in range(first_rinse0,first_rinse0+self.params['rinse0_baths']):
+            for j in range(first_neutr,first_neutr+self.params['neutr_baths']):
                 batchconnections.append([self.batchprocesses[i],self.batchprocesses[j],self.params['transfer1_time']])
 
         transport_params = {}
@@ -196,7 +186,7 @@ class BatchTex(QtCore.QObject):
         ### Batch transporter between dryers and output ###
         batchconnections = []
 
-        for i in np.arange(first_dryer,first_dryer+self.params['dryer_count']):
+        for i in range(first_dryer,first_dryer+self.params['dryer_count']):
                 batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer2_time']])
 
         transport_params = {}
@@ -206,18 +196,18 @@ class BatchTex(QtCore.QObject):
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)          
 
     def report(self):
-        string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
-        self.output_text.sig.emit(string)        
+        #string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
+        #self.output_text.sig.emit(string)        
 
         self.utilization.append("BatchTex")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
         production_volume = self.transport2.transport_counter - self.output.container.level
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
-        self.utilization.append(np.round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
         
         for i in range(len(self.batchprocesses)):
-            self.utilization.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
+            self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])
         
     def nominal_throughput(self):
         throughputs = []        

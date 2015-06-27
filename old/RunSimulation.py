@@ -1,101 +1,79 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Aug 17 14:59:54 2014
+Created on Fri Sep 12 18:00:48 2014
 
 @author: rnaber
-
 """
 
 from __future__ import division
-from WaferSource import WaferSource
-from WaferUnstacker import WaferUnstacker
-from Operator import Operator
-from WaferBin import WaferBin
-from BatchTex import BatchTex
-from TubeFurnace import TubeFurnace
-from SingleSideEtch import SingleSideEtch
-from TubePECVD import TubePECVD
-from PrintLine import PrintLine
-import simpy
-import numpy as np
+from PyQt4 import QtCore, QtGui
 from copy import deepcopy
+import numpy as np
 
-class RunSimulation(object):
-
-    def __init__(self, _batchlocations,_locationgroups,_batchconnections,_operators,_params = {}):    
-
-        self.batchlocations = deepcopy(_batchlocations)
-        self.locationgroups = deepcopy(_locationgroups)
-        self.batchconnections = deepcopy(_batchconnections)
-        self.operators = deepcopy(_operators)
-
-        self.params = {}
-        self.params['time_limit'] = 1000
-        self.params.update(_params)
-    
-        self.env = simpy.Environment()    
-
-        #import simpy.rt # if you are really patient
-        #self.env = simpy.rt.RealtimeEnvironment(factor=0.1)
-        #self.env = simpy.rt.RealtimeEnvironment(factor=1)
-    
-        for i in self.batchlocations:
-            # replace class names for real class instances in the same list
-            if (self.batchlocations[i][0] == "WaferSource"):
-                self.batchlocations[i] = WaferSource(self.env,self.batchlocations[i][1])
-            elif (self.batchlocations[i][0] == "WaferUnstacker"):
-                self.batchlocations[i] = WaferUnstacker(self.env,self.batchlocations[i][1])
-            elif (self.batchlocations[i][0] == "BatchTex"):
-                self.batchlocations[i] = BatchTex(self.env,self.batchlocations[i][1])
-            elif (self.batchlocations[i][0] == "TubeFurnace"):
-                self.batchlocations[i] = TubeFurnace(self.env,self.batchlocations[i][1])
-            elif (self.batchlocations[i][0] == "SingleSideEtch"):
-                self.batchlocations[i] = SingleSideEtch(self.env,self.batchlocations[i][1]) 
-            elif (self.batchlocations[i][0] == "TubePECVD"):
-                self.batchlocations[i] = TubePECVD(self.env,self.batchlocations[i][1]) 
-            elif (self.batchlocations[i][0] == "PrintLine"):
-                self.batchlocations[i] = PrintLine(self.env,self.batchlocations[i][1]) 
-            elif (self.batchlocations[i][0] == "WaferBin"):
-                self.batchlocations[i] = WaferBin(self.env,self.batchlocations[i][1])             
-
-        for i in self.locationgroups:
-            # replace batchlocation number indicators for references to real class instances
-            for j in np.arange(len(self.locationgroups[i])):
-                self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]
-           
-        for i in self.batchconnections:
-            # replace locationgroup number indicators for references to real class instances
-            self.batchconnections[i][0] = self.locationgroups[self.batchconnections[i][0][0]][self.batchconnections[i][0][1]]
-            self.batchconnections[i][1] = self.locationgroups[self.batchconnections[i][1][0]][self.batchconnections[i][1][1]]
-    
-        for i in self.operators:
-            # replace batchconnection number indicators for references to real class instances
-            # also replace operator list elements for new class instances
-            tmp_batchconnections = {}
+class RunSimulation(QtCore.QObject):
+    def __init__(self, _parent):
+        super(QtCore.QObject, self).__init__(_parent)
         
-            for j in np.arange(len(self.operators[i][0])):
-                tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
+        self.parent = _parent
+        
+        if (len(self.parent.batchlocations) < 2) | (len(self.parent.locationgroups) < 2):
+            self.parent.statusBar().showMessage(self.tr("Not enough batch locations found"))
+            return
+        
+        for i, value in enumerate(self.parent.batchconnections):
+            # check if all batchconnections exist inside locationgroups
+            # no separate check whether all batchlocations inside locationgroups exist
+            # since GUI should not allow for any errors to appear
+            if (self.parent.batchconnections[i][0][0] > (len(self.parent.locationgroups)-1)) | \
+                    (self.parent.batchconnections[i][1][0] > (len(self.parent.locationgroups)-1)):
+                self.parent.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
+                return
+            elif (self.parent.batchconnections[i][0][1] > (len(self.parent.locationgroups[self.parent.batchconnections[i][0][0]])-1)) | \
+                    (self.parent.batchconnections[i][1][1] > (len(self.parent.locationgroups[self.parent.batchconnections[i][1][0]])-1)):
+                self.parent.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
+                return
 
-            self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])         
+        for i, value in enumerate(self.parent.operators):
+            # check if all batchconnection numbers inside self.operators exist inside self.batchconnections
+            for j in self.parent.operators[i][0]:
+                if (j > len(self.parent.batchconnections)):
+                    self.parent.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"))
+                    return
+        
+        time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
+        for i, value in enumerate(self.parent.sim_time_selection_list):
+            if (value == self.parent.sim_time_combo.currentText()):
+                self.parent.params['time_limit'] = time_limits[i]
+        
+        if not self.parent.simulation_thread.isRunning():
+        #if True: # interchange for isRunning when not running simulation in separate thread
+        
+            # clear log tab
+            self.parent.edit.clear()
+            
+            # send production line definition to simulation thread using deep copy
+            self.parent.simulation_thread.batchlocations = deepcopy(self.parent.batchlocations)
+            self.parent.simulation_thread.locationgroups = deepcopy(self.parent.locationgroups)
+            self.parent.simulation_thread.batchconnections = deepcopy(self.parent.batchconnections)
+            self.parent.simulation_thread.operators = deepcopy(self.parent.operators)
 
-        print "0% progress: 0 hours"
-        for i in np.arange(1,11):        
-            self.env.run(until=self.params['time_limit']*i/10) # or perhaps do daily updates?
-            if (i < 10):            
-                print str(i*10) + "% progress: " + str(np.round(self.params['time_limit']*i/36000,1)) + " hours"
-            else:
-                print "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
+            self.parent.simulation_thread.params = {}
+            self.parent.simulation_thread.params.update(self.parent.params)
+            
+            self.parent.simulation_thread.stop_simulation = False
+            self.parent.simulation_thread.start()
+            #self.parent.simulation_thread.run() # interchange for start when not running simulation in separate thread
+            self.parent.run_sim_button.setEnabled(False)
+            self.parent.stop_sim_button.setEnabled(True)
 
-        for i in self.batchlocations:
-            self.batchlocations[i].report()
-
-        for i in self.operators:
-            self.operators[i].report()
-
-        prod_vol = 0
-        l_loc = len(self.locationgroups)
-        for i in np.arange(len(self.locationgroups[l_loc-1])):
-            prod_vol += self.locationgroups[l_loc-1][i].output.container.level
-
-        print "Production volume: " + str(prod_vol)
-        print "Average throughput (WPH): " + str(np.round(3600*prod_vol/self.params['time_limit']).astype(int))
+            # clear idle tab and reset headers
+            self.parent.table_widget.clear()
+        
+            headerlabels = ['Tool type','Name','Nominal','Util rate']
+            for i in np.arange(4,35):
+                headerlabels.append("Process " + str(i-4))
+            self.parent.table_widget.setHorizontalHeaderLabels(headerlabels)
+            self.parent.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+            self.parent.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+            
+            self.parent.statusBar().showMessage(self.tr("Simulation started"))           

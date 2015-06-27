@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Aug 17 14:55:31 2014
-
-@author: rnaber
-"""        
-
 from __future__ import division
-#import simpyx as simpy
 import simpy
          
 class BatchContainer(object):

@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Sep 12 18:00:48 2014
-
-@author: rnaber
-"""
-
 from __future__ import division
 from PyQt4 import QtCore
 from BatchlocationSettingsDialog import BatchlocationSettingsDialog

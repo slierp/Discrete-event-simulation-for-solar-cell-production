@@ -1,89 +1,79 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 18 14:36:34 2014
-
-@author: rnaber
-
-"""
-
 from __future__ import division
-from PyQt4 import QtCore
 from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
-import numpy as np
 
-class TubeFurnace(QtCore.QObject):
+class TubeFurnace(object):
         
     def __init__(self, _env, _output=None, _params = {}):
-        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.utilization = []
         
         self.params = {}
-        self.params['specification'] = self.tr("TubeFurnace consists of:\n")
-        self.params['specification'] += self.tr("- Input container\n")
-        self.params['specification'] += self.tr("- Boat-load-unload container\n")
-        self.params['specification'] += self.tr("- Process tubes\n")
-        self.params['specification'] += self.tr("- Cooldown locations\n")
-        self.params['specification'] += self.tr("- Output container\n")
+        self.params['specification'] = "TubeFurnace consists of:\n"
+        self.params['specification'] += "- Input container\n"
+        self.params['specification'] += "- Boat-load-unload container\n"
+        self.params['specification'] += "- Process tubes\n"
+        self.params['specification'] += "- Cooldown locations\n"
+        self.params['specification'] += "- Output container\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("There are two transporters:\n")
-        self.params['specification'] += self.tr("transport1: from load-in to boat-load-unload and from boat-load-unload to output\n")
-        self.params['specification'] += self.tr("transport2: from boat-load-unload to tube process to cool-down to boat-load-unload\n")
-        self.params['specification'] += self.tr("transport2 triggers transport1 when to do something (load or unload)\n")
+        self.params['specification'] += "There are two transporters:\n"
+        self.params['specification'] += "transport1: from load-in to boat-load-unload and from boat-load-unload to output\n"
+        self.params['specification'] += "transport2: from boat-load-unload to tube process to cool-down to boat-load-unload\n"
+        self.params['specification'] += "transport2 triggers transport1 when to do something (load or unload)\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("The number of batches in the system is limited by the no_of_boats variable.\n")
+        self.params['specification'] += "The number of batches in the system is limited by the no_of_boats variable.\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("Unloading has priority as this enables you to start a new process (less idle time).\n")
+        self.params['specification'] += "Unloading has priority as this enables you to start a new process (less idle time).\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += self.tr("Tool downtime is defined as a procedure where the whole tool is put offline for a short period ")
-        self.params['specification'] += self.tr("during which preventive maintenance is performed.")
+        self.params['specification'] += "Tool downtime is defined as a procedure where the whole tool is put offline for a short period "
+        self.params['specification'] += "during which preventive maintenance is performed."
 
         self.params['name'] = ""
-        self.params['name_desc'] = self.tr("Name of the individual batch location")
+        self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 500
-        self.params['batch_size_desc'] = self.tr("Number of units in a single process batch")
+        self.params['batch_size_desc'] = "Number of units in a single process batch"
         self.params['process_time'] = 60*60
-        self.params['process_time_desc'] = self.tr("Time for a single process (seconds)")
+        self.params['process_time_desc'] = "Time for a single process (seconds)"
         self.params['cool_time'] = 10*60
-        self.params['cool_time_desc'] = self.tr("Time for a single cooldown (seconds)")
+        self.params['cool_time_desc'] = "Time for a single cooldown (seconds)"
 
         self.params['downtime_runs'] = 1000
-        self.params['downtime_runs_desc'] = self.tr("Number of furnace processes before downtime")       
+        self.params['downtime_runs_desc'] = "Number of furnace processes before downtime"
         self.params['downtime_duration'] = 60*60
-        self.params['downtime_duration_desc'] = self.tr("Time for a single tool downtime cycle (seconds)")
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
         
         self.params['no_of_processes'] = 4
-        self.params['no_of_processes_desc'] = self.tr("Number of process locations in the tool")
+        self.params['no_of_processes_desc'] = "Number of process locations in the tool"
         self.params['no_of_cooldowns'] = 3
-        self.params['no_of_cooldowns_desc'] = self.tr("Number of cooldown locations in the tool")
+        self.params['no_of_cooldowns_desc'] = "Number of cooldown locations in the tool"
         
         self.params['cassette_size'] = 100
-        self.params['cassette_size_desc'] = self.tr("Number of units in a single cassette")
+        self.params['cassette_size_desc'] = "Number of units in a single cassette"
         self.params['max_cassette_no'] = 5
-        self.params['max_cassette_no_desc'] = self.tr("Number of cassette positions at input and the same number at output")
+        self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         
         self.params['no_of_boats'] = 6
-        self.params['no_of_boats_desc'] = self.tr("Number of boats available")
+        self.params['no_of_boats_desc'] = "Number of boats available"
         
         self.params['transfer0_time'] = 90
-        self.params['transfer0_time_desc'] = self.tr("Time for boat transfer from load-in to process tube (seconds)")
+        self.params['transfer0_time_desc'] = "Time for boat transfer from load-in to process tube (seconds)"
         self.params['transfer1_time'] = 90
-        self.params['transfer1_time_desc'] = self.tr("Time for boat transfer from process tube to cooldown (seconds)")
+        self.params['transfer1_time_desc'] = "Time for boat transfer from process tube to cooldown (seconds)"
         self.params['transfer2_time'] = 90
-        self.params['transfer2_time_desc'] = self.tr("Time for boat transfer from cooldown to load-out (seconds)")
+        self.params['transfer2_time_desc'] = "Time for boat transfer from cooldown to load-out (seconds)"
         
         self.params['automation_loadsize'] = 50
-        self.params['automation_loadsize_desc'] = self.tr("Number of units per loading/unloading automation cycle")
+        self.params['automation_loadsize_desc'] = "Number of units per loading/unloading automation cycle"
         self.params['automation_time'] = 30
-        self.params['automation_time_desc'] = self.tr("Time for a single loading/unloading automation cycle (seconds)")
+        self.params['automation_time_desc'] = "Time for a single loading/unloading automation cycle (seconds)"
 
         self.params['wait_time'] = 60
-        self.params['wait_time_desc'] = self.tr("Wait period between boat transport attempts (seconds)")
+        self.params['wait_time_desc'] = "Wait period between boat transport attempts (seconds)"
         
         self.params['verbose'] = False
-        self.params['verbose_desc'] = self.tr("Enable to get updates on various functions within the tool")
+        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)        
 
         self.transport_counter = 0
@@ -93,9 +83,9 @@ class TubeFurnace(QtCore.QObject):
         self.load_out_start = self.env.event()
         self.load_in_out_end = self.env.event()
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"
-            self.output_text.sig.emit(string)
+        #if (self.params['verbose']):
+        #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace"
+        #    self.output_text.sig.emit(string)
         
         ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -103,7 +93,7 @@ class TubeFurnace(QtCore.QObject):
 
         ### Add batch processes ###
         self.batchprocesses = [] 
-        for i in np.arange(self.params['no_of_processes']):
+        for i in range(self.params['no_of_processes']):
             process_params = {}
             process_params['name'] = "t" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -113,7 +103,7 @@ class TubeFurnace(QtCore.QObject):
 
         ### Add cooldown processes ###
         self.coolprocesses = []            
-        for i in np.arange(self.params['no_of_cooldowns']):
+        for i in range(self.params['no_of_cooldowns']):
             process_params = {}
             process_params['name'] = "c" + str(i)
             process_params['batch_size'] = self.params['batch_size']
@@ -129,24 +119,24 @@ class TubeFurnace(QtCore.QObject):
         self.env.process(self.run_load_out())
 
     def report(self):
-        string = "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
-        self.output_text.sig.emit(string)        
+        #string = "[TubeFurnace][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+        #self.output_text.sig.emit(string)        
 
         self.utilization.append("TubeFurnace")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
         production_volume = self.transport_counter - self.output.container.level
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
-        self.utilization.append(np.round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
+        self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
         
         for i in range(len(self.batchprocesses)):
-            self.utilization.append([self.batchprocesses[i].name,np.round(self.batchprocesses[i].idle_time(),1)])
+            self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])
 
     def run_transport(self):
         
         batchconnections = []
         j = 0
-        for i in np.arange(self.params['no_of_processes']*self.params['no_of_cooldowns']):
+        for i in range(self.params['no_of_processes']*self.params['no_of_cooldowns']):
             if (i%self.params['no_of_processes'] == 0) & (i > 0):
                 j += 1
                 
@@ -159,9 +149,9 @@ class TubeFurnace(QtCore.QObject):
                     yield self.env.timeout(self.params['downtime_duration'])
                     self.process_counter = 0
                     
-                    if (self.params['verbose']):
-                        string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] End downtime"
-                        self.output_text.sig.emit(string)
+                    #if (self.params['verbose']):
+                    #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] End downtime"
+                    #    self.output_text.sig.emit(string)
             
             for i in range(len(batchconnections)):
                 # first check if we can move any batch from tube to cool_down
@@ -181,9 +171,9 @@ class TubeFurnace(QtCore.QObject):
                         batchconnections[i][0].process_finished = 0
                         batchconnections[i][1].start_process()
                         
-                        if (self.params['verbose']):
-                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved batch to cooldown"
-                            self.output_text.sig.emit(string)
+                        #if (self.params['verbose']):
+                        #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved batch to cooldown"
+                        #    self.output_text.sig.emit(string)
 
             for i in range(len(self.coolprocesses)):
                 # check if we can unload a batch (should be followed by a re-load if possible)
@@ -198,9 +188,9 @@ class TubeFurnace(QtCore.QObject):
                         yield self.env.timeout(self.params['transfer2_time'])
                         yield self.boat_load_unload.container.put(self.params['batch_size'])
                         
-                        if (self.params['verbose']):
-                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved processed batch for load-out"
-                            self.output_text.sig.emit(string)
+                        #if (self.params['verbose']):
+                        #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved processed batch for load-out"
+                        #    self.output_text.sig.emit(string)
                     
                         self.coolprocesses[i].process_finished = 0                    
                     
@@ -233,16 +223,16 @@ class TubeFurnace(QtCore.QObject):
                         self.batchprocesses[i].start_process()
                         self.process_counter += 1
                         
-                        if (self.params['verbose']):
-                            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
-                            self.output_text.sig.emit(string)
+                        #if (self.params['verbose']):
+                        #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
+                        #    self.output_text.sig.emit(string)
             
             yield self.env.timeout(self.params['wait_time'])                        
             
     def run_load_in(self):
         while True:
             yield self.load_in_start
-            for i in np.arange(self.params['batch_size'] // self.params['automation_loadsize']):
+            for i in range(self.params['batch_size'] // self.params['automation_loadsize']):
                 yield self.env.timeout(self.params['automation_time'])
                 yield self.input.container.get(self.params['automation_loadsize'])            
                 yield self.boat_load_unload.container.put(self.params['automation_loadsize'])
@@ -251,14 +241,14 @@ class TubeFurnace(QtCore.QObject):
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event
 
-            if (self.params['verbose']):
-                string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Loaded batch"
-                self.output_text.sig.emit(string)
+            #if (self.params['verbose']):
+            #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Loaded batch"
+            #    self.output_text.sig.emit(string)
 
     def run_load_out(self):
         while True:
             yield self.load_out_start
-            for i in np.arange(self.params['batch_size'] // self.params['automation_loadsize']):
+            for i in range(self.params['batch_size'] // self.params['automation_loadsize']):
                 yield self.env.timeout(self.params['automation_time']) 
                 yield self.boat_load_unload.container.get(self.params['automation_loadsize']) 
                 yield self.output.container.put(self.params['automation_loadsize'])
@@ -268,9 +258,9 @@ class TubeFurnace(QtCore.QObject):
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event            
 
-            if (self.params['verbose']):            
-                string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Unloaded batch"
-                self.output_text.sig.emit(string)
+            #if (self.params['verbose']):            
+            #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Unloaded batch"
+            #    self.output_text.sig.emit(string)
         
     def nominal_throughput(self):
         throughputs = []        
