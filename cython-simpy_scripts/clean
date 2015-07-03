@@ -1,0 +1,9 @@
+rm -f *.so
+rm -f *.c
+rm -f *.pyc
+rm -rf __pycache__
+cd resources 
+rm -f *.so
+rm -f *.c
+rm -f *.pyc
+rm -rf __pycache__
