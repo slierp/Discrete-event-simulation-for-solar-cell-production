@@ -12,7 +12,7 @@ ext_modules=[
     Extension("batchlocations.Buffer", ["batchlocations/Buffer.py"]),
     Extension("batchlocations.IonImplanter", ["batchlocations/IonImplanter.py"]),
     Extension("batchlocations.Operator", ["batchlocations/Operator.py"]),
-    Extension("batchlocations.PrintLine", ["batchlocations/PrintLine.pyx"]),
+    Extension("batchlocations.PrintLine", ["batchlocations/PrintLine.py"]),
     Extension("batchlocations.SingleSideEtch", ["batchlocations/SingleSideEtch.py"]),
     Extension("batchlocations.TubeFurnace", ["batchlocations/TubeFurnace.py"]),
     Extension("batchlocations.TubePECVD", ["batchlocations/TubePECVD.py"]),

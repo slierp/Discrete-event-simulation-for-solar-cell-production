@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+# cython: profile=True
+
 from __future__ import division
 from batchlocations.BatchContainer import BatchContainer
 import simpy
+import collections
 
 class PrintLine(object):
         
@@ -53,7 +56,7 @@ class PrintLine(object):
         
         self.params['verbose'] = False
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
-        self.params.update(_params)
+        self.params.update(_params)    
         
         #if (self.params['verbose']):               
         #    string = str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"
@@ -63,16 +66,17 @@ class PrintLine(object):
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Array of zeroes represents belts ###
-        self.belts = [[0 for col in range(self.params['units_on_belt_input'])] for row in range(self.params['no_print_steps'])]
-        #np.zeros((self.params['no_print_steps'],self.params['units_on_belt_input']))
+        self.belts = []
+        for i in  range(self.params['no_print_steps']):            
+            self.belts.append(collections.deque([False for rows in range(self.params['units_on_belt_input'])]))
         
         ### Array of zeroes represents dryers ###
-        self.dryers = [[0 for col in range(self.params['time_dry'])] for row in range(self.params['no_print_steps'])]
-        #np.zeros((self.params['no_print_steps'],self.params['time_dry']))
+        self.dryers = []
+        for i in  range(self.params['no_print_steps']):
+            self.dryers.append(collections.deque([False for rows in range(self.params['time_dry'])]))
 
         ### List represents single lane firing furnace ###
-        self.firing_lane = [0] * int(60*self.params['firing_tool_length']//self.params['firing_belt_speed'])
-        #np.zeros((1,60*self.params['firing_tool_length']//self.params['firing_belt_speed']))
+        self.firing_lane = collections.deque([False] * int(60*self.params['firing_tool_length']//self.params['firing_belt_speed']))
         
         ### Infinite output container ###
         self.output = InfiniteContainer(self.env,"output")
@@ -122,32 +126,31 @@ class PrintLine(object):
 
             yield self.input.container.get(1)
             yield self.env.timeout(self.params['time_cassette_to_belt']) 
-            self.belts[0][0] = 1
+            self.belts[0][0] = True
                                                  
             #if (self.params['verbose']):
             #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
             #    self.output_text.sig.emit(string)
            
-    def run_printer(self, num):        
+    def run_printer(self, num):
         while True:
             if num > 0:
                 input_check = False
             else:
-                input_check = (self.input.container.level > 0)
+                input_check = self.input.container.level
             
-            if (self.belts[num][-1] > 0):
+            if (self.belts[num][-1]):
                 # if last belt position contains a wafer, start printing
             
                 if self.first_run[num]:
                     self.start_time[num] = self.env.now
-                    self.first_run[num] = False            
+                    self.first_run[num] = True           
             
                 # remove wafer from belt
-                self.belts[num][-1] = 0
+                self.belts[num][-1] = False
 
                 # move belt and try to load new wafer
-                self.belts[num].pop() #= np.roll(self.belts[num],1)                
-                self.belts[num].insert(0,0)
+                self.belts[num].rotate(1)
                 
                 if input_check:
                     yield self.next_step.succeed()               
@@ -164,13 +167,12 @@ class PrintLine(object):
                 #    self.output_text.sig.emit(string)
 
                 # place wafer in dryer after printing                    
-                self.dryers[num][0] = 1
+                self.dryers[num][0] = True
 
             elif input_check:
                 # if cannot print but there are wafers available in input or on belt
 
-                self.belts[num].pop() #= np.roll(self.belts[num],1)                
-                self.belts[num].insert(0,0)
+                self.belts[num].rotate(1)
                 
                 yield self.next_step.succeed()
                 self.next_step = self.env.event() # make new event
@@ -183,10 +185,9 @@ class PrintLine(object):
                 if not self.first_run[num]:
                     self.idle_times_internal[num] += self.params['time_step']               
 
-            elif (sum(self.belts[num]) > 0):
+            elif (sum(self.belts[num])):
                 
-                self.belts[num].pop() #= np.roll(self.belts[num],1)                
-                self.belts[num].insert(0,0)
+                self.belts[num].rotate(1)
                 
                 yield self.env.timeout(self.params['time_step'])                                
 
@@ -204,23 +205,22 @@ class PrintLine(object):
         # Updates drying time for all wafers in dryers
         while True:
             for i in range(0,self.params['no_print_steps']):
-                self.dryers[i].pop()               
-                self.dryers[i].insert(0,0)
+                self.dryers[i].rotate(1)
                 
             yield self.env.timeout(1.0)              
 
     def run_dryer_load_out(self,num):
         # Places wafers into output when they have reached drying time
         while True:
-            if self.dryers[num][-1] > 0:
-                self.dryers[num][-1] = 0
+            if self.dryers[num][-1]:
+                self.dryers[num][-1] = False
 
                 if (num < (self.params['no_print_steps']-1)):
                     #go to next printer
-                    self.belts[num+1][0] = 1
+                    self.belts[num+1][0] = True
                 else:
                     # go to firing furnace
-                    self.firing_lane[0] = 1 #[0][0] = 1
+                    self.firing_lane[0] = True
 
                     if self.first_run[num+1]:
                         self.start_time[num+1] = self.env.now
@@ -234,17 +234,15 @@ class PrintLine(object):
 
     def run_firing_lane(self):
         # Updates position for all wafers in firing lane
-        while True:                    
-            self.firing_lane.pop()                
-            self.firing_lane.insert(0,0)            
-            #self.firing_lane = np.roll(self.firing_lane,1)
+        while True:
+            self.firing_lane.rotate(1)
             yield self.env.timeout(1.0)  
 
     def run_firing_load_out(self):
         # Places wafers into output when they have reached tool length
         while True:            
-            if self.firing_lane[-1]: #[0][-1]:        
-                self.firing_lane[-1] = 0 #[0][-1] = 0
+            if self.firing_lane[-1]:
+                self.firing_lane[-1] = False
                 yield self.output.container.put(1)
                 
                 #if (self.params['verbose']):

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# cython: profile=True
+
 from __future__ import division
 from batchlocations.BatchContainer import BatchContainer
 
