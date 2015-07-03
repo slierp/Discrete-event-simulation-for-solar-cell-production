@@ -2,6 +2,7 @@
 from __future__ import division
 from RunSimulation import RunSimulation
 import sys
+import numpy #needed for PyInstaller (currently only because cPickle uses numpy)
 
 def check_int(user_input):
     try:
