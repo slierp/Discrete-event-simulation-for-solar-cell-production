@@ -12,13 +12,13 @@ ext_modules=[
     Extension("batchlocations.Buffer", ["batchlocations/Buffer.py"]),
     Extension("batchlocations.IonImplanter", ["batchlocations/IonImplanter.py"]),
     Extension("batchlocations.Operator", ["batchlocations/Operator.py"]),
-    Extension("batchlocations.PrintLine", ["batchlocations/PrintLine.py"]),
+    Extension("batchlocations.PrintLine", ["batchlocations/PrintLine.pyx"]),
     Extension("batchlocations.SingleSideEtch", ["batchlocations/SingleSideEtch.py"]),
     Extension("batchlocations.TubeFurnace", ["batchlocations/TubeFurnace.py"]),
     Extension("batchlocations.TubePECVD", ["batchlocations/TubePECVD.py"]),
     Extension("batchlocations.WaferBin", ["batchlocations/WaferBin.py"]),
     Extension("batchlocations.WaferSource", ["batchlocations/WaferSource.py"]),
-    Extension("batchlocations.WaferUnstacker", ["batchlocations/WaferUnstacker.py"])
+    Extension("batchlocations.WaferUnstacker", ["batchlocations/WaferUnstacker.py"]),
 ]
 
 setup(

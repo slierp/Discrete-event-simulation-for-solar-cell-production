@@ -112,6 +112,7 @@ class WaferUnstacker(object):
                 # put one cassette into output at a time
                 yield self.output.container.put(self.params['cassette_size'])
                 self.output.process_counter += self.params['cassette_size']
+                
                 current_load = 0                
                 yield self.env.timeout(self.params['time_new_cassette']) # load new cassette
                 

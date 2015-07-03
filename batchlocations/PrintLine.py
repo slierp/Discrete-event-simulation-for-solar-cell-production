@@ -127,7 +127,7 @@ class PrintLine(object):
             #if (self.params['verbose']):
             #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
             #    self.output_text.sig.emit(string)
-            
+           
     def run_printer(self, num):        
         while True:
             if num > 0:

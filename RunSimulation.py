@@ -162,7 +162,7 @@ class RunSimulation(object):
         self.updates_list = self.hourly_updates + self.percentage_updates
         self.updates_list = self.make_unique(self.updates_list)        
 
-    def run(self):        
+    def run(self):      
         print "0% progress: 0 hours / 0 produced"
                     
         ### Run simulation ###
@@ -194,7 +194,7 @@ class RunSimulation(object):
             
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
-               
+
         ### Calculate sum of all produced cells ###
         prod_vol = 0
         l_loc = len(self.locationgroups)
