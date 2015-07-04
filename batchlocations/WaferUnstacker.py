@@ -3,10 +3,11 @@
 
 from __future__ import division
 from batchlocations.BatchContainer import BatchContainer
+import collections
 
 class WaferUnstacker(object):
         
-    def __init__(self, _env, _output=None, _params = {}):
+    def __init__(self, _env, _output=None, _params = {}):       
         self.env = _env
         self.output_text = _output
         self.idle_times = []
@@ -49,7 +50,8 @@ class WaferUnstacker(object):
         #    self.output_text.sig.emit(string)
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
-        self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
+        #self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
+        self.belt = collections.deque([False] * self.params['units_on_belt'])
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         self.env.process(self.run_pick_and_place())
@@ -62,64 +64,60 @@ class WaferUnstacker(object):
     def run_pick_and_place(self):
         unit_counter = 0
         restart = True
+        time_new_stack = self.params['time_new_stack']
+        time_pick_and_place = self.params['time_pick_and_place']
+        stack_size = self.params['stack_size']
+        time_step = self.params['time_step']
+        wafer_available = False
         
-        while True:            
-            yield self.next_step
-
+        while True:
+            if (not wafer_available):
+                yield self.input.container.get(1)
+                wafer_available = True
+            
             if (restart):
-                # time delay for loading stack after being empty
-                yield self.env.timeout(self.params['time_new_stack'])
-                restart = False
+                #time delay for loading new stack if input had been completely empty
+                yield self.env.timeout(time_new_stack)
+                restart = False            
                 
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] (Re-)starting unstacker"
-                #    self.output_text.sig.emit(string)
-            
-            yield self.input.container.get(1)
-            yield self.env.timeout(self.params['time_pick_and_place'])
-            yield self.belt.container.put(1)
-            unit_counter += 1            
-            
-            if (unit_counter == self.params['stack_size']):
-                # if current stack is empty, delay to load a new stack                
-                yield self.env.timeout(self.params['time_new_stack'])
-                unit_counter = 0
-                
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] New input stack loaded"
-                #    self.output_text.sig.emit(string)
+            if (not self.belt[0]):
+                yield self.env.timeout(time_pick_and_place)
+                self.belt[0] = True
+                wafer_available = False
+                unit_counter += 1
+
+            if (unit_counter == stack_size):
+                if self.input.container.level:
+                    # if current stack is empty and there are more stacks available, delay to load a new stack                
+                    yield self.env.timeout(time_new_stack)
+                    unit_counter = 0
+                else:
+                    restart = True
                     
-            if (self.input.container.level == 0):
-                restart = True
+            yield self.env.timeout(time_step)                    
             
     def run_cassette_loader(self):
         current_load = 0
+        cassette_size = self.params['cassette_size']
+        time_new_cassette = self.params['time_new_cassette']
+        time_step = self.params['time_step']
         
-        while True:
-            if (self.belt.space_available(1)) & (self.input.container.level > 0):
-                # trigger new pick and place event if possible
-                yield self.next_step.succeed()
-                self.next_step = self.env.event() # make new event
-
-            if (not self.belt.space_available(1)) & (self.output.space_available(1)):
-                # if belt is full and there is space in the output, load one wafer into cassette
-                yield self.belt.container.get(1)
+        while True:     
+            if (self.belt[-1]) & (current_load < cassette_size):
+                # if wafer available and cassette is not full, load into cassette
+                self.belt[-1] = False
                 current_load += 1
-            elif (self.input.container.level == 0) & (self.belt.container.level > 0) & (self.output.space_available(1)):
-                # if the input is empty, but there are wafers on the belt and there is space in the output, continue loading
-                yield self.belt.container.get(1)
-                current_load += 1                
-            
-            if (current_load == self.params['cassette_size']):                
-                # put one cassette into output at a time
-                yield self.output.container.put(self.params['cassette_size'])
-                self.output.process_counter += self.params['cassette_size']
+                
+            if (current_load == cassette_size):            
+                # if current cassette is full, replace full one for empty cassette
+                yield self.output.container.put(cassette_size)
+                self.output.process_counter += cassette_size
                 
                 current_load = 0                
-                yield self.env.timeout(self.params['time_new_cassette']) # load new cassette
+                yield self.env.timeout(time_new_cassette) # time for loading new cassette
+
+            if (not self.belt[-1]):
+                # if last position is empty, move belt forward by one position
+                self.belt.rotate(1)
                 
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] New output cassette"
-                #    self.output_text.sig.emit(string)
-            
-            yield self.env.timeout(self.params['time_step']) 
+            yield self.env.timeout(time_step)

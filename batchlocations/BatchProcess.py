@@ -40,6 +40,9 @@ class BatchProcess(object):
             self.env.process(self.uptime_counter())
 
     def run(self):
+        batch_size = self.params['batch_size']
+        process_time = self.params['process_time']
+        
         while True:
             yield self.start
             
@@ -47,13 +50,13 @@ class BatchProcess(object):
                 self.start_time = self.env.now
                 self.first_run = False
                 
-            if (self.container.level >= self.params['batch_size']) & (not self.process_finished):
+            if (self.container.level >= batch_size) & (not self.process_finished):
                 with self.resource.request() as request:
                     yield request
-                    yield self.env.timeout(self.params['process_time']) 
+                    yield self.env.timeout(process_time) 
                     self.process_finished = 1
                     self.process_counter += 1
-                    self.process_time_counter += self.params['process_time']
+                    self.process_time_counter += process_time
                     
                     #if (self.params['verbose']):
                     #    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process "
@@ -78,17 +81,20 @@ class BatchProcess(object):
 
     def uptime_counter(self):
         # check repeatedly whether time limit has been reached
+        downtime_time = self.params['downtime_time']
+        downtime_duration = self.params['downtime_duration']
+    
         while True:
             yield self.env.timeout(1)
             
-            if ((self.env.now - self.last_downtime) >= self.params['downtime_time']) & \
+            if ((self.env.now - self.last_downtime) >= downtime_time) & \
                 (not self.container.level):
                 # perform a downtime cycle at time limit and when empty
                     
                 with self.resource.request() as request:
                     yield request
                     self.status = 0                   
-                    yield self.env.timeout(self.params['downtime_duration'])
+                    yield self.env.timeout(downtime_duration)
                     self.status = 1
                     self.process_counter = 0
                     self.last_downtime = self.env.now

@@ -5,7 +5,7 @@ from batchlocations.BatchContainer import BatchContainer
 
 class TubeFurnace(object):
         
-    def __init__(self, _env, _output=None, _params = {}):
+    def __init__(self, _env, _output=None, _params = {}):      
         self.env = _env
         self.output_text = _output
         self.utilization = []
@@ -142,11 +142,20 @@ class TubeFurnace(object):
                 
             batchconnections.append([self.batchprocesses[i%self.params['no_of_processes']],self.coolprocesses[j]])
         
+        downtime_runs = self.params['downtime_runs']
+        downtime_duration = self.params['downtime_duration']
+        batch_size = self.params['batch_size']
+        transfer0_time = self.params['transfer0_time']
+        transfer1_time = self.params['transfer1_time']
+        transfer2_time = self.params['transfer2_time']
+        no_of_boats = self.params['no_of_boats']
+        wait_time = self.params['wait_time']
+        
         while True:
-            if (self.params['downtime_runs'] > 0) & (self.process_counter >= self.params['downtime_runs']) & \
+            if (downtime_runs > 0) & (self.process_counter >= downtime_runs) & \
                 (self.batches_loaded == 0):
                     # if downtime is needed and all batches have been unloaded, enter downtime
-                    yield self.env.timeout(self.params['downtime_duration'])
+                    yield self.env.timeout(downtime_duration)
                     self.process_counter = 0
                     
                     #if (self.params['verbose']):
@@ -164,9 +173,9 @@ class TubeFurnace(object):
                         yield request_input                 
                         yield request_output
 
-                        yield batchconnections[i][0].container.get(self.params['batch_size'])
-                        yield self.env.timeout(self.params['transfer1_time'])
-                        yield batchconnections[i][1].container.put(self.params['batch_size'])
+                        yield batchconnections[i][0].container.get(batch_size)
+                        yield self.env.timeout(transfer1_time)
+                        yield batchconnections[i][1].container.put(batch_size)
 
                         batchconnections[i][0].process_finished = 0
                         batchconnections[i][1].start_process()
@@ -184,9 +193,9 @@ class TubeFurnace(object):
                     with self.coolprocesses[i].resource.request() as request_input:
                         yield request_input
 
-                        yield self.coolprocesses[i].container.get(self.params['batch_size'])
-                        yield self.env.timeout(self.params['transfer2_time'])
-                        yield self.boat_load_unload.container.put(self.params['batch_size'])
+                        yield self.coolprocesses[i].container.get(batch_size)
+                        yield self.env.timeout(transfer2_time)
+                        yield self.boat_load_unload.container.put(batch_size)
                         
                         #if (self.params['verbose']):
                         #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Moved processed batch for load-out"
@@ -198,10 +207,10 @@ class TubeFurnace(object):
                         yield self.load_in_out_end
                         self.load_out_start = self.env.event()                    
 
-            if (self.params['downtime_runs'] > 0) & (self.process_counter >= self.params['downtime_runs']):
+            if (downtime_runs > 0) & (self.process_counter >= downtime_runs):
                 # do not perform load-in if machine needs to enter downtime
                 pass            
-            elif (self.batches_loaded < self.params['no_of_boats']) & (self.input.container.level >= self.params['batch_size']) & \
+            elif (self.batches_loaded < no_of_boats) & (self.input.container.level >= batch_size) & \
                     (self.boat_load_unload.container.level == 0):
                 # ask for more wafers if there is a boat and wafers available
                 yield self.load_in_start.succeed()
@@ -211,14 +220,14 @@ class TubeFurnace(object):
             for i in range(len(self.batchprocesses)):
                 # check if we can load new wafers into a tube
                 if (self.batchprocesses[i].container.level == 0) & \
-                        (self.boat_load_unload.container.level == self.params['batch_size']):
+                        (self.boat_load_unload.container.level == batch_size):
 
                     with self.batchprocesses[i].resource.request() as request_output:                  
                         yield request_output
                         
-                        yield self.boat_load_unload.container.get(self.params['batch_size'])
-                        yield self.env.timeout(self.params['transfer0_time'])
-                        yield self.batchprocesses[i].container.put(self.params['batch_size'])
+                        yield self.boat_load_unload.container.get(batch_size)
+                        yield self.env.timeout(transfer0_time)
+                        yield self.batchprocesses[i].container.put(batch_size)
 
                         self.batchprocesses[i].start_process()
                         self.process_counter += 1
@@ -227,15 +236,19 @@ class TubeFurnace(object):
                         #    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Started a process"
                         #    self.output_text.sig.emit(string)
             
-            yield self.env.timeout(self.params['wait_time'])                        
+            yield self.env.timeout(wait_time)                        
             
     def run_load_in(self):
+        no_loads = self.params['batch_size'] // self.params['automation_loadsize']
+        automation_loadsize = self.params['automation_loadsize']
+        automation_time = self.params['automation_time']
+        
         while True:
             yield self.load_in_start
-            for i in range(self.params['batch_size'] // self.params['automation_loadsize']):
-                yield self.env.timeout(self.params['automation_time'])
-                yield self.input.container.get(self.params['automation_loadsize'])            
-                yield self.boat_load_unload.container.put(self.params['automation_loadsize'])
+            for i in range(no_loads):
+                yield self.env.timeout(automation_time)
+                yield self.input.container.get(automation_loadsize)            
+                yield self.boat_load_unload.container.put(automation_loadsize)
             
             self.batches_loaded += 1
             yield self.load_in_out_end.succeed()
@@ -246,13 +259,17 @@ class TubeFurnace(object):
             #    self.output_text.sig.emit(string)
 
     def run_load_out(self):
+        no_loads = self.params['batch_size'] // self.params['automation_loadsize']
+        automation_loadsize = self.params['automation_loadsize']
+        automation_time = self.params['automation_time']
+        
         while True:
             yield self.load_out_start
-            for i in range(self.params['batch_size'] // self.params['automation_loadsize']):
-                yield self.env.timeout(self.params['automation_time']) 
-                yield self.boat_load_unload.container.get(self.params['automation_loadsize']) 
-                yield self.output.container.put(self.params['automation_loadsize'])
-                self.transport_counter += self.params['automation_loadsize']
+            for i in range(no_loads):
+                yield self.env.timeout(automation_time) 
+                yield self.boat_load_unload.container.get(automation_loadsize) 
+                yield self.output.container.put(automation_loadsize)
+                self.transport_counter += automation_loadsize
             
             self.batches_loaded -= 1
             yield self.load_in_out_end.succeed()

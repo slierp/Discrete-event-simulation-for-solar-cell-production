@@ -30,7 +30,7 @@ class WaferSource(object):
         #if (self.params['verbose']):
         #    string = str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"
         #    self.output_text.sig.emit(string)
-        
+
         self.output = BatchContainer(self.env,"output",self.batch_size,1)
         self.env.process(self.run())        
 
@@ -39,17 +39,20 @@ class WaferSource(object):
     #    self.output_text.sig.emit(string)
         
     def run(self):
+        time_limit = self.params['time_limit']
+        batch_size = self.params['batch_size']
+        
         while True:
             
-            if (self.params['time_limit'] > 0) & (self.env.now >= self.params['time_limit']):                
-                #string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Time limit reached"
-                #self.output_text.sig.emit(string)
-                break
+            if (time_limit > 0):
+                if (self.env.now >= time_limit):   
+                    #string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Time limit reached"
+                    #self.output_text.sig.emit(string)
+                    break
             
             if (not self.output.container.level):
-                yield self.output.container.put(self.params['batch_size'])
-                self.output.process_counter += self.params['batch_size']
-                
+                yield self.output.container.put(batch_size)
+                self.output.process_counter += batch_size
                 #if (self.params['verbose']):
                 #    string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Performed refill"
                 #    self.output_text.sig.emit(string)

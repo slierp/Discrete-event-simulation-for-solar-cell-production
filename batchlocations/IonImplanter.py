@@ -14,7 +14,7 @@ from batchlocations.BatchContainer import BatchContainer
 
 class IonImplanter(object):
         
-    def __init__(self, _env, _output=None, _params = {}):
+    def __init__(self, _env, _output=None, _params = {}):       
         self.env = _env
         self.output_text = _output
         self.utilization = []       

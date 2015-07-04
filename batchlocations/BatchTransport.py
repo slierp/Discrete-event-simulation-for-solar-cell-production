@@ -6,7 +6,7 @@ from batchlocations.BatchContainer import BatchContainer
 class BatchTransport(object):
     # For simple one-way transports
 
-    def __init__(self,  _env, _batchconnections, _output=None, _params = {}):
+    def __init__(self,  _env, _batchconnections, _output=None, _params = {}):      
         self.env = _env
         self.batchconnections = _batchconnections        
         self.output_text = _output        
@@ -28,21 +28,24 @@ class BatchTransport(object):
         self.env.process(self.run())
     
     def run(self):
+        batch_size = self.params['batch_size']
+        wait_time = self.params['wait_time']
+        
         while True:
             for i in range(len(self.batchconnections)):
                 if isinstance(self.batchconnections[i][0],BatchContainer):
                     # load-in from BatchContainer to BatchProcess
-                    if (self.batchconnections[i][0].container.level >= self.params['batch_size']) & \
-                            self.batchconnections[i][1].space_available(self.params['batch_size']) & \
+                    if (self.batchconnections[i][0].container.level >= batch_size) & \
+                            self.batchconnections[i][1].space_available(batch_size) & \
                             self.batchconnections[i][1].status:
                                                   
                         with self.batchconnections[i][1].resource.request() as request_output:
                             yield request_output
                         
-                            yield self.batchconnections[i][0].container.get(self.params['batch_size'])
+                            yield self.batchconnections[i][0].container.get(batch_size)
                             yield self.env.timeout(self.batchconnections[i][2])
-                            self.transport_counter += self.params['batch_size']
-                            yield self.batchconnections[i][1].container.put(self.params['batch_size'])
+                            self.transport_counter += batch_size
+                            yield self.batchconnections[i][1].container.put(batch_size)
                             self.batchconnections[i][1].start_process()
                             
                             #if (self.params['verbose']):
@@ -52,18 +55,18 @@ class BatchTransport(object):
 
                 elif isinstance(self.batchconnections[i][1],BatchContainer):
                     # load-out from BatchProcess into BatchContainer 
-                    if (self.batchconnections[i][0].container.level >= self.params['batch_size']) & \
-                            self.batchconnections[i][1].space_available(self.params['batch_size']) & \
+                    if (self.batchconnections[i][0].container.level >= batch_size) & \
+                            self.batchconnections[i][1].space_available(batch_size) & \
                             self.batchconnections[i][0].process_finished & \
                             self.batchconnections[i][0].status:
 
                         with self.batchconnections[i][0].resource.request() as request_input:
                             yield request_input
                         
-                            yield self.batchconnections[i][0].container.get(self.params['batch_size'])
+                            yield self.batchconnections[i][0].container.get(batch_size)
                             yield self.env.timeout(self.batchconnections[i][2])
-                            self.transport_counter += self.params['batch_size']
-                            yield self.batchconnections[i][1].container.put(self.params['batch_size'])
+                            self.transport_counter += batch_size
+                            yield self.batchconnections[i][1].container.put(batch_size)
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
                             
@@ -76,8 +79,8 @@ class BatchTransport(object):
                         (isinstance(self.batchconnections[i][1],BatchProcess)):
                     # transport from BatchProcess to BatchProcess
                     # only call if you're sure in- and output are BatchProcess
-                    if (self.batchconnections[i][0].container.level >= self.params['batch_size']) & \
-                            self.batchconnections[i][1].space_available(self.params['batch_size']) & \
+                    if (self.batchconnections[i][0].container.level >= batch_size) & \
+                            self.batchconnections[i][1].space_available(batch_size) & \
                             self.batchconnections[i][0].process_finished & \
                             self.batchconnections[i][0].status & self.batchconnections[i][1].status:
                         #parentheses are crucial
@@ -87,10 +90,10 @@ class BatchTransport(object):
                             yield request_input                                    
                             yield request_output
                             
-                            yield self.batchconnections[i][0].container.get(self.params['batch_size'])
+                            yield self.batchconnections[i][0].container.get(batch_size)
                             yield self.env.timeout(self.batchconnections[i][2])
-                            self.transport_counter += self.params['batch_size']                            
-                            yield self.batchconnections[i][1].container.put(self.params['batch_size'])                        
+                            self.transport_counter += batch_size                            
+                            yield self.batchconnections[i][1].container.put(batch_size)                        
 
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
@@ -101,6 +104,6 @@ class BatchTransport(object):
                             #    string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended"
                             #    self.output_text.sig.emit(string)                                    
                     
-            yield self.env.timeout(self.params['wait_time'])
+            yield self.env.timeout(wait_time)
             
             

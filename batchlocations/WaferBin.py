@@ -5,7 +5,7 @@ import simpy
 
 class WaferBin(object):
         
-    def __init__(self, _env, _output=None, _params = {}):
+    def __init__(self, _env, _output=None, _params = {}):      
         self.env = _env
         self.output_text = _output
         self.idle_times = []
@@ -39,11 +39,14 @@ class WaferBin(object):
     #    self.output_text.sig.emit(string)
 
     def run(self):
+        batch_size = self.params['batch_size']
+        wait_time = self.params['wait_time']
+        
         while True:
-            if (self.input.container.level >= self.params['batch_size']):
-                yield self.input.container.get(self.params['batch_size'])
-                yield self.output.container.put(self.params['batch_size'])                
-            yield self.env.timeout(self.params['wait_time'])    
+            if (self.input.container.level >= batch_size):
+                yield self.input.container.get(batch_size)
+                yield self.output.container.put(batch_size)                
+            yield self.env.timeout(wait_time)    
         
 class InfiniteContainer(object):
     

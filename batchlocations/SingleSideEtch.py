@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from batchlocations.BatchContainer import BatchContainer
+import collections
 
 class SingleSideEtch(object):
         
@@ -65,8 +66,9 @@ class SingleSideEtch(object):
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Array of zeroes represents lanes ###
-        self.lanes = [[0 for col in range(int(self.params['tool_length']//self.params['unit_distance']))] for row in range(self.params['no_of_lanes'])]
-        #np.zeros((self.params['no_of_lanes'],self.params['tool_length']//self.params['unit_distance']))
+        self.lanes = []
+        for i in  range(self.params['no_of_lanes']):            
+            self.lanes.append(collections.deque([False for rows in range(int(self.params['tool_length']//self.params['unit_distance']))]))            
 
         ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -102,12 +104,16 @@ class SingleSideEtch(object):
         # Loads wafers if available
         # Implementation optimized for minimal timeouts
         # All processes timeout with the same duration
+        downtime_volume = self.params['downtime_volume']
+        downtime_duration = self.params['downtime_duration']
+        no_of_lanes = self.params['no_of_lanes']
+        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
     
         while True:
-            if (self.params['downtime_volume'] > 0) & (self.process_counter >= self.params['downtime_volume']):
-                yield self.env.timeout(self.params['downtime_duration'])
-                for i in range(0,self.params['no_of_lanes']):
-                    self.idle_times_internal[i] += self.params['downtime_duration']
+            if downtime_volume & (self.process_counter >= downtime_volume):
+                yield self.env.timeout(downtime_duration)
+                for i in range(0,no_of_lanes):
+                    self.idle_times_internal[i] += downtime_duration
                 self.process_counter = 0
                 
                 #if (self.params['verbose']):
@@ -122,7 +128,7 @@ class SingleSideEtch(object):
                 
                 yield self.input.container.get(1)            
                 #self.env.process(self.run_wafer_instance())
-                self.lanes[lane_number][0] = 1
+                self.lanes[lane_number][0] = True
                 self.process_counter += 1               
                 
                 #if self.params['verbose']:
@@ -133,27 +139,31 @@ class SingleSideEtch(object):
                         
             elif not self.first_run:
                 # start counting down-time after first run
-                self.idle_times_internal[lane_number] += 60*self.params['unit_distance']/self.params['belt_speed']
+                self.idle_times_internal[lane_number] += time_step
                         
-            yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed'])
+            yield self.env.timeout(time_step)
 
     def run_lanes(self):
+        no_of_lanes = self.params['no_of_lanes']
+        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
+        
         while True:
-            for i in range(0,self.params['no_of_lanes']):
-                self.lanes[i].pop() #= np.roll(self.belts[num],1)                
-                self.lanes[i].insert(0,0)            
-            #self.lanes = np.roll(self.lanes,1)
-            yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed'])
+            for i in range(0,no_of_lanes):
+                self.lanes[i].rotate(1)
+            yield self.env.timeout(time_step)
 
     def run_lane_load_out(self):
+        no_of_lanes = self.params['no_of_lanes']
+        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
+        
         while True:
-            for i in range(0,self.params['no_of_lanes']):
-                if self.lanes[i][-1] == 1:
-                    self.lanes[i][-1] = 0
+            for i in range(0,no_of_lanes):
+                if self.lanes[i][-1]:
+                    self.lanes[i][-1] = False
                     yield self.output.container.put(1)
                     self.transport_counter += 1
                     
-            yield self.env.timeout(60*self.params['unit_distance']/self.params['belt_speed'])
+            yield self.env.timeout(time_step)
 
     def nominal_throughput(self):       
         return self.params['no_of_lanes']*60*self.params['belt_speed']/self.params['unit_distance']

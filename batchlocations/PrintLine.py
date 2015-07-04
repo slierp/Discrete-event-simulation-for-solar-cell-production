@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
-# cython: profile=True
 
 from __future__ import division
 from batchlocations.BatchContainer import BatchContainer
 import simpy
 import collections
+
+"""
+TODO: Add delay for loading new cassette in input
+
+
+"""
 
 class PrintLine(object):
         
@@ -93,12 +98,10 @@ class PrintLine(object):
 
         for i in range(self.params['no_print_steps']):
             self.env.process(self.run_printer(i))
-            self.env.process(self.run_dryer_load_out(i))
+            self.env.process(self.run_dryer(i))
 
-        self.env.process(self.run_belt())
-        self.env.process(self.run_dryers())        
+        self.env.process(self.run_belt())      
         self.env.process(self.run_firing_lane())
-        self.env.process(self.run_firing_load_out())
 
     def report(self):
         #string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
@@ -120,25 +123,31 @@ class PrintLine(object):
         
         self.utilization[len(self.utilization)-1][0] = "f0"
 
-    def run_belt(self): # For first belt      
+    def run_belt(self): # For first belt
+        time_cassette_to_belt = self.params['time_cassette_to_belt']
+        time_step = self.params['time_step']
+        wafer_available = False
+        
         while True:
-            yield self.next_step
-
-            yield self.input.container.get(1)
-            yield self.env.timeout(self.params['time_cassette_to_belt']) 
-            self.belts[0][0] = True
-                                                 
-            #if (self.params['verbose']):
-            #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
-            #    self.output_text.sig.emit(string)
+            if (not wafer_available):
+                yield self.input.container.get(1)
+                wafer_available = True
+            
+            if (not self.belts[0][0]):
+                yield self.env.timeout(time_cassette_to_belt) 
+                self.belts[0][0] = True
+                wafer_available = False
+                #if (self.params['verbose']):
+                #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
+                #    self.output_text.sig.emit(string)                
+                                     
+            yield self.env.timeout(time_step)        
            
     def run_printer(self, num):
-        while True:
-            if num > 0:
-                input_check = False
-            else:
-                input_check = self.input.container.level
-            
+        time_step = self.params['time_step']
+        time_print = self.params['time_print']
+        
+        while True:            
             if (self.belts[num][-1]):
                 # if last belt position contains a wafer, start printing
             
@@ -152,14 +161,10 @@ class PrintLine(object):
                 # move belt and try to load new wafer
                 self.belts[num].rotate(1)
                 
-                if input_check:
-                    yield self.next_step.succeed()               
-                    self.next_step = self.env.event()
-                
                 # perform print
                 time_out = []
-                time_out.append(self.params['time_print'])
-                time_out.append(self.params['time_step'])
+                time_out.append(time_step)
+                time_out.append(time_print)
                 yield self.env.timeout(max(time_out))
                 
                 #if (self.params['verbose']):
@@ -169,78 +174,45 @@ class PrintLine(object):
                 # place wafer in dryer after printing                    
                 self.dryers[num][0] = True
 
-            elif input_check:
-                # if cannot print but there are wafers available in input or on belt
-
-                self.belts[num].rotate(1)
-                
-                yield self.next_step.succeed()
-                self.next_step = self.env.event() # make new event
-
-                time_out = []
-                time_out.append(self.params['time_cassette_to_belt'])
-                time_out.append(self.params['time_step'])
-                yield self.env.timeout(max(time_out))                                                              
-
-                if not self.first_run[num]:
-                    self.idle_times_internal[num] += self.params['time_step']               
-
-            elif (sum(self.belts[num])):
-                
-                self.belts[num].rotate(1)
-                
-                yield self.env.timeout(self.params['time_step'])                                
-
-                if not self.first_run[num]:
-                    self.idle_times_internal[num] += self.params['time_step']
-                
             else:
-                # if cannot print and no wafers available
-                yield self.env.timeout(self.params['time_step'])
-                
+                # if cannot print: move belt and wait
+                self.belts[num].rotate(1)                
+                yield self.env.timeout(time_step)                                                              
+
                 if not self.first_run[num]:
-                    self.idle_times_internal[num] += self.params['time_step']
-
-    def run_dryers(self):
-        # Updates drying time for all wafers in dryers
-        while True:
-            for i in range(0,self.params['no_print_steps']):
-                self.dryers[i].rotate(1)
-                
-            yield self.env.timeout(1.0)              
-
-    def run_dryer_load_out(self,num):
+                    self.idle_times_internal[num] += time_step
+                          
+    def run_dryer(self,num):
         # Places wafers into output when they have reached drying time
+        no_print_steps = self.params['no_print_steps']
+        
         while True:
             if self.dryers[num][-1]:
                 self.dryers[num][-1] = False
 
-                if (num < (self.params['no_print_steps']-1)):
+                if (num < (no_print_steps-1)):
                     #go to next printer
                     self.belts[num+1][0] = True
                 else:
                     # go to firing furnace
                     self.firing_lane[0] = True
+                    
+                    #if (self.params['verbose']):
+                    #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
+                    #    self.output_text.sig.emit(string)                          
 
                     if self.first_run[num+1]:
                         self.start_time[num+1] = self.env.now
-                        self.first_run[num+1] = False
-                        
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
-                #    self.output_text.sig.emit(string)                        
+                        self.first_run[num+1] = False            
 
+            self.dryers[num].rotate(1)                
             yield self.env.timeout(1.0)
 
     def run_firing_lane(self):
         # Updates position for all wafers in firing lane
+        no_print_steps = self.params['no_print_steps']    
+    
         while True:
-            self.firing_lane.rotate(1)
-            yield self.env.timeout(1.0)  
-
-    def run_firing_load_out(self):
-        # Places wafers into output when they have reached tool length
-        while True:            
             if self.firing_lane[-1]:
                 self.firing_lane[-1] = False
                 yield self.output.container.put(1)
@@ -249,11 +221,12 @@ class PrintLine(object):
                 #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
                 #    self.output_text.sig.emit(string)   
             else:
-                if not self.first_run[self.params['no_print_steps']]:
-                    self.idle_times_internal[self.params['no_print_steps']] += 1.0
-                
-            yield self.env.timeout(1.0)       
-
+                if not self.first_run[no_print_steps]:
+                    self.idle_times_internal[no_print_steps] += 1.0
+            
+            self.firing_lane.rotate(1)
+            yield self.env.timeout(1.0)
+    
     def nominal_throughput(self):
         return 3600/self.params['time_print']
             

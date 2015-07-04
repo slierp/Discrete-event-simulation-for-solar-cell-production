@@ -38,6 +38,7 @@ class RunSimulation(object):
         self.copy_definition()
         self.calculate_timesteps()
     
+    """
     def define_simulation(self): # not used at the moment
         self.batchlocations.append(["WaferSource", {'name' : '0'}])
         self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
@@ -93,6 +94,7 @@ class RunSimulation(object):
         self.operators.append([[8],{'name' : '4'}])
         self.operators.append([[9,10],{'name' : '4'}])
         self.operators.append([[11,12,13,14],{'name' : '5'}])
+    """
 
     def make_unique(self,nonunique):
         unique = []
@@ -108,25 +110,25 @@ class RunSimulation(object):
         for i, value in enumerate(self.batchlocations):
             # replace class names for real class instances in the same list
             if (self.batchlocations[i][0] == "WaferSource"):
-                self.batchlocations[i] = WaferSource(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = WaferSource(self.env,"",self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "WaferUnstacker"):
-                self.batchlocations[i] = WaferUnstacker(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = WaferUnstacker(self.env,"",self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchTex"):
-                self.batchlocations[i] = BatchTex(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = BatchTex(self.env,"",self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchClean"):
-                self.batchlocations[i] = BatchClean(self.env,self.batchlocations[i][1])                
+                self.batchlocations[i] = BatchClean(self.env,"",self.batchlocations[i][1])                
             elif (self.batchlocations[i][0] == "TubeFurnace"):
-                self.batchlocations[i] = TubeFurnace(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = TubeFurnace(self.env,"",self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "SingleSideEtch"):
-                self.batchlocations[i] = SingleSideEtch(self.env,self.batchlocations[i][1]) 
+                self.batchlocations[i] = SingleSideEtch(self.env,"",self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "TubePECVD"):
-                self.batchlocations[i] = TubePECVD(self.env,self.batchlocations[i][1]) 
+                self.batchlocations[i] = TubePECVD(self.env,"",self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "PrintLine"):
-                self.batchlocations[i] = PrintLine(self.env,self.batchlocations[i][1]) 
+                self.batchlocations[i] = PrintLine(self.env,"",self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "WaferBin"):
-                self.batchlocations[i] = WaferBin(self.env,self.batchlocations[i][1])
+                self.batchlocations[i] = WaferBin(self.env,"",self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "Buffer"):
-                self.batchlocations[i] = Buffer(self.env,self.batchlocations[i][1])                 
+                self.batchlocations[i] = Buffer(self.env,"",self.batchlocations[i][1])                 
 
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances
@@ -162,7 +164,7 @@ class RunSimulation(object):
         self.updates_list = self.hourly_updates + self.percentage_updates
         self.updates_list = self.make_unique(self.updates_list)        
 
-    def run(self):      
+    def run(self):
         print "0% progress: 0 hours / 0 produced"
                     
         ### Run simulation ###

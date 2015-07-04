@@ -36,6 +36,8 @@ class Operator(object):
 
     def run(self):
         continue_loop = False
+        min_no_batches = self.params['min_no_batches']
+        wait_time = self.params['wait_time']
         
         while True:
             for i in self.batchconnections:
@@ -50,7 +52,7 @@ class Operator(object):
                 if (units_for_transport >= self.batchconnections[i][0].output.batch_size):
                     no_batches_for_transport = units_for_transport // self.batchconnections[i][0].output.batch_size
 
-                    if (no_batches_for_transport < self.params['min_no_batches']):
+                    if (no_batches_for_transport < min_no_batches):
                         # abort transport if not enough batches available
                         continue
                     
@@ -82,8 +84,8 @@ class Operator(object):
                 continue_loop = False
                 continue
             
-            yield self.env.timeout(self.params['wait_time'])
-            self.idle_time += self.params['wait_time']
+            yield self.env.timeout(wait_time)
+            self.idle_time += wait_time
 
     #def report(self):        
         #string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
