@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# cython: profile=True
-
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 import collections
 
-class WaferUnstacker(object):
+class WaferUnstacker(QtCore.QObject):
         
-    def __init__(self, _env, _output=None, _params = {}):       
+    def __init__(self, _env, _output=None, _params = {}):  
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.idle_times = []
@@ -45,9 +45,9 @@ class WaferUnstacker(object):
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)    
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"
+            self.output_text.sig.emit(string)
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         #self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
@@ -57,9 +57,9 @@ class WaferUnstacker(object):
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())
 
-    #def report(self):
-    #    string = "[WaferUnstacker][" + self.params['name'] + "] Units processed: " + str(self.output.process_counter)
-    #    self.output_text.sig.emit(string)
+    def report(self):
+        string = "[WaferUnstacker][" + self.params['name'] + "] Units processed: " + str(self.output.process_counter)
+        self.output_text.sig.emit(string)
 
     def run_pick_and_place(self):
         unit_counter = 0

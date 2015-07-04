@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 import simpy
 import collections
@@ -8,12 +9,12 @@ import collections
 """
 TODO: Add delay for loading new cassette in input
 
-
 """
 
-class PrintLine(object):
+class PrintLine(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.utilization = []
@@ -63,9 +64,9 @@ class PrintLine(object):
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)    
         
-        #if (self.params['verbose']):               
-        #    string = str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):               
+            string = str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line"
+            self.output_text.sig.emit(string)
 
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -77,7 +78,7 @@ class PrintLine(object):
         
         ### Array of zeroes represents dryers ###
         self.dryers = []
-        for i in  range(self.params['no_print_steps']):
+        for i in range(self.params['no_print_steps']):
             self.dryers.append(collections.deque([False for rows in range(self.params['time_dry'])]))
 
         ### List represents single lane firing furnace ###
@@ -89,7 +90,7 @@ class PrintLine(object):
         self.start_time = []
         self.first_run = []
         self.idle_times_internal = []
-        for i in range(self.params['no_print_steps']+1): # plus one for the firing furnace
+        for i in range(self.params['no_print_steps']):
             self.idle_times_internal.append(0)
             self.first_run.append(True)
             self.start_time.append(0)
@@ -104,29 +105,32 @@ class PrintLine(object):
         self.env.process(self.run_firing_lane())
 
     def report(self):
-        #string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
-        #self.output_text.sig.emit(string)
+        string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
+        self.output_text.sig.emit(string)
         
         self.utilization.append("PrintLine")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
         production_volume = self.output.container.level
         production_hours = (self.env.now - self.start_time[0])/3600
-        self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0):
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        else:
+            self.utilization.append(0)            
         
         for i in range(len(self.idle_times_internal)):
             if self.first_run[i]:
                 idle_time = 100.0
-            else:
+            elif ((self.env.now-self.start_time[i]) > 0):
                 idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time[i])
-            self.utilization.append(["p" + str(i),round(idle_time,1)])
-        
-        self.utilization[len(self.utilization)-1][0] = "f0"
+            self.utilization.append(["p" + str(i),round(idle_time,1)])        
 
     def run_belt(self): # For first belt
         time_cassette_to_belt = self.params['time_cassette_to_belt']
         time_step = self.params['time_step']
         wafer_available = False
+        verbose = self.params['verbose']
         
         while True:
             if (not wafer_available):
@@ -137,15 +141,17 @@ class PrintLine(object):
                 yield self.env.timeout(time_cassette_to_belt) 
                 self.belts[0][0] = True
                 wafer_available = False
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
-                #    self.output_text.sig.emit(string)                
+                
+                if (verbose):
+                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt"
+                    self.output_text.sig.emit(string)                
                                      
             yield self.env.timeout(time_step)        
            
     def run_printer(self, num):
         time_step = self.params['time_step']
         time_print = self.params['time_print']
+        verbose = self.params['verbose']
         
         while True:            
             if (self.belts[num][-1]):
@@ -153,7 +159,7 @@ class PrintLine(object):
             
                 if self.first_run[num]:
                     self.start_time[num] = self.env.now
-                    self.first_run[num] = True           
+                    self.first_run[num] = False    
             
                 # remove wafer from belt
                 self.belts[num][-1] = False
@@ -167,9 +173,9 @@ class PrintLine(object):
                 time_out.append(time_print)
                 yield self.env.timeout(max(time_out))
                 
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
-                #    self.output_text.sig.emit(string)
+                if (verbose):
+                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
+                    self.output_text.sig.emit(string)
 
                 # place wafer in dryer after printing                    
                 self.dryers[num][0] = True
@@ -185,6 +191,7 @@ class PrintLine(object):
     def run_dryer(self,num):
         # Places wafers into output when they have reached drying time
         no_print_steps = self.params['no_print_steps']
+        verbose = self.params['verbose']
         
         while True:
             if self.dryers[num][-1]:
@@ -197,32 +204,25 @@ class PrintLine(object):
                     # go to firing furnace
                     self.firing_lane[0] = True
                     
-                    #if (self.params['verbose']):
-                    #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
-                    #    self.output_text.sig.emit(string)                          
-
-                    if self.first_run[num+1]:
-                        self.start_time[num+1] = self.env.now
-                        self.first_run[num+1] = False            
+                    if (verbose):
+                        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
+                        self.output_text.sig.emit(string)           
 
             self.dryers[num].rotate(1)                
             yield self.env.timeout(1.0)
 
     def run_firing_lane(self):
-        # Updates position for all wafers in firing lane
-        no_print_steps = self.params['no_print_steps']    
+        # Updates position for all wafers in firing lane    
+        verbose = self.params['verbose']
     
         while True:
             if self.firing_lane[-1]:
                 self.firing_lane[-1] = False
                 yield self.output.container.put(1)
                 
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
-                #    self.output_text.sig.emit(string)   
-            else:
-                if not self.first_run[no_print_steps]:
-                    self.idle_times_internal[no_print_steps] += 1.0
+                if (verbose):
+                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer"
+                    self.output_text.sig.emit(string)
             
             self.firing_lane.rotate(1)
             yield self.env.timeout(1.0)

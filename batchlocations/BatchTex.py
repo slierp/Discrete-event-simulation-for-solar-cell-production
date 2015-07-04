@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchTransport import BatchTransport
 from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
 
-class BatchTex(object):
+class BatchTex(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.idle_times = []
@@ -81,9 +83,9 @@ class BatchTex(object):
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)        
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
+            self.output_text.sig.emit(string)
         
         ### Add input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -196,15 +198,19 @@ class BatchTex(object):
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)          
 
     def report(self):
-        #string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
-        #self.output_text.sig.emit(string)        
+        string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter - self.output.container.level)
+        self.output_text.sig.emit(string)        
 
         self.utilization.append("BatchTex")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
         production_volume = self.transport2.transport_counter - self.output.container.level
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
-        self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0): 
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        else:
+            self.utilization.append(0)
         
         for i in range(len(self.batchprocesses)):
             self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])

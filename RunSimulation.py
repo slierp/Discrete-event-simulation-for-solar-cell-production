@@ -17,7 +17,7 @@ import pickle
 class RunSimulation(object):
     
     def __init__(self,filename,time_limit=1):
-         
+        
         with open(filename) as f: # Pickle imports numpy so not compatible with PyPy and ShedSkin
             self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
 

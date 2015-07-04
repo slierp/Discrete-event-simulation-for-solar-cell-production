@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from PyQt4 import QtCore
 import simpy
          
-class BatchProcess(object):
+class BatchProcess(QtCore.QObject):
     
     def __init__(self,  _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output       
 
@@ -30,9 +32,9 @@ class BatchProcess(object):
         self.status = 1 # up or down
         self.container = simpy.Container(self.env,capacity=self.params['batch_size'],init=0)
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " - [BatchProcess][" + self.params['name'] + "] Added default batch process"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " - [BatchProcess][" + self.params['name'] + "] Added default batch process"
+            self.output_text.sig.emit(string)
             
         self.env.process(self.run())
         
@@ -42,6 +44,7 @@ class BatchProcess(object):
     def run(self):
         batch_size = self.params['batch_size']
         process_time = self.params['process_time']
+        verbose = self.params['verbose']
         
         while True:
             yield self.start
@@ -58,9 +61,9 @@ class BatchProcess(object):
                     self.process_counter += 1
                     self.process_time_counter += process_time
                     
-                    #if (self.params['verbose']):
-                    #    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process "
-                    #    self.output_text.sig.emit(string)
+                    if (verbose):
+                        string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process "
+                        self.output_text.sig.emit(string)
             
     def space_available(self,_batch_size):
         # see if space is available for the specified _batch_size
@@ -83,6 +86,7 @@ class BatchProcess(object):
         # check repeatedly whether time limit has been reached
         downtime_time = self.params['downtime_time']
         downtime_duration = self.params['downtime_duration']
+        verbose = self.params['verbose']
     
         while True:
             yield self.env.timeout(1)
@@ -99,9 +103,9 @@ class BatchProcess(object):
                     self.process_counter = 0
                     self.last_downtime = self.env.now
 
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime "
-                #    self.output_text.sig.emit(string)                
+                if (verbose):
+                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime "
+                    self.output_text.sig.emit(string)                
 
     def downtime_cycle(self):
         # perform downtime cycle
@@ -113,9 +117,12 @@ class BatchProcess(object):
             self.process_counter = 0
             self.last_downtime = self.env.now
 
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime "
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime "
+            self.output_text.sig.emit(string)
         
     def idle_time(self):
-        return 100-(100*self.process_time_counter/(self.env.now-self.start_time))
+        if (self.env.now-self.start_time):
+            return 100-(100*self.process_time_counter/(self.env.now-self.start_time))
+        else:
+            return 0

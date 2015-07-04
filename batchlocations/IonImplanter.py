@@ -1,20 +1,26 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
+from PyQt4 import QtCore
+from batchlocations.BatchContainer import BatchContainer
+import collections
+
+
 """
 
     Input buffer - tuneable size but default 8 cassettes
-    Two loadlocks - tuneable capacity, default is 2 cassettes each
-    Two belts - tuneable belt speed
-    Ouput buffer - the same size as the input buffer
+    Loadlocks - tuneable capacity, default is 2 cassettes each
+    Belts
+    Output buffer - the same size as the input buffer
     One set of automation moves cassettes between the buffers and the loadlocks.
     Another set of automation puts and removes wafers from the belt (this probably doesn't exist in the real tool)
 
 """
-from __future__ import division
-from batchlocations.BatchContainer import BatchContainer
 
-class IonImplanter(object):
+class IonImplanter(QtCore.QObject):
         
-    def __init__(self, _env, _output=None, _params = {}):       
+    def __init__(self, _env, _output=None, _params = {}):    
+        QtCore.QObject.__init__(self)
+     
         self.env = _env
         self.output_text = _output
         self.utilization = []       
@@ -37,24 +43,17 @@ class IonImplanter(object):
         self.params['specification'] += "maintenance is performed."
 
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
-        self.params['no_of_lanes'] = 5
-        self.params['no_of_lanes_desc'] = "Number of process lanes"
-        self.params['tool_length'] = 10
-        self.params['tool_length_desc'] = "Distance between input and output (meters)"
-        self.params['belt_speed'] = 1.8
-        self.params['belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
-        self.params['unit_distance'] = 0.2
-        self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
+        self.params['name_desc'] = "Name of the individual tool"
+        self.params['loadlock_capacity'] = 2
+        self.params['loadlock_capacity_desc'] = "Number of cassettes per loadlock"   
+        self.params['no_of_loadlocks'] = 2
+        self.params['no_of_loadlocks_desc'] = "Number of loadlocks"
+        self.params['process_time'] = 20*60
+        self.params['process_time_desc'] = "Process time including evacuation (seconds)"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
-        self.params['max_cassette_no'] = 8
-        self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
-        
-        self.params['downtime_volume'] = 100000
-        self.params['downtime_volume_desc'] = "Number of entered wafers before downtime"
-        self.params['downtime_duration'] = 60*60
-        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
+        self.params['max_cassette_no'] = 5
+        self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"        
         
         self.params['verbose'] = False
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
@@ -69,14 +68,26 @@ class IonImplanter(object):
         #    string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
         #    self.output_text.sig.emit(string)
         
-        ### Input ###
+        ### Input buffer ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        
+        ## Load locks ##
+        self.batchprocesses = []
+        for i in range(0,self.params['loadlock_capacity']):
+            process_params = {}
+            process_params['name'] = "i" + str(i)
+            process_params['batch_size'] = self.params['batch_size']
+            process_params['process_time'] = self.params['process_time']
+            process_params['verbose'] = self.params['verbose']
+            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))       
 
         ### Array of zeroes represents lanes ###
-        self.lanes = [[0 for col in range(self.params['tool_length']//self.params['unit_distance'])] for row in range(self.params['no_of_lanes'])]
-        #np.zeros((self.params['no_of_lanes'],self.params['tool_length']//self.params['unit_distance']))
+        self.lanes = []
+        for i in  range(self.params['no_of_lanes']):            
+            self.lanes.append(collections.deque([False for rows in range(self.params['tool_length']//self.params['unit_distance'])]))        
+        #self.lanes = [[0 for col in range(self.params['tool_length']//self.params['unit_distance'])] for row in range(self.params['no_of_lanes'])]
 
-        ### Output ###
+        ### Output buffer ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
         
         self.idle_times_internal = {}
@@ -105,6 +116,9 @@ class IonImplanter(object):
             else:
                 idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time)
             self.utilization.append(["l" + str(i),round(idle_time,1)])
+
+    def run_loadlock(self, lane_number):
+        return
 
     def run_lane_load_in(self, lane_number):
         # Loads wafers if available

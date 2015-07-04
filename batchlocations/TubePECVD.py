@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
 
-class TubePECVD(object):
+class TubePECVD(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):       
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.utilization = []        
@@ -77,9 +79,9 @@ class TubePECVD(object):
         self.load_out_start = self.env.event()
         self.load_in_out_end = self.env.event()
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube PECVD"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube PECVD"
+            self.output_text.sig.emit(string)
         
         ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -121,7 +123,11 @@ class TubePECVD(object):
         self.utilization.append(self.nominal_throughput())
         production_volume = self.transport_counter - self.output.container.level
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
-        self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0):
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
+        else:
+            self.utilization.append(0)            
         
         for i in range(len(self.batchprocesses)):
             self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])        
@@ -142,6 +148,7 @@ class TubePECVD(object):
         transfer2_time = self.params['transfer2_time']
         no_of_boats = self.params['no_of_boats']
         wait_time = self.params['wait_time']
+        verbose = self.params['verbose']
         
         while True:
             for i in range(len(batchconnections)):
@@ -162,9 +169,9 @@ class TubePECVD(object):
                         batchconnections[i][0].process_finished = 0
                         batchconnections[i][1].start_process()
                         
-                        #if (self.params['verbose']):
-                        #    string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown"
-                        #    self.output_text.sig.emit(string)
+                        if (verbose):
+                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown"
+                            self.output_text.sig.emit(string)
 
             for i in range(len(self.coolprocesses)):
                 # check if we can unload a batch (should be followed by a re-load if possible)
@@ -179,9 +186,9 @@ class TubePECVD(object):
                         yield self.env.timeout(transfer2_time)
                         yield self.boat_load_unload.container.put(batch_size)
                         
-                        #if (self.params['verbose']):
-                        #    string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved processed batch for load-out"
-                        #    self.output_text.sig.emit(string)
+                        if (verbose):
+                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved processed batch for load-out"
+                            self.output_text.sig.emit(string)
                     
                         self.coolprocesses[i].process_finished = 0                    
                     
@@ -210,9 +217,9 @@ class TubePECVD(object):
 
                         self.batchprocesses[i].start_process()
                         
-                        #if (self.params['verbose']):
-                        #    string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Started a process"
-                        #    self.output_text.sig.emit(string)
+                        if (verbose):
+                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Started a process"
+                            self.output_text.sig.emit(string)
             
             yield self.env.timeout(wait_time)                        
             
@@ -220,6 +227,7 @@ class TubePECVD(object):
         no_loads = self.params['batch_size'] // self.params['automation_loadsize']
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
+        verbose = self.params['verbose']
         
         while True:
             yield self.load_in_start
@@ -232,14 +240,15 @@ class TubePECVD(object):
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event
 
-            #if (self.params['verbose']):
-            #    string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loaded batch"
-            #    self.output_text.sig.emit(string)
+            if (verbose):
+                string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loaded batch"
+                self.output_text.sig.emit(string)
 
     def run_load_out(self):
         no_loads = self.params['batch_size'] // self.params['automation_loadsize']
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
+        verbose = self.params['verbose']
         
         while True:
             yield self.load_out_start
@@ -253,9 +262,9 @@ class TubePECVD(object):
             yield self.load_in_out_end.succeed()
             self.load_in_out_end = self.env.event() # make new event            
 
-            #if (self.params['verbose']):            
-            #    string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloaded batch"
-            #    self.output_text.sig.emit(string)
+            if (verbose):            
+                string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloaded batch"
+                self.output_text.sig.emit(string)
 
     def nominal_throughput(self):
         throughputs = []        

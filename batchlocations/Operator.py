@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from PyQt4 import QtCore
 
-class Operator(object):
+class Operator(QtCore.QObject):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
         
     def __init__(self, _env, _batchconnections = None, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.batchconnections = _batchconnections
@@ -28,9 +30,9 @@ class Operator(object):
         self.start_time = self.env.now
         self.idle_time = 0
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
+            self.output_text.sig.emit(string)
             
         self.env.process(self.run())        
 
@@ -38,6 +40,7 @@ class Operator(object):
         continue_loop = False
         min_no_batches = self.params['min_no_batches']
         wait_time = self.params['wait_time']
+        verbose = self.params['verbose']
         
         while True:
             for i in self.batchconnections:
@@ -75,10 +78,10 @@ class Operator(object):
                     
                         continue_loop = True
 
-                        #if (self.params['verbose']):
-                        #    string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
-                        #    string += str(no_batches_for_transport)
-                        #    self.output_text.sig.emit(string)                              
+                        if (verbose):
+                            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
+                            string += str(no_batches_for_transport)
+                            self.output_text.sig.emit(string)                              
 
             if (continue_loop):
                 continue_loop = False
@@ -87,10 +90,10 @@ class Operator(object):
             yield self.env.timeout(wait_time)
             self.idle_time += wait_time
 
-    #def report(self):        
-        #string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
-        #self.output_text.sig.emit(string)
+    def report(self):        
+        string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
+        self.output_text.sig.emit(string)
         
-        #if (self.params['verbose']):
-        #    string = "[Operator][" + self.params['name'] + "] Transport time: " + str(np.round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = "[Operator][" + self.params['name'] + "] Transport time: " + str(round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
+            self.output_text.sig.emit(string)

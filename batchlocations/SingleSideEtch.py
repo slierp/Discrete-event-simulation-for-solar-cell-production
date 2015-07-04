@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 import collections
 
-class SingleSideEtch(object):
+class SingleSideEtch(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.utilization = []       
@@ -58,9 +60,9 @@ class SingleSideEtch(object):
         self.first_run = True
         self.process_counter = 0      
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
+            self.output_text.sig.emit(string)
         
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -83,15 +85,19 @@ class SingleSideEtch(object):
         self.env.process(self.run_lane_load_out())
 
     def report(self):
-        #string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        #self.output_text.sig.emit(string)
+        string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
+        self.output_text.sig.emit(string)
 
         self.utilization.append("SingleSideEtch")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
         production_volume = self.transport_counter - self.output.container.level
         production_hours = (self.env.now - self.start_time)/3600
-        self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())               
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0):
+            self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())               
+        else:
+            self.utilization.append(0)            
 
         for i in range(len(self.idle_times_internal)):
             if self.first_run:
@@ -108,6 +114,7 @@ class SingleSideEtch(object):
         downtime_duration = self.params['downtime_duration']
         no_of_lanes = self.params['no_of_lanes']
         time_step = 60*self.params['unit_distance']/self.params['belt_speed']
+        verbose = self.params['verbose']
     
         while True:
             if downtime_volume & (self.process_counter >= downtime_volume):
@@ -116,9 +123,9 @@ class SingleSideEtch(object):
                     self.idle_times_internal[i] += downtime_duration
                 self.process_counter = 0
                 
-                #if (self.params['verbose']):
-                #    string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] End downtime"
-                #    self.output_text.sig.emit(string)
+                if (verbose):
+                    string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] End downtime"
+                    self.output_text.sig.emit(string)
 
             if (self.input.container.level > lane_number):
                 # all lanes are started simultaneously, so only continue if there are enough wafers for this particular lane
@@ -131,11 +138,11 @@ class SingleSideEtch(object):
                 self.lanes[lane_number][0] = True
                 self.process_counter += 1               
                 
-                #if self.params['verbose']:
-                #    if ((self.process_counter % self.params['cassette_size']) == 0):            
-                #        string = str(np.around(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
-                #        string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number)
-                #        self.output_text.sig.emit(string)
+                if (verbose):
+                    if ((self.process_counter % self.params['cassette_size']) == 0):            
+                        string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+                        string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number)
+                        self.output_text.sig.emit(string)
                         
             elif not self.first_run:
                 # start counting down-time after first run

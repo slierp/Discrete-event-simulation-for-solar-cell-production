@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-import numpy as np
 from PyQt4 import QtCore, QtGui
 import os, ntpath
 from dialogs.AddBatchlocationView import AddBatchlocationView
@@ -9,11 +8,9 @@ from dialogs.EditBatchlocationView import EditBatchlocationView
 from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
-#from RunSimulation import RunSimulation
-#from RunSimulationThread import RunSimulationThread
+from RunSimGui import RunSimGui
+from RunSimulationThread import RunSimulationThread
 import pickle
-import Required_resources
-import sys
 
 class DeselectableTreeView(QtGui.QTreeView):
     # de-select by right click or by clicking on white space
@@ -29,20 +26,24 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell production simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
+        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
         
         self.table_widget = QtGui.QTableWidget()        
         self.clip = QtGui.QApplication.clipboard()
-
-        #self.simulation_thread = RunSimulationThread(self,self.edit)
-        #self.simulation_thread.signal.sig.connect(self.simulation_end_signal)
-        #self.simulation_thread.output.sig.connect(self.simulation_output)
-        #self.simulation_thread.util.sig.connect(self.utilization_output)
-        #self.output_signal_counter = 0        
-        #self.output_overload_signal_given = False        
+        
+        self.qt_thread = QtCore.QThread(self) # Separate Qt thread
+        self.simulation_thread = RunSimulationThread(self) # Where all the simulation work will be done
+        self.simulation_thread.moveToThread(self.qt_thread) # Move simulation work to separate thread
+        self.qt_thread.started.connect(self.simulation_thread.run) # Start simulation when thread is started
+        self.simulation_thread.signal.sig.connect(self.simulation_end_signal) # Get signal to show message when simulation is finished
+        self.simulation_thread.signal.sig.connect(self.qt_thread.quit) # Stop thread when simulation is finished
+        self.simulation_thread.output.sig.connect(self.simulation_output) # Get signal to show simulation progress
+        self.simulation_thread.util.sig.connect(self.utilization_output) # Get signal to show utilization results
+        self.output_signal_counter = 0        
+        self.output_overload_signal_given = False        
 
         self.prev_dir_path = ""
         self.prev_save_path = ""
@@ -236,7 +237,7 @@ class MainGui(QtGui.QMainWindow):
         time_per_unit = 20
                            
         #num = 0
-        for i in np.arange(len(self.locationgroups)-1):
+        for i in range(len(self.locationgroups)-1):
             for j, value in enumerate(self.locationgroups[i]):
                 for k, value in enumerate(self.locationgroups[i+1]):
                     #self.batchconnections[num] = [[i,j],[i+1,k],transport_time, time_per_unit]
@@ -261,7 +262,7 @@ class MainGui(QtGui.QMainWindow):
         # generate a default operators list from batchconnections list
         
         self.operators = []    
-        for i in np.arange(len(self.locationgroups)-1):
+        for i in range(len(self.locationgroups)-1):
             # make as many operators as there are locationgroups minus one
             self.operators.append([[],{'name' : str(i)}])
             
@@ -299,13 +300,13 @@ class MainGui(QtGui.QMainWindow):
             self.operators_model.setHorizontalHeaderLabels(['Operators']) 
             self.statusBar().showMessage(self.tr("All operators were removed"))
 
-#    def run_simulation(self):
-#        self.output_signal_counter = 0
-#        RunSimulation(self)        
+    def run_simulation(self):
+        self.output_signal_counter = 0
+        RunSimGui(self)        
 
-#    def stop_simulation(self):
-#        self.simulation_thread.stop_simulation = True
-#        self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
+    def stop_simulation(self):
+        self.simulation_thread.stop_simulation = True
+        self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
 
     def keyPressEvent(self, e):
         if (e.modifiers() & QtCore.Qt.ControlModifier): # Ctrl
@@ -322,49 +323,49 @@ class MainGui(QtGui.QMainWindow):
                     s = s[:-1] + "\n" #eliminate last '\t'
                 self.clip.setText(s)
 
-#    @QtCore.pyqtSlot(str)
-#    def simulation_output(self,string):        
-#        
-#        if self.output_signal_counter < 1000:
-#            # limit text output to 999 lines to prevent GUI from becoming unresponsive
-#            self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
-#            self.edit.insertPlainText(string + '\n')
-#            self.output_signal_counter += 1
-#        elif not self.output_overload_signal_given:
-#            self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
-#            self.edit.insertPlainText('Output overload\n') 
-#            self.output_overload_signal_given = True
+    @QtCore.pyqtSlot(str)
+    def simulation_output(self,string):        
+        
+        if self.output_signal_counter < 1000:
+            # limit text output to 999 lines to prevent GUI from becoming unresponsive
+            self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
+            self.edit.insertPlainText(string + '\n')
+            self.output_signal_counter += 1
+        elif not self.output_overload_signal_given:
+            self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
+            self.edit.insertPlainText('Output overload\n') 
+            self.output_overload_signal_given = True
         #self.edit.insertHtml(QtCore.QString(string))
 
-    #@QtCore.pyqtSlot(list)
-    #def utilization_output(self,utilization):
+    @QtCore.pyqtSlot(list)
+    def utilization_output(self,utilization):
 
-#        for i, value in enumerate(utilization):
-#            item0 = QtGui.QTableWidgetItem(utilization[i][0])
-#            item1 = QtGui.QTableWidgetItem(utilization[i][1])
-#            item2 = QtGui.QTableWidgetItem(str(int(utilization[i][2])))
-#            item3 = QtGui.QTableWidgetItem(str(int(utilization[i][3])) + "%")
-#            self.table_widget.setItem(i, 0, item0)
-#            self.table_widget.setItem(i, 1, item1)
-#            self.table_widget.setItem(i, 2, item2)
-#            self.table_widget.setItem(i, 3, item3)            
-#            
-#            for j in np.arange(4,len(utilization[i])):
-#                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + "-" + str(utilization[i][j][1]) + "%")
-#                self.table_widget.setItem(i, j, item)
-#                
-#                if (utilization[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
-#                elif (utilization[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
-#                elif (utilization[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
-#                else: color_code = QtGui.QColor(255,100,100)
-#                    
-#                self.table_widget.item(i, j).setBackground(color_code)
+        for i, value in enumerate(utilization):
+            item0 = QtGui.QTableWidgetItem(utilization[i][0])
+            item1 = QtGui.QTableWidgetItem(utilization[i][1])
+            item2 = QtGui.QTableWidgetItem(str(int(utilization[i][2])))
+            item3 = QtGui.QTableWidgetItem(str(int(utilization[i][3])) + "%")
+            self.table_widget.setItem(i, 0, item0)
+            self.table_widget.setItem(i, 1, item1)
+            self.table_widget.setItem(i, 2, item2)
+            self.table_widget.setItem(i, 3, item3)            
+            
+            for j in range(4,len(utilization[i])):
+                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + "-" + str(utilization[i][j][1]) + "%")
+                self.table_widget.setItem(i, j, item)
+                
+                if (utilization[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
+                elif (utilization[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
+                elif (utilization[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
+                else: color_code = QtGui.QColor(255,100,100)
+                    
+                self.table_widget.item(i, j).setBackground(color_code)
 
-#    @QtCore.pyqtSlot(str)
-#    def simulation_end_signal(self):
-#        self.run_sim_button.setEnabled(True)
-#        self.stop_sim_button.setEnabled(False)
-#        self.statusBar().showMessage(self.tr("Simulation has ended"))
+    @QtCore.pyqtSlot(str)
+    def simulation_end_signal(self):
+        self.run_sim_button.setEnabled(True)
+        self.stop_sim_button.setEnabled(False)
+        self.statusBar().showMessage(self.tr("Simulation has ended"))
 
     def on_about(self):
         msg = self.tr("Solar cell production simulation\n\n- Author: Ronald Naber (rnaber@tempress.nl)\n- License: Public domain")
@@ -481,53 +482,53 @@ class MainGui(QtGui.QMainWindow):
         save_file_button.setToolTip(tip)
         save_file_button.setStatusTip(tip)
 
-        #self.run_sim_button = QtGui.QPushButton()
-        #tip = self.tr("Run simulation")
-        #self.run_sim_button.clicked.connect(self.run_simulation)         
-        #self.run_sim_button.setIcon(QtGui.QIcon(":play.png"))
-        #self.run_sim_button.setToolTip(tip)
-        #self.run_sim_button.setStatusTip(tip)
-        #self.run_sim_button.setShortcut('Ctrl+R')
+        self.run_sim_button = QtGui.QPushButton()
+        tip = self.tr("Run simulation")
+        self.run_sim_button.clicked.connect(self.run_simulation)         
+        self.run_sim_button.setIcon(QtGui.QIcon(":play.png"))
+        self.run_sim_button.setToolTip(tip)
+        self.run_sim_button.setStatusTip(tip)
+        self.run_sim_button.setShortcut('Ctrl+R')
         
-        #self.stop_sim_button = QtGui.QPushButton()
-        #tip = self.tr("Stop simulation")
-        #self.stop_sim_button.clicked.connect(self.stop_simulation)          
-        #self.stop_sim_button.setIcon(QtGui.QIcon(":stop.png"))
-        #self.stop_sim_button.setToolTip(tip)
-        #self.stop_sim_button.setStatusTip(tip)
-        #self.stop_sim_button.setEnabled(False)
-        #self.stop_sim_button.setShortcut('Escape')
+        self.stop_sim_button = QtGui.QPushButton()
+        tip = self.tr("Stop simulation")
+        self.stop_sim_button.clicked.connect(self.stop_simulation)          
+        self.stop_sim_button.setIcon(QtGui.QIcon(":stop.png"))
+        self.stop_sim_button.setToolTip(tip)
+        self.stop_sim_button.setStatusTip(tip)
+        self.stop_sim_button.setEnabled(False)
+        self.stop_sim_button.setShortcut('Escape')
 
         top_buttonbox = QtGui.QDialogButtonBox()
         top_buttonbox.addButton(open_file_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(save_file_button, QtGui.QDialogButtonBox.ActionRole)
-        #top_buttonbox.addButton(self.run_sim_button, QtGui.QDialogButtonBox.ActionRole)
-        #top_buttonbox.addButton(self.stop_sim_button, QtGui.QDialogButtonBox.ActionRole)
+        top_buttonbox.addButton(self.run_sim_button, QtGui.QDialogButtonBox.ActionRole)
+        top_buttonbox.addButton(self.stop_sim_button, QtGui.QDialogButtonBox.ActionRole)
 
-        #self.sim_time_combo = QtGui.QComboBox(self)
-        #for i in self.sim_time_selection_list:
-        #    self.sim_time_combo.addItem(i)
+        self.sim_time_combo = QtGui.QComboBox(self)
+        for i in self.sim_time_selection_list:
+            self.sim_time_combo.addItem(i)
         
         toolbar_hbox = QtGui.QHBoxLayout()
         toolbar_hbox.addWidget(top_buttonbox)
-        #toolbar_hbox.addWidget(self.sim_time_combo)        
+        toolbar_hbox.addWidget(self.sim_time_combo)        
         
-        #bottom_tabwidget = QtGui.QTabWidget()
-        #bottom_tabwidget.addTab(self.edit, QtCore.QString("Activity log"))
+        bottom_tabwidget = QtGui.QTabWidget()
+        bottom_tabwidget.addTab(self.edit, QtCore.QString("Activity log"))
 
         ##### Idle time tab #####       
-        #self.table_widget.setRowCount(64)
-        #self.table_widget.setColumnCount(35)
-        #self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
+        self.table_widget.setRowCount(64)
+        self.table_widget.setColumnCount(35)
+        self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
 
-        #headerlabels = ['Tool type','Name','Nominal','Util rate']
-        #for i in np.arange(4,35):
-        #    headerlabels.append("Process " + str(i-4))
-        #self.table_widget.setHorizontalHeaderLabels(headerlabels)
-        #self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        #self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        headerlabels = ['Tool type','Name','Nominal','Util rate']
+        for i in range(4,35):
+            headerlabels.append("Process " + str(i-4))
+        self.table_widget.setHorizontalHeaderLabels(headerlabels)
+        self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
                 
-        #bottom_tabwidget.addTab(self.table_widget, QtCore.QString("Utilization"))
+        bottom_tabwidget.addTab(self.table_widget, QtCore.QString("Utilization"))
         
         ##### Main layout #####
         top_hbox = QtGui.QHBoxLayout()
@@ -538,8 +539,7 @@ class MainGui(QtGui.QMainWindow):
         vbox = QtGui.QVBoxLayout()       
         vbox.addLayout(toolbar_hbox)
         vbox.addLayout(top_hbox)
-        #vbox.addLayout(textbox_hbox)
-        #vbox.addWidget(bottom_tabwidget)
+        vbox.addWidget(bottom_tabwidget)
                                                          
         self.main_frame.setLayout(vbox)
 
@@ -597,22 +597,4 @@ class MainGui(QtGui.QMainWindow):
         about_action.setStatusTip(tip)
         about_action.setShortcut('F1')
 
-        self.help_menu.addAction(about_action)        
-
-if __name__ == "__main__":      
-
-    app = QtGui.QApplication.instance()
-    if not app:
-        # if no other PyQt program is running (such as the IDE) create a new instance
-        app = QtGui.QApplication(sys.argv)
-    
-    if len(sys.argv) > 1:
-        if "--help" in sys.argv or "-h" in sys.argv:
-            print "Program for making definitions for solar cell production simulation"
-            print "Options:"
-            print "--h, --help  : Help message"
-            exit()
-               
-    window = MainGui()
-    window.show()
-    app.exec_()        
+        self.help_menu.addAction(about_action)

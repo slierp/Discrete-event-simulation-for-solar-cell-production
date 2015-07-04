@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 
-class Buffer(object):
+class Buffer(QtCore.QObject):
         
-    def __init__(self, _env, _output=None, _params = {}):        
+    def __init__(self, _env, _output=None, _params = {}):    
+        QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
         self.idle_times = []
@@ -23,13 +25,13 @@ class Buffer(object):
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)
         
-        #if (self.params['verbose']):
-        #    string = str(self.env.now) + " - [Buffer][" + self.params['name'] + "] Added a buffer location"
-        #    self.output_text.sig.emit(string)
+        if (self.params['verbose']):
+            string = str(self.env.now) + " - [Buffer][" + self.params['name'] + "] Added a buffer location"
+            self.output_text.sig.emit(string)
         
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.output = self.input
 
-    #def report(self):
-    #    string = "[Buffer][" + self.params['name'] + "] Currently buffered: " + str(self.output.container.level)
-    #    self.output_text.sig.emit(string)
+    def report(self):
+        string = "[Buffer][" + self.params['name'] + "] Currently buffered: " + str(self.output.container.level)
+        self.output_text.sig.emit(string)

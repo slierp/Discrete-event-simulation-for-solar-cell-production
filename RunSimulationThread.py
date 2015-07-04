@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Aug 17 14:59:54 2014
-
-@author: rnaber
-
-"""
-
 from __future__ import division
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferUnstacker import WaferUnstacker
@@ -18,30 +11,24 @@ from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
 from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
-#import simpyx as simpy
 import simpy
-#import cProfile, pstats, StringIO
-import numpy as np
 from PyQt4 import QtCore
-#from PyQt4 import QtGui # only needed when not running simulation in separate thread
 
 class StringSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
 
 class ListSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(list)
-
-class RunSimulationThread(QtCore.QThread):
-#class RunSimulationThread(QtGui.QMainWindow): # interchange for QThread when not running simulation in separate thread
-
-    def __init__(self, _parent, _edit):
-        QtCore.QThread.__init__(self, _parent)
-        self.parent = _parent
-        self.edit = _edit
+        
+class RunSimulationThread(QtCore.QObject):
+    
+    def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
+        
         self.stop_simulation = False        
         self.signal = StringSignal()        
         self.output = StringSignal()
-        self.util = ListSignal()
+        self.util = ListSignal()        
 
     def make_unique(self,nonunique):
         unique = []
@@ -51,13 +38,9 @@ class RunSimulationThread(QtCore.QThread):
         unique.sort()
         return unique
 
+    @QtCore.pyqtSlot()
     def run(self):
-        
-        self.env = simpy.Environment()    
-
-        #import simpy.rt # if you are really patient
-        #self.env = simpy.rt.RealtimeEnvironment(factor=0.1)
-        #self.env = simpy.rt.RealtimeEnvironment(factor=1)
+        self.env = simpy.Environment()
    
         ### Replace string elements in production line definition for real class instances ###
         for i, value in enumerate(self.batchlocations):
@@ -85,7 +68,7 @@ class RunSimulationThread(QtCore.QThread):
 
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances
-            for j in np.arange(len(self.locationgroups[i])):
+            for j in range(len(self.locationgroups[i])):
                 self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]
            
         for i, value in enumerate(self.batchconnections):
@@ -98,7 +81,7 @@ class RunSimulationThread(QtCore.QThread):
             # also replace operator list elements for new class instances
             tmp_batchconnections = {}
         
-            for j in np.arange(len(self.operators[i][0])):
+            for j in range(len(self.operators[i][0])):
                 tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
@@ -106,11 +89,11 @@ class RunSimulationThread(QtCore.QThread):
         ### Calculate time steps needed ###
         no_hourly_updates = self.params['time_limit'] // (60*60)
         hourly_updates = []
-        for i in np.arange(0,no_hourly_updates):
+        for i in range(0,no_hourly_updates):
             hourly_updates.append((i+1)*60*60)
         
         percentage_updates = []
-        for i in np.arange(0,10):
+        for i in range(0,10):
             percentage_updates.append((i+1) * self.params['time_limit'] / 10)    
                 
         updates_list = hourly_updates + percentage_updates
@@ -118,49 +101,38 @@ class RunSimulationThread(QtCore.QThread):
 
         self.output.sig.emit("0% progress: 0 hours / 0 produced")
 
-        ### Profiler start ###
-        #pr = cProfile.Profile()
-        #pr.enable()
-
         ### Run simulation ###
         prev_production_volume_update = 0
         prev_percentage_time = self.env.now
+        
         for i in updates_list:
             if(self.stop_simulation):
-                string = "Stopped at "  + str(np.round(self.env.now/3600,1)) + " hours"
+                string = "Stopped at "  + str(round(self.env.now/3600,1)) + " hours"
                 self.output.sig.emit(string) 
                 break
 
             self.env.run(until=i)
             
             if (i == self.params['time_limit']):                
-                string = "Finished at "  + str(np.round(self.env.now/3600,1)) + " hours"
+                string = "Finished at "  + str(round(self.env.now/3600,1)) + " hours"
                 self.output.sig.emit(string)                            
             elif i in percentage_updates: #% (self.params['time_limit'] // 10) == 0):
                 
                 l_loc = len(self.locationgroups)
                 percentage_production_volume_update = 0
-                for j in np.arange(len(self.locationgroups[l_loc-1])):
+                for j in range(len(self.locationgroups[l_loc-1])):
                     percentage_production_volume_update += self.locationgroups[l_loc-1][j].output.container.level
                     
                 percentage_wph_update = (percentage_production_volume_update - prev_production_volume_update)
                 percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
                 
                 # float needed for very large integer division                
-                string = str(np.round(100*float(i)/self.params['time_limit']).astype(int)) + "% progress: " + str(np.round(i/3600,1)) + " hours / "
+                string = str(round(100*float(i)/self.params['time_limit'])) + "% progress: " + str(round(i/3600,1)) + " hours / "
                 string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
                 self.output.sig.emit(string)
 
                 prev_percentage_time = self.env.now
-                prev_production_volume_update = percentage_production_volume_update                
-
-        ### Profiler end ###
-        #pr.disable()
-        #s = StringIO.StringIO()
-        #sortby = 'tottime'
-        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        #ps.print_stats()
-        #print s.getvalue()
+                prev_production_volume_update = percentage_production_volume_update
 
         ### Generate summary output in log tab ###
         for i, value in enumerate(self.batchlocations):
@@ -179,10 +151,10 @@ class RunSimulationThread(QtCore.QThread):
         ### Calculate sum of all produced cells ###
         prod_vol = 0
         l_loc = len(self.locationgroups)
-        for i in np.arange(len(self.locationgroups[l_loc-1])):
+        for i in range(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
 
         self.output.sig.emit("Production volume: " + str(prod_vol))
-        self.output.sig.emit("Average throughput (WPH): " + str(np.round(3600*prod_vol/self.params['time_limit']).astype(int)))        
+        self.output.sig.emit("Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit'])))        
         
         self.signal.sig.emit('Simulation finished')
