@@ -6,6 +6,11 @@ from batchlocations.BatchContainer import BatchContainer
 import simpy
 import collections
 
+"""
+Finish implementation of delay between loading wafers into dryers
+
+"""
+
 class PrintLine(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):
@@ -46,6 +51,11 @@ class PrintLine(QtCore.QObject):
         self.params['time_dry'] = 90
         self.params['time_dry_desc'] = "Time for one wafer to go from printer to dryer and "
         self.params['time_dry_desc'] += "to next input (printing or firing) (seconds)"
+        #self.params['dryer_tool_length'] = 3.0
+        #self.params['dryer_tool_length_desc'] = "Distance between dryer input and output (meters)"
+        #self.params['dryer_belt_speed'] = 2.0
+        #self.params['dryer_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
+
         
         self.params['no_print_steps'] = 3
         self.params['no_print_steps_desc'] = "Number of print and dry stations"
@@ -54,12 +64,18 @@ class PrintLine(QtCore.QObject):
         self.params['firing_tool_length_desc'] = "Distance between firing furnace input and output (meters)"
         self.params['firing_belt_speed'] = 5.0 # 5 is roughly 200 ipm
         self.params['firing_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
+
+        self.params['unit_distance'] = 0.2
+        self.params['unit_distance_desc'] = "Minimal distance between wafers on drying belts and firing furnace (meters)"        
         
         self.params['verbose'] = False
         self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
         self.params.update(_params)    
         
-        self.time_dry = self.params['time_dry']        
+        self.time_dry = self.params['time_dry']
+        #self.time_dry = int(60*self.params['dryer_tool_length']//self.params['dryer_belt_speed'])         
+        #self.load_in_delay = int(60*self.params['unit_distance']//self.params['dryer_belt_speed'])
+        
         self.no_print_steps = self.params['no_print_steps'] 
         self.time_fire = int(60*self.params['firing_tool_length']//self.params['firing_belt_speed'])
         self.verbose = self.params['verbose'] 
@@ -87,7 +103,9 @@ class PrintLine(QtCore.QObject):
             self.first_run.append(True)
             self.start_time.append(0)
 
-        self.next_step = self.env.event() # triggers load-in from cassette
+        #self.locks = [] # lock drying belt load-in in order to maintain minimal distance between wafers     
+        #for i in range(self.params['no_print_steps']):
+        #    self.locks.append(False)
 
         for i in range(self.params['no_print_steps']):
             self.env.process(self.run_printer(i))
@@ -171,7 +189,10 @@ class PrintLine(QtCore.QObject):
 
                 # move belt and perform print
                 self.belts[num].rotate(1)
-                yield self.env.timeout(time_print) # belt movement time determined by print time
+                time_out = []
+                time_out.append(time_step)
+                time_out.append(time_print)
+                yield self.env.timeout(max(time_out)) # belt movement time determined by the slowest: print time or by belt speed
                 
                 if (verbose):
                     string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num)
@@ -179,6 +200,10 @@ class PrintLine(QtCore.QObject):
 
                 # place wafer in dryer after printing
                 self.env.process(self.dry_wafer(num))
+                #if self.locks[num]:
+                #    yield self.env.timeout(self.load_in_delay)
+                #else:
+                #    self.env.process(self.dry_wafer(num))
 
             else:
                 # if cannot print: move belt and wait
@@ -189,6 +214,11 @@ class PrintLine(QtCore.QObject):
                     self.idle_times_internal[num] += time_step
 
     def dry_wafer(self,num): # inline process is continuous so it requires a timeout
+        #self.locks[num] = True
+        #yield self.env.timeout(self.load_in_delay)        
+        #self.locks[num] = False
+        #yield self.env.timeout(self.time_dry - self.load_in_delay)            
+    
         yield self.env.timeout(self.time_dry)
         if (num < (self.no_print_steps-1)):
             #go to next printer
@@ -201,7 +231,8 @@ class PrintLine(QtCore.QObject):
             string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num)
             self.output_text.sig.emit(string)             
 
-    def fire_wafer(self): # inline process is continuous so it requires a timeout
+    def fire_wafer(self): # inline process is continuous so it requires a timeout       
+            
         yield self.env.timeout(self.time_fire)
         yield self.output.container.put(1)
         
@@ -210,7 +241,10 @@ class PrintLine(QtCore.QObject):
             self.output_text.sig.emit(string)
     
     def nominal_throughput(self):
-        return 3600/self.params['time_print']
+        throughputs = []        
+        throughputs.append(3600/self.params['time_print'])
+        throughputs.append(3600/self.params['time_step'])
+        return min(throughputs)
             
 class InfiniteContainer(object):
     
