@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from __future__ import division
 from RunSimulation import RunSimulation
 import sys
@@ -21,7 +22,7 @@ if __name__ == "__main__":
         if "--help" in sys.argv or "-h" in sys.argv:
             print "Solar cell production simulation"
             print "Running with no arguments will start graphical user interface"            
-            print "Command-line usage: python " + sys.argv[0] + " file duration"
+            print "Command-line usage: " + sys.argv[0] + " file duration"
             print "Options:"
             print "--h, --help  : Print help message"
             print "file : .desc file containing simulation description"

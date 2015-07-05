@@ -23,13 +23,13 @@ class WaferBin(QtCore.QObject):
         self.params['max_batch_no_desc'] = "Number of input batch positions"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between wafer removal attempts (seconds)"
-        self.params['verbose'] = False
-        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
+#        self.params['verbose'] = False #DEBUG
+#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin"
-            self.output_text.sig.emit(string)
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
       
         self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")

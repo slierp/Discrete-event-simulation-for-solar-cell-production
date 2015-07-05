@@ -41,13 +41,13 @@ class WaferUnstacker(QtCore.QObject):
         self.params['time_pick_and_place'] = 1.0
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds)"
         
-        self.params['verbose'] = False
-        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
+#        self.params['verbose'] = False #DEBUG
+#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)    
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker"
-            self.output_text.sig.emit(string)
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         #self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
@@ -68,7 +68,7 @@ class WaferUnstacker(QtCore.QObject):
         time_pick_and_place = self.params['time_pick_and_place']
         stack_size = self.params['stack_size']
         time_step = self.params['time_step']
-        verbose = self.params['verbose']
+#        verbose = self.params['verbose'] #DEBUG
         wafer_available = False
         
         while True:
@@ -88,9 +88,9 @@ class WaferUnstacker(QtCore.QObject):
                 wafer_available = False
                 unit_counter += 1
                 
-                if (verbose):
-                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from stack onto belt"
-                    self.output_text.sig.emit(string)   
+#                if (verbose): #DEBUG
+#                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from stack onto belt" #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
 
             if (unit_counter == stack_size):
                 # if current stack is empty and there are more stacks available, delay to load a new stack                
@@ -104,7 +104,7 @@ class WaferUnstacker(QtCore.QObject):
         cassette_size = self.params['cassette_size']
         time_new_cassette = self.params['time_new_cassette']
         time_step = self.params['time_step']
-        verbose = self.params['verbose']        
+#        verbose = self.params['verbose'] #DEBUG   
         
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):
@@ -114,9 +114,9 @@ class WaferUnstacker(QtCore.QObject):
                 yield self.env.timeout(time_step)                
                 current_load += 1              
                 
-                if (verbose):
-                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from belt into cassette"
-                    self.output_text.sig.emit(string)
+#                if (verbose): #DEBUG
+#                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
             
             elif (not self.belt[-1]):
                 # move belt if no wafer available

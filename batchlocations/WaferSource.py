@@ -22,16 +22,16 @@ class WaferSource(QtCore.QObject):
         self.params['time_limit_desc'] = "Time limit for sourcing batches (seconds)"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between wafer sourcing attempts (seconds)"
-        self.params['verbose'] = False
-        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
+#        self.params['verbose'] = False #DEBUG
+#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
         
         self.batch_size = self.params['batch_size']
         self.process_counter = 0        
        
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source"
-            self.output_text.sig.emit(string)
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " - [WaferSource][" + self.params['name'] + "] Added a wafer source" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
 
         self.output = BatchContainer(self.env,"output",self.batch_size,1)
         self.env.process(self.run())        
@@ -43,7 +43,7 @@ class WaferSource(QtCore.QObject):
     def run(self):
         time_limit = self.params['time_limit']
         batch_size = self.params['batch_size']
-        verbose = self.params['verbose']
+#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             
@@ -57,8 +57,8 @@ class WaferSource(QtCore.QObject):
                 yield self.output.container.put(batch_size)
                 self.output.process_counter += batch_size
                 
-                if (verbose):
-                    string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Performed refill"
-                    self.output_text.sig.emit(string)
+#                if (verbose): #DEBUG
+#                    string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Performed refill" #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
                     
             yield self.env.timeout(self.params['wait_time'])        

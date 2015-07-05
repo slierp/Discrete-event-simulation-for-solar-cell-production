@@ -79,13 +79,13 @@ class BatchTex(QtCore.QObject):
         self.params['transfer2_time'] = 60
         self.params['transfer2_time_desc'] = "Time for single transfer by transporter (seconds)"
         
-        self.params['verbose'] = False
-        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool"
+#        self.params['verbose'] = False #DEBUG
+#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)        
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine"
-            self.output_text.sig.emit(string)
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " - [BatchTex][" + self.params['name'] + "] Added a batch texture machine" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
         
         ### Add input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -100,7 +100,7 @@ class BatchTex(QtCore.QObject):
             process_params['process_time'] = self.params['tex_time']
             process_params['downtime_runs'] = self.params['tex_downtime_runs']
             process_params['downtime_duration'] = self.params['tex_downtime_duration']
-            process_params['verbose'] = self.params['verbose']
+#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         ### First rinse baths ###
@@ -110,7 +110,7 @@ class BatchTex(QtCore.QObject):
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['rinse0_time']
-            process_params['verbose'] = self.params['verbose']
+#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         ### Neutralization baths ###
@@ -120,7 +120,7 @@ class BatchTex(QtCore.QObject):
             process_params['name'] = "n" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['neutr_time']
-            process_params['verbose'] = self.params['verbose']
+#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         ### Second rinse baths ###
@@ -130,7 +130,7 @@ class BatchTex(QtCore.QObject):
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['rinse1_time']
-            process_params['verbose'] = self.params['verbose']
+#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))        
 
         ### Dryers ### 
@@ -140,7 +140,7 @@ class BatchTex(QtCore.QObject):
             process_params['name'] = "d" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['dry_time']
-            process_params['verbose'] = self.params['verbose']
+#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         ### Add output ###
@@ -160,7 +160,7 @@ class BatchTex(QtCore.QObject):
         transport_params = {}
         transport_params['name'] = "tex0"
         transport_params['batch_size'] = self.params['batch_size']
-        transport_params['verbose'] = self.params['verbose']        
+#        transport_params['verbose'] = self.params['verbose'] #DEBUG      
         self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between first rinse, neutralization, second rinse  and dryers ###
@@ -182,7 +182,7 @@ class BatchTex(QtCore.QObject):
         transport_params = {}
         transport_params['name'] = "tex1"
         transport_params['batch_size'] = self.params['batch_size']
-        transport_params['verbose'] = self.params['verbose']        
+#        transport_params['verbose'] = self.params['verbose'] #DEBUG        
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
         ### Batch transporter between dryers and output ###
@@ -194,7 +194,7 @@ class BatchTex(QtCore.QObject):
         transport_params = {}
         transport_params['name'] = "tex2"
         transport_params['batch_size'] = self.params['batch_size']
-        transport_params['verbose'] = self.params['verbose']        
+#        transport_params['verbose'] = self.params['verbose'] #DEBUG        
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)          
 
     def report(self):

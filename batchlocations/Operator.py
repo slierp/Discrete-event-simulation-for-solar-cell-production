@@ -22,17 +22,17 @@ class Operator(QtCore.QObject):
         self.params['min_no_batches_desc'] = "Minimum number of batches needed for transport"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between transport attempts (seconds)"
-        self.params['verbose'] = False
-        self.params['verbose_desc'] = "Enable to get updates on all actions of the operator"
+#        self.params['verbose'] = False #DEBUG
+#        self.params['verbose_desc'] = "Enable to get updates on all actions of the operator" #DEBUG
         self.params.update(_params)
         
         self.transport_counter = 0
         self.start_time = self.env.now
         self.idle_time = 0
         
-        if (self.params['verbose']):
-            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator"
-            self.output_text.sig.emit(string)
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Added an operator" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
             
         self.env.process(self.run())        
 
@@ -40,7 +40,7 @@ class Operator(QtCore.QObject):
         continue_loop = False
         min_no_batches = self.params['min_no_batches']
         wait_time = self.params['wait_time']
-        verbose = self.params['verbose']
+#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             for i in self.batchconnections:
@@ -78,10 +78,10 @@ class Operator(QtCore.QObject):
                     
                         continue_loop = True
 
-                        if (verbose):
-                            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
-                            string += str(no_batches_for_transport)
-                            self.output_text.sig.emit(string)                              
+#                        if (verbose): #DEBUG
+#                            string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: " #DEBUG
+#                            string += str(no_batches_for_transport) #DEBUG
+#                            self.output_text.sig.emit(string) #DEBUG                           
 
             if (continue_loop):
                 continue_loop = False
@@ -94,6 +94,6 @@ class Operator(QtCore.QObject):
         string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
         self.output_text.sig.emit(string)
         
-        if (self.params['verbose']):
-            string = "[Operator][" + self.params['name'] + "] Transport time: " + str(round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %"
-            self.output_text.sig.emit(string)
+#        if (self.params['verbose']): #DEBUG
+#            string = "[Operator][" + self.params['name'] + "] Transport time: " + str(round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG

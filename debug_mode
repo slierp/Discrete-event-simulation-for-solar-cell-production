@@ -1,0 +1,9 @@
+if [ "$1" == "off" ]; then
+  sed -e '/^#/! {/#DEBUG/ s/^/#/}' -i *.py batchlocations/*.py dialogs/*.py 
+  echo "Debug mode to $1"
+elif [ "$1" == "on" ]; then
+  sed -e '/#DEBUG/ s/^#//' -i *.py batchlocations/*.py dialogs/*.py 
+  echo "Debug mode to $1"
+else
+  echo "usage: $0 on | off"
+fi
