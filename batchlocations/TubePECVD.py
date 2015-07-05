@@ -115,8 +115,8 @@ class TubePECVD(QtCore.QObject):
         self.env.process(self.run_load_out())
 
     def report(self):
-        #string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
-        #self.output_text.sig.emit(string)      
+        string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+        self.output_text.sig.emit(string)      
         
         self.utilization.append("TubePECVD")
         self.utilization.append(self.params['name'])

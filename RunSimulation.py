@@ -18,8 +18,12 @@ class RunSimulation(object):
     
     def __init__(self,filename,time_limit=1):
         
-        with open(filename) as f: # Pickle imports numpy so not compatible with PyPy and ShedSkin
-            self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
+        try:
+            with open(filename) as f: # Pickle is in principle the only reason the program currently needs numpy
+                self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
+        except:
+            print"Could not read file \"" + str(filename) + "\""
+            exit()
 
         #self.batchlocations = [] #tool class name, no of tools, dict with settings         
         #self.locationgroups = []
@@ -34,68 +38,10 @@ class RunSimulation(object):
         
         self.env = simpy.Environment()
          
-        #self.define_simulation()
+        #self.define_simulation() # in case the definition should be made here
         self.copy_definition()
         self.calculate_timesteps()
     
-    """
-    def define_simulation(self): # not used at the moment
-        self.batchlocations.append(["WaferSource", {'name' : '0'}])
-        self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
-        self.batchlocations.append(["WaferUnstacker",{'name' : '1'}])
-        self.batchlocations.append(["BatchTex", {'name' : '0'}])
-        self.batchlocations.append(["TubeFurnace", {'name' : '0'}])
-        self.batchlocations.append(["TubeFurnace", {'name' : '1'}])
-        self.batchlocations.append(["Buffer", {'name' : '0'}])
-        self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
-        self.batchlocations.append(["TubePECVD", {'name' : '0'}])
-        self.batchlocations.append(["TubePECVD", {'name' : '1'}])
-        self.batchlocations.append(["PrintLine", {'name' : '0'}])
-        self.batchlocations.append(["PrintLine", {'name' : '1'}])
-
-        self.locationgroups.append([0])
-        self.locationgroups.append([1, 2])
-        self.locationgroups.append([3])
-        self.locationgroups.append([4, 5])
-        self.locationgroups.append([6])
-        self.locationgroups.append([7])
-        self.locationgroups.append([8, 9])
-        self.locationgroups.append([10, 11])
-
-        transport_time = 90 # time for actual transport of one or more units
-        time_per_unit = 20 # added time per unit for loading/unloading on the machines (combined value for input and output stations)
-
-        self.batchconnections.append([[0,0],[1,0],transport_time,time_per_unit])
-        self.batchconnections.append([[0,0],[1,1],transport_time,time_per_unit])
-
-        self.batchconnections.append([[1,0],[2,0],transport_time,time_per_unit])
-        self.batchconnections.append([[1,1],[2,0],transport_time,time_per_unit])
-
-        self.batchconnections.append([[2,0],[3,0],transport_time,time_per_unit])
-        self.batchconnections.append([[2,0],[3,1],transport_time,time_per_unit])
-
-        self.batchconnections.append([[3,0],[4,0],transport_time,time_per_unit])
-        self.batchconnections.append([[3,1],[4,0],transport_time,time_per_unit])
-
-        self.batchconnections.append([[4,0],[5,0],transport_time,time_per_unit])
-    
-        self.batchconnections.append([[5,0],[6,0],transport_time,time_per_unit])
-        self.batchconnections.append([[5,0],[6,1],transport_time,time_per_unit])
-
-        self.batchconnections.append([[6,0],[7,0],transport_time,time_per_unit])
-        self.batchconnections.append([[6,0],[7,1],transport_time,time_per_unit])
-        self.batchconnections.append([[6,1],[7,0],transport_time,time_per_unit])
-        self.batchconnections.append([[6,1],[7,1],transport_time,time_per_unit])
-
-        self.operators.append([[0,1],{'name' : '0'}])
-        self.operators.append([[2,3],{'name' : '1'}])
-        self.operators.append([[4,5],{'name' : '2'}])
-        self.operators.append([[6,7],{'name' : '3'}])
-        self.operators.append([[8],{'name' : '4'}])
-        self.operators.append([[9,10],{'name' : '4'}])
-        self.operators.append([[11,12,13,14],{'name' : '5'}])
-    """
-
     def make_unique(self,nonunique):
         unique = []
         for x in nonunique:
@@ -171,10 +117,6 @@ class RunSimulation(object):
         prev_production_volume_update = 0
         prev_percentage_time = self.env.now
         for i in self.updates_list:
-            #if(self.stop_simulation):
-                #string = "Stopped at "  + str(np.round(self.env.now/3600,1)) + " hours"
-                #self.output.sig.emit(string) 
-                #break
             
             self.env.run(until=i)
                         
@@ -206,3 +148,61 @@ class RunSimulation(object):
         print "Production volume: " + str(prod_vol)
         print "Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit']))
         print "Simulation finished"
+
+    """
+    def define_simulation(self): # not used at the moment
+        self.batchlocations.append(["WaferSource", {'name' : '0'}])
+        self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
+        self.batchlocations.append(["WaferUnstacker",{'name' : '1'}])
+        self.batchlocations.append(["BatchTex", {'name' : '0'}])
+        self.batchlocations.append(["TubeFurnace", {'name' : '0'}])
+        self.batchlocations.append(["TubeFurnace", {'name' : '1'}])
+        self.batchlocations.append(["Buffer", {'name' : '0'}])
+        self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
+        self.batchlocations.append(["TubePECVD", {'name' : '0'}])
+        self.batchlocations.append(["TubePECVD", {'name' : '1'}])
+        self.batchlocations.append(["PrintLine", {'name' : '0'}])
+        self.batchlocations.append(["PrintLine", {'name' : '1'}])
+
+        self.locationgroups.append([0])
+        self.locationgroups.append([1, 2])
+        self.locationgroups.append([3])
+        self.locationgroups.append([4, 5])
+        self.locationgroups.append([6])
+        self.locationgroups.append([7])
+        self.locationgroups.append([8, 9])
+        self.locationgroups.append([10, 11])
+
+        transport_time = 90 # time for actual transport of one or more units
+        time_per_unit = 20 # added time per unit for loading/unloading on the machines (combined value for input and output stations)
+
+        self.batchconnections.append([[0,0],[1,0],transport_time,time_per_unit])
+        self.batchconnections.append([[0,0],[1,1],transport_time,time_per_unit])
+
+        self.batchconnections.append([[1,0],[2,0],transport_time,time_per_unit])
+        self.batchconnections.append([[1,1],[2,0],transport_time,time_per_unit])
+
+        self.batchconnections.append([[2,0],[3,0],transport_time,time_per_unit])
+        self.batchconnections.append([[2,0],[3,1],transport_time,time_per_unit])
+
+        self.batchconnections.append([[3,0],[4,0],transport_time,time_per_unit])
+        self.batchconnections.append([[3,1],[4,0],transport_time,time_per_unit])
+
+        self.batchconnections.append([[4,0],[5,0],transport_time,time_per_unit])
+    
+        self.batchconnections.append([[5,0],[6,0],transport_time,time_per_unit])
+        self.batchconnections.append([[5,0],[6,1],transport_time,time_per_unit])
+
+        self.batchconnections.append([[6,0],[7,0],transport_time,time_per_unit])
+        self.batchconnections.append([[6,0],[7,1],transport_time,time_per_unit])
+        self.batchconnections.append([[6,1],[7,0],transport_time,time_per_unit])
+        self.batchconnections.append([[6,1],[7,1],transport_time,time_per_unit])
+
+        self.operators.append([[0,1],{'name' : '0'}])
+        self.operators.append([[2,3],{'name' : '1'}])
+        self.operators.append([[4,5],{'name' : '2'}])
+        self.operators.append([[6,7],{'name' : '3'}])
+        self.operators.append([[8],{'name' : '4'}])
+        self.operators.append([[9,10],{'name' : '4'}])
+        self.operators.append([[11,12,13,14],{'name' : '5'}])
+    """

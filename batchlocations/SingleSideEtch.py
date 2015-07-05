@@ -61,7 +61,7 @@ class SingleSideEtch(QtCore.QObject):
         self.process_counter = 0      
         
         if (self.params['verbose']):
-            string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
+            string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch"
             self.output_text.sig.emit(string)
         
         ### Input ###
@@ -117,14 +117,14 @@ class SingleSideEtch(QtCore.QObject):
         verbose = self.params['verbose']
     
         while True:
-            if downtime_volume & (self.process_counter >= downtime_volume):
+            if (downtime_volume > 0) & (self.process_counter >= downtime_volume):
                 yield self.env.timeout(downtime_duration)
                 for i in range(0,no_of_lanes):
                     self.idle_times_internal[i] += downtime_duration
                 self.process_counter = 0
                 
                 if (verbose):
-                    string = str(self.env.now) + " [SingleSideEtch][" + self.params['name'] + "] End downtime"
+                    string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "][" + str(lane_number) + "] End downtime"
                     self.output_text.sig.emit(string)
 
             if (self.input.container.level > lane_number):
@@ -138,11 +138,11 @@ class SingleSideEtch(QtCore.QObject):
                 self.lanes[lane_number][0] = True
                 self.process_counter += 1               
                 
-                if (verbose):
-                    if ((self.process_counter % self.params['cassette_size']) == 0):            
-                        string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
-                        string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number)
-                        self.output_text.sig.emit(string)
+                #if (verbose):
+                #    if ((self.process_counter % self.params['cassette_size']) == 0):            
+                #        string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+                #        string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number)
+                #        self.output_text.sig.emit(string)
                         
             elif not self.first_run:
                 # start counting down-time after first run

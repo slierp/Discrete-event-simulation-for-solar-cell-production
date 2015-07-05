@@ -28,7 +28,7 @@ class RunSimulationThread(QtCore.QObject):
         self.stop_simulation = False        
         self.signal = StringSignal()        
         self.output = StringSignal()
-        self.util = ListSignal()        
+        self.util = ListSignal()       
 
     def make_unique(self,nonunique):
         unique = []
@@ -36,7 +36,7 @@ class RunSimulationThread(QtCore.QObject):
             if x not in unique:
                 unique.append(x)
         unique.sort()
-        return unique
+        return unique     
 
     @QtCore.pyqtSlot()
     def run(self):
@@ -99,7 +99,7 @@ class RunSimulationThread(QtCore.QObject):
         updates_list = hourly_updates + percentage_updates
         updates_list = self.make_unique(updates_list)
 
-        self.output.sig.emit("0% progress: 0 hours / 0 produced")
+        self.output.sig.emit("<b>Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration</b>")
 
         ### Run simulation ###
         prev_production_volume_update = 0
@@ -107,14 +107,14 @@ class RunSimulationThread(QtCore.QObject):
         
         for i in updates_list:
             if(self.stop_simulation):
-                string = "Stopped at "  + str(round(self.env.now/3600,1)) + " hours"
+                string = "<b>Stopped at "  + str(int(self.env.now // 3600)) + " hours</b>"
                 self.output.sig.emit(string) 
                 break
 
             self.env.run(until=i)
             
             if (i == self.params['time_limit']):                
-                string = "Finished at "  + str(round(self.env.now/3600,1)) + " hours"
+                string = "<b>Finished at "  + str(int(self.env.now // 3600)) + " hours</b>"
                 self.output.sig.emit(string)                            
             elif i in percentage_updates: #% (self.params['time_limit'] // 10) == 0):
                 
@@ -127,7 +127,7 @@ class RunSimulationThread(QtCore.QObject):
                 percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
                 
                 # float needed for very large integer division                
-                string = str(round(100*float(i)/self.params['time_limit'])) + "% progress: " + str(round(i/3600,1)) + " hours / "
+                string = "<span style=\"color: red\">" + str(round(100*float(i)/self.params['time_limit'])) + "% progress</span> - " + str(round(i/3600,1)) + " hours / "
                 string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
                 self.output.sig.emit(string)
 
@@ -135,6 +135,9 @@ class RunSimulationThread(QtCore.QObject):
                 prev_production_volume_update = percentage_production_volume_update
 
         ### Generate summary output in log tab ###
+        string = "<br><b>Production result summary</>"
+        self.output.sig.emit(string)
+
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 
@@ -154,7 +157,7 @@ class RunSimulationThread(QtCore.QObject):
         for i in range(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
 
-        self.output.sig.emit("Production volume: " + str(prod_vol))
-        self.output.sig.emit("Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit'])))        
+        self.output.sig.emit("<b>Production volume: " + str(prod_vol) + "</b>")
+        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.params['time_limit'])) + "</b>")        
         
         self.signal.sig.emit('Simulation finished')

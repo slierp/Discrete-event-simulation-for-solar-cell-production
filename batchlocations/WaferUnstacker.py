@@ -33,7 +33,7 @@ class WaferUnstacker(QtCore.QObject):
         self.params['units_on_belt_desc'] = "Number of units that fit on the belt"
         
         self.params['time_step'] = 1.0
-        self.params['time_step_desc'] = "Time for one unit to progress one position (seconds)"
+        self.params['time_step_desc'] = "Time for one wafer to progress one position on belt or into cassette (seconds)"
         self.params['time_new_cassette'] = 10
         self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
         self.params['time_new_stack'] = 10
@@ -51,7 +51,7 @@ class WaferUnstacker(QtCore.QObject):
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         #self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
-        self.belt = collections.deque([False] * self.params['units_on_belt'])
+        self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         self.env.process(self.run_pick_and_place())
@@ -68,10 +68,12 @@ class WaferUnstacker(QtCore.QObject):
         time_pick_and_place = self.params['time_pick_and_place']
         stack_size = self.params['stack_size']
         time_step = self.params['time_step']
+        verbose = self.params['verbose']
         wafer_available = False
         
         while True:
             if (not wafer_available):
+                # if pick and place robot does not already have a wafer try to get one
                 yield self.input.container.get(1)
                 wafer_available = True
             
@@ -85,14 +87,15 @@ class WaferUnstacker(QtCore.QObject):
                 self.belt[0] = True
                 wafer_available = False
                 unit_counter += 1
+                
+                if (verbose):
+                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from stack onto belt"
+                    self.output_text.sig.emit(string)   
 
             if (unit_counter == stack_size):
-                if self.input.container.level:
-                    # if current stack is empty and there are more stacks available, delay to load a new stack                
-                    yield self.env.timeout(time_new_stack)
-                    unit_counter = 0
-                else:
-                    restart = True
+                # if current stack is empty and there are more stacks available, delay to load a new stack                
+                unit_counter = 0            
+                restart = True
                     
             yield self.env.timeout(time_step)                    
             
@@ -101,13 +104,25 @@ class WaferUnstacker(QtCore.QObject):
         cassette_size = self.params['cassette_size']
         time_new_cassette = self.params['time_new_cassette']
         time_step = self.params['time_step']
+        verbose = self.params['verbose']        
         
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):
                 # if wafer available and cassette is not full, load into cassette
                 self.belt[-1] = False
-                current_load += 1
+                self.belt.rotate(1)
+                yield self.env.timeout(time_step)                
+                current_load += 1              
                 
+                if (verbose):
+                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from belt into cassette"
+                    self.output_text.sig.emit(string)
+            
+            elif (not self.belt[-1]):
+                # move belt if no wafer available
+                self.belt.rotate(1)
+                yield self.env.timeout(time_step)                
+            
             if (current_load == cassette_size):            
                 # if current cassette is full, replace full one for empty cassette
                 yield self.output.container.put(cassette_size)
@@ -115,9 +130,3 @@ class WaferUnstacker(QtCore.QObject):
                 
                 current_load = 0                
                 yield self.env.timeout(time_new_cassette) # time for loading new cassette
-
-            if (not self.belt[-1]):
-                # if last position is empty, move belt forward by one position
-                self.belt.rotate(1)
-                
-            yield self.env.timeout(time_step)

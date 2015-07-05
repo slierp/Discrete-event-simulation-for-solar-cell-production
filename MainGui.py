@@ -8,9 +8,9 @@ from dialogs.EditBatchlocationView import EditBatchlocationView
 from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
-from RunSimGui import RunSimGui
 from RunSimulationThread import RunSimulationThread
 import pickle
+from copy import deepcopy
 
 class DeselectableTreeView(QtGui.QTreeView):
     # de-select by right click or by clicking on white space
@@ -26,7 +26,6 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell production simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
-        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint) # DISABLE BEFORE RELEASE
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
@@ -101,8 +100,13 @@ class MainGui(QtGui.QMainWindow):
         self.prev_save_path = str(filename)
         self.prev_dir_path = ntpath.dirname(str(filename))
         
-        with open(str(filename)) as f:
-            self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
+        try:
+            with open(str(filename)) as f:
+                self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
+        except:
+            msg = self.tr("Could not read file \"" + filename + "\"")
+            QtGui.QMessageBox.about(self, self.tr("Warning"), msg) 
+            return
         
         self.load_definition_batchlocations(False)
         self.load_definition_operators(False) 
@@ -240,9 +244,7 @@ class MainGui(QtGui.QMainWindow):
         for i in range(len(self.locationgroups)-1):
             for j, value in enumerate(self.locationgroups[i]):
                 for k, value in enumerate(self.locationgroups[i+1]):
-                    #self.batchconnections[num] = [[i,j],[i+1,k],transport_time, time_per_unit]
-                    self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit])
-                    #num  += 1                            
+                    self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit])                           
 
     def import_batchlocations(self):
         self.exec_locationgroups() # reload connections again just to be sure
@@ -301,11 +303,71 @@ class MainGui(QtGui.QMainWindow):
             self.statusBar().showMessage(self.tr("All operators were removed"))
 
     def run_simulation(self):
-        self.output_signal_counter = 0
-        RunSimGui(self)        
+        self.output_signal_counter = 0       
+
+        if (len(self.batchlocations) < 2) | (len(self.locationgroups) < 2):
+            self.statusBar().showMessage(self.tr("Not enough batch locations found"))
+            return
+        
+        for i, value in enumerate(self.batchconnections):
+            # check if all batchconnections exist inside locationgroups
+            # no separate check whether all batchlocations inside locationgroups exist
+            # since GUI should not allow for any errors to appear
+            if (self.batchconnections[i][0][0] > (len(self.locationgroups)-1)) | \
+                    (self.batchconnections[i][1][0] > (len(self.locationgroups)-1)):
+                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
+                return
+            elif (self.batchconnections[i][0][1] > (len(self.locationgroups[self.batchconnections[i][0][0]])-1)) | \
+                    (self.batchconnections[i][1][1] > (len(self.locationgroups[self.batchconnections[i][1][0]])-1)):
+                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
+                return
+
+        for i, value in enumerate(self.operators):
+            # check if all batchconnection numbers inside self.operators exist inside self.batchconnections
+            for j in self.operators[i][0]:
+                if (j > len(self.batchconnections)):
+                    self.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"))
+                    return
+        
+        time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
+        for i, value in enumerate(self.sim_time_selection_list):
+            if (value == self.sim_time_combo.currentText()):
+                self.params['time_limit'] = time_limits[i]
+                
+        if not self.qt_thread.isRunning():
+        
+            # clear log tab
+            self.edit.clear()
+            
+            # send production line definition to simulation thread using deep copy
+            self.simulation_thread.batchlocations = deepcopy(self.batchlocations)
+            self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
+            self.simulation_thread.batchconnections = deepcopy(self.batchconnections)
+            self.simulation_thread.operators = deepcopy(self.operators)
+
+            self.simulation_thread.params = {}
+            self.simulation_thread.params.update(self.params)
+            
+            self.simulation_thread.stop_simulation = False
+            self.run_sim_button.setEnabled(False)
+            self.stop_sim_button.setEnabled(True)
+
+            # clear idle tab and reset headers
+            self.table_widget.clear()
+        
+            headerlabels = ['Tool type','Name','Nominal','Util rate']
+            for i in range(4,35):
+                headerlabels.append("Process " + str(i-4))
+            self.table_widget.setHorizontalHeaderLabels(headerlabels)
+            self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+            self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+
+            self.qt_thread.start() # Start separate thread and automatically start simulation also  
+            self.statusBar().showMessage(self.tr("Simulation started")) 
+
 
     def stop_simulation(self):
-        self.simulation_thread.stop_simulation = True
+        self.simulation_thread.stop_simulation = True # sending signal does not work since simulationthread run function will not be interrupted
         self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
 
     def keyPressEvent(self, e):
@@ -329,13 +391,13 @@ class MainGui(QtGui.QMainWindow):
         if self.output_signal_counter < 1000:
             # limit text output to 999 lines to prevent GUI from becoming unresponsive
             self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
-            self.edit.insertPlainText(string + '\n')
+            #self.edit.insertPlainText(string + '\n')
+            self.edit.insertHtml(QtCore.QString(string + '<br>'))
             self.output_signal_counter += 1
         elif not self.output_overload_signal_given:
             self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
             self.edit.insertPlainText('Output overload\n') 
             self.output_overload_signal_given = True
-        #self.edit.insertHtml(QtCore.QString(string))
 
     @QtCore.pyqtSlot(list)
     def utilization_output(self,utilization):
