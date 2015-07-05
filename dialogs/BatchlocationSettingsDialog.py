@@ -11,6 +11,7 @@ from batchlocations.SingleSideEtch import SingleSideEtch
 from batchlocations.TubePECVD import TubePECVD
 from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
+from batchlocations.IonImplanter import IonImplanter
 
 class dummy_env(object):
     
@@ -59,6 +60,8 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             curr_params = WaferBin(env).params
         elif (batchlocation[0] == "Buffer"):
             curr_params = Buffer(env).params            
+        elif (batchlocation[0] == "IonImplanter"):
+            curr_params = IonImplanter(env).params
         else:
             return                         
         

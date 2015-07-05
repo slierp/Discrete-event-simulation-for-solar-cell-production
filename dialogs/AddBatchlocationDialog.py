@@ -36,15 +36,16 @@ class AddBatchlocationDialog(QtGui.QDialog):
 
         batchlocation_types = []
         batchlocation_types.append("WaferSource")
-        batchlocation_types.append("Buffer")        
         batchlocation_types.append("WaferUnstacker")
+        batchlocation_types.append("Buffer")        
+        batchlocation_types.append("WaferBin")
         batchlocation_types.append("BatchTex")
         batchlocation_types.append("BatchClean")
         batchlocation_types.append("TubeFurnace")
-        batchlocation_types.append("SingleSideEtch")
         batchlocation_types.append("TubePECVD")
+        batchlocation_types.append("SingleSideEtch")
         batchlocation_types.append("PrintLine")
-        batchlocation_types.append("WaferBin")      
+        batchlocation_types.append("IonImplanter")      
 
         self.batchlocation_types_combo = QtGui.QComboBox(self)
         for i in batchlocation_types:
