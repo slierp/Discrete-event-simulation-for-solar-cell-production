@@ -29,7 +29,7 @@ To install you can choose between these methods:
 
 <b>Using the program</b>
 
-By default the program will start the graphical user interface. For commandline mode you have to add arguments, for example: python Main.py [simulation definition file] [duration in hours]
+By default the program will start the graphical user interface. For commandline mode you have to add arguments. For example: python Main.py [simulation definition file] [duration in hours]
 
 On start-up the program loads a default configuration that represents a p-type monocrystalline silicon solar cell production line. The 'batch locations' panel can be used to change the list of tools, the production flow and the settings of the tools. Tools are always defined as part a group, so that the production can automatically flow from group to group along the list. The add and remove buttons can be used to modify the list. The tool settings can be accessed by double-clicking on an item in the list or by selecting an item and clicking the edit button. If all the tools within a group are of the same type then it is possible to double-click on the group name to alter all the tools at the same time. The production flow makes no distinction between tools within a group. The name of the group is automatically set to the name of the first production tool in that group.
 
