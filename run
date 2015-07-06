@@ -1,4 +1,4 @@
-#python -m cProfile -o output Main.py Example0.desc 168 
+#python -m cProfile -o output Main.py Example0.desc 24 
 #snakeviz output
 time python Main.py Example0.desc 24 
 #python -m cProfile Main.py Example0.desc 24 >output
