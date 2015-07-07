@@ -7,7 +7,6 @@ import simpy
 import collections
 
 """
-TODO: Implement downtime by stopping load-in transporter
 
     Input buffer - tuneable size but default 8 cassettes
     A loadlock with two chambers for two cassettes each
@@ -42,9 +41,9 @@ class IonImplanter(QtCore.QObject):
         self.params['specification'] += "When the buffer cassette is full, the wafers return on the same belt "
         self.params['specification'] += "to the loadlock. After repressurization the cassettes "
         self.params['specification'] += "are placed in the output buffer.\n"
-        #self.params['specification'] += "\n"
-        #self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which "
-        #self.params['specification'] += "maintenance is performed."
+        self.params['specification'] += "\n"
+        self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which "
+        self.params['specification'] += "maintenance is performed."
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual tool"
@@ -64,21 +63,21 @@ class IonImplanter(QtCore.QObject):
         self.params['repressurization_time'] = 90
         self.params['repressurization_time_desc'] = "Time for single loadlock repressurization (seconds)"
 
-        self.params['implant_belt_speed'] = 10.0
+        self.params['implant_belt_speed'] = 6
         self.params['implant_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"        
-        self.params['implant_belt_length'] = 5.0
+        self.params['implant_belt_length'] = 2
         self.params['implant_belt_length_desc'] = "Distance between loadlock and buffer cassette (meters)"
         self.params['unit_distance'] = 0.2
-        self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"        
+        self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
+        
+        self.params['downtime_interval'] = 100
+        self.params['downtime_interval_desc'] = "Interval between downtime cycles (hours)"
+        self.params['downtime_duration'] = 3600
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
         
 #        self.params['verbose'] = False #DEBUG
 #        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
-        self.params.update(_params)         
-        
-        self.transport_counter = 0
-        self.start_time = self.env.now
-        self.first_run = True
-        self.process_counter = 0      
+        self.params.update(_params)           
         
 #        if (self.params['verbose']): #DEBUG
 #            string = str(self.env.now) + " [IonImplanter][" + self.params['name'] + "] Added an ion implanter" #DEBUG
@@ -106,7 +105,6 @@ class IonImplanter(QtCore.QObject):
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Load-in transport ###
-        # Will be stopped during downtime
         batchconnections = []
 
         for i in range(0,2):
@@ -134,19 +132,19 @@ class IonImplanter(QtCore.QObject):
         self.utilization.append("IonImplanter")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
-        production_volume = self.transport_counter - self.output.container.level
-        production_hours = (self.env.now - self.start_time)/3600
+        production_volume = self.transport1.transport_counter - self.output.container.level
+        production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
         self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())
 
-        #for i in range(len(self.idle_times_internal)):
-        #    if self.first_run:
-        #        idle_time = 100.0
-        #    else:
-        #        idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time)
-        #    self.utilization.append(["l" + str(i),round(idle_time,1)])
+        for i in range(0,2):
+            if self.batchprocesses[0].first_run:
+                idle_time = 100.0
+            else:
+                idle_time = 100.0*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
+            self.utilization.append(["l" + str(i),round(idle_time,1)])
 
     def nominal_throughput(self):       
-        return 1
+        return 60*self.params['implant_belt_speed']/self.params['unit_distance']
         
 class loadlock(QtCore.QObject):
     
@@ -165,6 +163,9 @@ class loadlock(QtCore.QObject):
         self.implant_process_finished0 = self.env.event()
         self.implant_process_finished1 = self.env.event()
         self.container = simpy.Container(self.env,capacity=self.params['batch_size'],init=0)
+        self.first_run = True
+        self.start_time = 0
+        self.last_downtime = 0
         
 #        if (self.params['verbose']): #DEBUG
 #            string = str(self.env.now) + " - [Loadlock][" + self.params['name'] + "] Added loadlock" #DEBUG
@@ -180,6 +181,10 @@ class loadlock(QtCore.QObject):
         
         while True:
             yield self.start            
+
+            if (self.first_run):
+                self.start_time = self.env.now
+                self.first_run = False
             
             if (self.container.level >= batch_size) & (not self.process_finished):
                 with self.resource.request() as request: # reserve access to loadlock
@@ -230,7 +235,23 @@ class loadlock(QtCore.QObject):
             return False
             
     def check_downtime(self): # needed for BatchTransport
-        return
+        # see if downtime period is needed    
+        if self.params['downtime_interval']: 
+            if (self.env.now >= (self.last_downtime + 3600*self.params['downtime_interval'])):
+                self.env.process(self.downtime_cycle())
+
+    def downtime_cycle(self):
+        # perform downtime cycle
+        with self.resource.request() as request:
+            yield request
+            self.status = 0                   
+            yield self.env.timeout(self.params['downtime_duration'])
+            self.status = 1
+            self.last_downtime = self.env.now
+
+#        if (self.params['verbose']): #DEBUG
+#            string = str(int(self.env.now)) + " [Loadlock][" + self.params['name'] + "] End of downtime" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG            
                 
 class implant_lane(QtCore.QObject):
         
@@ -243,10 +264,9 @@ class implant_lane(QtCore.QObject):
         self.loadlock_container = None
         self.implant_process_finished = None
         
-        self.transport_counter = 0
-        self.start_time = self.env.now
+        self.prev_time = 0
         self.first_run = True
-        self.process_counter = 0
+        self.idle_time = 0
         self.resource = simpy.Resource(self.env, 1)        
         
 #        if (self.params['verbose']): #DEBUG
@@ -266,11 +286,16 @@ class implant_lane(QtCore.QObject):
         return
 
     def run(self):      
-        time_step = 60*self.params['unit_distance']/self.params['implant_belt_speed']       
+        time_step = 60*self.params['unit_distance']/self.params['implant_belt_speed']
 
         while True:
             yield self.process_start
             self.process_start = self.env.event() 
+
+            if (self.first_run):
+                self.first_run = False
+            else:
+                self.idle_time += (self.env.now-self.prev_time)
         
             while True: # load wafers on belt and run belt until loadlock and belt is empty
                 if (self.loadlock_container.level > 0) & (not self.lane[0]):
@@ -306,4 +331,5 @@ class implant_lane(QtCore.QObject):
 #                string = str(self.env.now) + " - [ImplantLane][" + self.params['name'] + "] Processed one cassette" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
             
-            self.implant_process_finished.succeed()        
+            self.implant_process_finished.succeed()
+            self.prev_time = self.env.now
