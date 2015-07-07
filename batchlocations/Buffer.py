@@ -35,3 +35,6 @@ class Buffer(QtCore.QObject):
     def report(self):
         string = "[Buffer][" + self.params['name'] + "] Currently buffered: " + str(self.output.container.level)
         self.output_text.sig.emit(string)
+        
+    def prod_volume(self):
+        return self.output.container.level

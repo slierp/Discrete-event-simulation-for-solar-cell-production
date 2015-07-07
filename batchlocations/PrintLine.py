@@ -130,6 +130,9 @@ class PrintLine(QtCore.QObject):
                 idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time[i])
             self.utilization.append(["p" + str(i),round(idle_time,1)])        
 
+    def prod_volume(self):
+        return self.output.container.level
+        
     def run_belt(self): # For first belt
         wafer_counter = 0
         restart = True # start with new cassette

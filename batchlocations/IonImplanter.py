@@ -143,6 +143,9 @@ class IonImplanter(QtCore.QObject):
                 idle_time = 100.0*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
             self.utilization.append(["l" + str(i),round(idle_time,1)])
 
+    def prod_volume(self):
+        return self.transport1.transport_counter - self.output.container.level
+
     def nominal_throughput(self):       
         return 60*self.params['implant_belt_speed']/self.params['unit_distance']
         

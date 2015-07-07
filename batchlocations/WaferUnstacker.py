@@ -12,7 +12,7 @@ class WaferUnstacker(QtCore.QObject):
         self.output_text = _output
         self.idle_times = []
         self.utilization = []        
-        self.next_step = self.env.event()        
+        self.next_step = self.env.event()
         
         self.params = {}
         self.params['specification'] = "WaferUnstacker accepts a number of stacks of wafers. "
@@ -60,6 +60,9 @@ class WaferUnstacker(QtCore.QObject):
     def report(self):
         string = "[WaferUnstacker][" + self.params['name'] + "] Units processed: " + str(self.output.process_counter)
         self.output_text.sig.emit(string)
+
+    def prod_volume(self):
+        return self.output.process_counter
 
     def run_pick_and_place(self):
         unit_counter = 0

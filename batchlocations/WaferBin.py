@@ -40,6 +40,9 @@ class WaferBin(QtCore.QObject):
         string = "[WaferBin][" + self.params['name'] + "] Current level: " + str(self.output.container.level)
         self.output_text.sig.emit(string)
 
+    def prod_volume(self):
+        return self.output.container.level
+        
     def run(self):
         batch_size = self.params['batch_size']
         wait_time = self.params['wait_time']

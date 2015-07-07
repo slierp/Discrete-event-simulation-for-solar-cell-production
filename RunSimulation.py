@@ -14,6 +14,7 @@ from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 import simpy
 import pickle
+import pandas as pd
 
 class RunSimulation(object):
     
@@ -152,6 +153,37 @@ class RunSimulation(object):
         print "Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit']))
         print "Simulation finished"
 
+    def run_with_profiling(self):
+        curr_time = 0
+
+        columns = []
+        columns.append("Time")
+        for i in range(len(self.batchlocations)):
+            columns.append("[" + str(self.batchlocations[i].__class__.__name__) + "][" + str(self.batchlocations[i].params['name']) + "]")
+
+        df = pd.DataFrame(columns=columns)
+
+        ### Run simulation ###
+        while True:
+            curr_time += 3600            
+            self.env.run(curr_time)
+                        
+            #print str(self.env.now),
+
+            tmp_list = []
+            tmp_list.append(self.env.now)
+            for i in range(len(self.batchlocations)):
+                 tmp_list.append(self.batchlocations[i].prod_volume())
+                 
+            df.loc[len(df)] = tmp_list
+                        
+            if (self.env.now >= self.params['time_limit']):
+                break
+
+        writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
+        df.to_excel(writer,str("output"))             
+        writer.save()
+    
     """
     def define_simulation(self): # not used at the moment
         self.batchlocations.append(["WaferSource", {'name' : '0'}])

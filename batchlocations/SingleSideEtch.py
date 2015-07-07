@@ -106,6 +106,9 @@ class SingleSideEtch(QtCore.QObject):
                 idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time)
             self.utilization.append(["l" + str(i),round(idle_time,1)])
 
+    def prod_volume(self):
+        return self.transport_counter
+
     def run_lane_load_in(self, lane_number):
         # Loads wafers if available
         # Implementation optimized for minimal timeouts

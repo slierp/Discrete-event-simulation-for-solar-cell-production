@@ -39,6 +39,9 @@ class WaferSource(QtCore.QObject):
     def report(self):
         string = "[WaferSource][" + self.params['name'] + "] Units sourced: " + str(self.output.process_counter - self.output.container.level)
         self.output_text.sig.emit(string)
+
+    def prod_volume(self):
+        return self.output.process_counter - self.output.container.level
         
     def run(self):
         time_limit = self.params['time_limit']

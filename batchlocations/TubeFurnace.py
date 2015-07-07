@@ -138,6 +138,9 @@ class TubeFurnace(QtCore.QObject):
         for i in range(len(self.batchprocesses)):
             self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])
 
+    def prod_volume(self):
+        return self.transport_counter - self.output.container.level
+
     def run_transport(self):
         
         batchconnections = []
