@@ -114,7 +114,7 @@ class RunSimulation(object):
         self.updates_list = self.make_unique(self.updates_list)        
 
     def run(self):
-        print "0% progress: 0 hours / 0 produced"
+        print "Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration"
                     
         ### Run simulation ###
         prev_production_volume_update = 0

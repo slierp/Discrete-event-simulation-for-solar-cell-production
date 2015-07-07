@@ -20,7 +20,7 @@ class BatchProcess(QtCore.QObject):
 #        self.params['verbose'] = False #DEBUG
         self.params.update(_params)        
         
-        self.name = self.params['name'] # for backward compatibility / to be removed
+        self.name = self.params['name']
         self.resource = simpy.Resource(self.env, 1)
         self.process_finished = 0
         self.start_time = self.env.now

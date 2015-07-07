@@ -2,15 +2,16 @@
 from __future__ import division
 from PyQt4 import QtCore
 from batchlocations.BatchTransport import BatchTransport
-from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
+import simpy
+import collections
 
 """
+TODO: Implement downtime by stopping load-in transporter
 
     Input buffer - tuneable size but default 8 cassettes
-    Two loadlocks for two cassettes each
+    A loadlock with two chambers for two cassettes each
     Two processing belts
-    Two buffer cassettes
     Output buffer - the same size as the input buffer
     One set of automation moves cassettes between the buffers and the loadlocks.
     Another set of automation puts and removes wafers from the belt (this probably doesn't exist in the real tool)
@@ -28,8 +29,7 @@ class IonImplanter(QtCore.QObject):
         self.utilization = []       
         
         self.params = {}
-        self.params['specification'] = "DO NOT USE\n"
-        self.params['specification'] += "IonImplanter consists of:\n"
+        self.params['specification'] = "IonImplanter consists of:\n"
         self.params['specification'] += "- Input container\n"
         self.params['specification'] += "- Two loadlocks for two cassettes each\n"
         self.params['specification'] += "- Two processing belts\n"
@@ -37,14 +37,14 @@ class IonImplanter(QtCore.QObject):
         self.params['specification'] += "- Output container\n"
         self.params['specification'] += "\n"
         self.params['specification'] += "Cassettes are loaded into the loadlocks, which are "
-        self.params['specification'] += "then held for a set time (for evacuation). Subsequently, the "
+        self.params['specification'] += "then held for a set time for evacuation. Subsequently, the "
         self.params['specification'] += "wafers are processed on belts and enter into buffer cassettes. "
         self.params['specification'] += "When the buffer cassette is full, the wafers return on the same belt "
-        self.params['specification'] += "to the loadlock. After a set time (for repressurization) the cassettes "
+        self.params['specification'] += "to the loadlock. After repressurization the cassettes "
         self.params['specification'] += "are placed in the output buffer.\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which "
-        self.params['specification'] += "maintenance is performed."
+        #self.params['specification'] += "\n"
+        #self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which "
+        #self.params['specification'] += "maintenance is performed."
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual tool"
@@ -52,65 +52,91 @@ class IonImplanter(QtCore.QObject):
         self.params['cassette_size_desc'] = "Number of units in a single cassette"       
         self.params['max_cassette_no'] = 5
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
-        self.params['batch_size'] = 100
+        self.params['batch_size'] = 200
         self.params['batch_size_desc'] = "Number of units in a single process batch"         
-        self.params['transfer0_time'] = 60
-        self.params['transfer0_time_desc'] = "Time for single transfer by transporter (seconds)"        
+        self.params['transfer0_time'] = 30
+        self.params['transfer0_time_desc'] = "Time for single batch transfer from input to loadlock (seconds)"        
+        self.params['transfer1_time'] = 30
+        self.params['transfer1_time_desc'] = "Time for single batch transfer from loadlock to output (seconds)"
+
+        self.params['evacuation_time'] = 240
+        self.params['evacuation_time_desc'] = "Time for single loadlock evacuation (seconds)"
+        self.params['repressurization_time'] = 90
+        self.params['repressurization_time_desc'] = "Time for single loadlock repressurization (seconds)"
+
+        self.params['implant_belt_speed'] = 10.0
+        self.params['implant_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"        
+        self.params['implant_belt_length'] = 5.0
+        self.params['implant_belt_length_desc'] = "Distance between loadlock and buffer cassette (meters)"
+        self.params['unit_distance'] = 0.2
+        self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"        
         
 #        self.params['verbose'] = False #DEBUG
 #        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)         
         
-        #self.transport_counter = 0
-        #self.start_time = self.env.now
-        #self.first_run = True
-        #self.process_counter = 0      
+        self.transport_counter = 0
+        self.start_time = self.env.now
+        self.first_run = True
+        self.process_counter = 0      
         
-#        #if (self.params['verbose']): #DEBUG
-#        #    string = str(self.env.now) + " [IonImplanter][" + self.params['name'] + "] Added an ion implanter" #DEBUG
-#        #    self.output_text.sig.emit(string) #DEBUG
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " [IonImplanter][" + self.params['name'] + "] Added an ion implanter" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
         
         ### Input buffer ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         
+        ### Implant lanes ###
+        # Owned by parent class so that loadlocks can see them both
+        self.implant_lanes = []
+        for i in range(0,2):
+            process_params = self.params.copy()
+            process_params['name'] = "il" + str(i)            
+            self.implant_lanes.append(implant_lane(self.env, self.output_text, process_params))
+        
         ## Load locks ##
         self.batchprocesses = []
-        for i in range(0,1):
-            process_params = {}
+        for i in range(0,2):
+            process_params = self.params.copy()
             process_params['name'] = "ll" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = 120
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
-            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
+            self.batchprocesses.append(loadlock(self.env,self.output_text,process_params,self.implant_lanes))
 
         ### Output buffer ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Load-in transport ###
+        # Will be stopped during downtime
         batchconnections = []
 
-        for i in range(0,1):
+        for i in range(0,2):
             batchconnections.append([self.input,self.batchprocesses[i],self.params['transfer0_time']])
-        
-        for i in range(0,1):
-            batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer0_time']])
 
-        transport_params = {}
-        transport_params['name'] = "ll0"
-        transport_params['batch_size'] = self.params['batch_size']
-#        transport_params['verbose'] = self.params['verbose'] #DEBUG      
+        transport_params = self.params.copy()
+        transport_params['name'] = "ii0"    
         self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
+        ### Load-out transport ###
+        # separate transporter so we can easily count processed wafers
+        batchconnections = []
+        
+        for i in range(0,2):
+            batchconnections.append([self.batchprocesses[i],self.output,self.params['transfer1_time']])
+        
+        transport_params = self.params.copy()
+        transport_params['name'] = "ii1"      
+        self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
+
     def report(self):
-        #string = "[IonImplanter][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        #self.output_text.sig.emit(string)
+        string = "[IonImplanter][" + self.params['name'] + "] Units processed: " + str(self.transport1.transport_counter - self.output.container.level)
+        self.output_text.sig.emit(string)
 
         self.utilization.append("IonImplanter")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
-        #production_volume = self.transport_counter - self.output.container.level
-        #production_hours = (self.env.now - self.start_time)/3600
-        #self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())               
+        production_volume = self.transport_counter - self.output.container.level
+        production_hours = (self.env.now - self.start_time)/3600
+        self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())
 
         #for i in range(len(self.idle_times_internal)):
         #    if self.first_run:
@@ -119,11 +145,165 @@ class IonImplanter(QtCore.QObject):
         #        idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time)
         #    self.utilization.append(["l" + str(i),round(idle_time,1)])
 
-    def run_loadlock_load_in(self):
-        return
-
-    def run_loadlock_load_out(self):
-        return
-
     def nominal_throughput(self):       
-        return 0
+        return 1
+        
+class loadlock(QtCore.QObject):
+    
+    def __init__(self,  _env, _output=None, _params = {}, _implant_lanes=None):
+        QtCore.QObject.__init__(self)
+        self.env = _env
+        self.output_text = _output   
+        self.params = _params
+        self.implant_lanes = _implant_lanes
+
+        self.name = self.params['name'] # needed for BatchTransport
+        self.resource = simpy.Resource(self.env, 1) # needed for BatchTransport
+        self.process_finished = 0 # needed for BatchTransport
+        self.status = 1 # needed for BatchTransport        
+        self.start = self.env.event()
+        self.implant_process_finished0 = self.env.event()
+        self.implant_process_finished1 = self.env.event()
+        self.container = simpy.Container(self.env,capacity=self.params['batch_size'],init=0)
+        
+#        if (self.params['verbose']): #DEBUG
+#            string = str(self.env.now) + " - [Loadlock][" + self.params['name'] + "] Added loadlock" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
+            
+        self.env.process(self.run())        
+
+    def run(self):
+        batch_size = self.params['batch_size']
+        evacuation_time = self.params['evacuation_time']
+        repressurization_time = self.params['repressurization_time']
+#        verbose = self.params['verbose'] #DEBUG
+        
+        while True:
+            yield self.start            
+            
+            if (self.container.level >= batch_size) & (not self.process_finished):
+                with self.resource.request() as request: # reserve access to loadlock
+                    yield request
+                    yield self.env.timeout(evacuation_time)
+                    
+                    with self.implant_lanes[0].resource.request() as request_lane0, \
+                           self.implant_lanes[1].resource.request() as request_lane1:
+                        # reserve access to process lanes
+                        yield request_lane0                                    
+                        yield request_lane1                                                
+                        
+                        # copy container in order to not empty it, as that will trigger BatchTransport
+                        container_copy = simpy.Container(self.env,capacity=batch_size,init=self.container.level)
+                        
+                         # point lanes to the right loadlock
+                        self.implant_lanes[0].loadlock_container = container_copy
+                        self.implant_lanes[1].loadlock_container = container_copy
+                        
+                        # point lanes to the right event to trigger when finished
+                        self.implant_lanes[0].implant_process_finished = self.implant_process_finished0 
+                        self.implant_lanes[1].implant_process_finished = self.implant_process_finished1
+                        
+                        # perform ion implantation
+                        yield self.implant_lanes[0].process_start.succeed()
+                        yield self.implant_lanes[1].process_start.succeed()              
+                        yield self.implant_lanes[0].implant_process_finished
+                        yield self.implant_lanes[1].implant_process_finished                        
+                        self.implant_process_finished0 = self.env.event() # make new events
+                        self.implant_process_finished1 = self.env.event()
+                    
+                    yield self.env.timeout(repressurization_time)
+                    self.process_finished = 1
+                    
+#                    if (verbose): #DEBUG
+#                        string = str(self.env.now) + " [Loadlock][" + self.name + "] End process " #DEBUG
+#                        self.output_text.sig.emit(string) #DEBUG
+
+    def start_process(self):
+        self.start.succeed()
+        self.start = self.env.event() # make new event
+        
+    def space_available(self,_batch_size):
+        # see if space is available for the specified _batch_size
+        if ((self.container.level+_batch_size) <= self.params['batch_size']):
+            return True
+        else:
+            return False
+            
+    def check_downtime(self): # needed for BatchTransport
+        return
+                
+class implant_lane(QtCore.QObject):
+        
+    def __init__(self, _env, _output=None, _params = {}):
+        QtCore.QObject.__init__(self)
+        self.env = _env
+        self.output_text = _output
+        self.utilization = []       
+        self.params = _params        
+        self.loadlock_container = None
+        self.implant_process_finished = None
+        
+        self.transport_counter = 0
+        self.start_time = self.env.now
+        self.first_run = True
+        self.process_counter = 0
+        self.resource = simpy.Resource(self.env, 1)        
+        
+#        if (self.params['verbose']): #DEBUG
+#            string = str(int(self.env.now)) + " [ImplantLane][" + self.params['name'] + "] Added an implant lane" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG        
+
+        ### Array of zeroes represents lane ###          
+        self.lane = collections.deque([False for rows in range(int(self.params['implant_belt_length']//self.params['unit_distance']))])            
+
+        ### Buffer cassette ###
+        self.buffer = BatchContainer(self.env,"buffer",self.params['cassette_size'],1)
+        
+        self.process_start = self.env.event()       
+        self.env.process(self.run())
+
+    def report(self):
+        return
+
+    def run(self):      
+        time_step = 60*self.params['unit_distance']/self.params['implant_belt_speed']       
+
+        while True:
+            yield self.process_start
+            self.process_start = self.env.event() 
+        
+            while True: # load wafers on belt and run belt until loadlock and belt is empty
+                if (self.loadlock_container.level > 0) & (not self.lane[0]):
+                    self.loadlock_container.get(1)
+                    self.lane[0] = True
+                
+                if (self.lane[-1]):
+                    self.lane[-1] = False
+                    self.buffer.container.put(1)
+                
+                if (self.loadlock_container.level == 0) & (not self.lane.count(True)):
+                    break                
+                
+                self.lane.rotate(1)    
+                yield self.env.timeout(time_step)                
+    
+            while True: # load wafers on belt and run belt until buffer and lane is empty
+                if (self.buffer.container.level > 0) & (not self.lane[-1]):
+                    self.buffer.container.get(1)
+                    self.lane[-1] = True
+                
+                if (self.lane[0]):
+                    self.lane[0] = False
+                    self.loadlock_container.put(1)
+
+                if (self.buffer.container.level == 0) & (not self.lane.count(True)):
+                    break  
+                
+                self.lane.rotate(-1)    
+                yield self.env.timeout(time_step)
+    
+#            if (self.params['verbose']): #DEBUG
+#                string = str(self.env.now) + " - [ImplantLane][" + self.params['name'] + "] Processed one cassette" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
+            
+            self.implant_process_finished.succeed()        

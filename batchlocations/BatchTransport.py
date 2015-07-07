@@ -40,8 +40,8 @@ class BatchTransport(QtCore.QObject):
                     # load-in from BatchContainer to BatchProcess
                     if (self.batchconnections[i][0].container.level >= batch_size) & \
                             self.batchconnections[i][1].space_available(batch_size) & \
-                            self.batchconnections[i][1].status:
-                                                  
+                            self.batchconnections[i][1].status:                            
+                            
                         with self.batchconnections[i][1].resource.request() as request_output:
                             yield request_output
                         
