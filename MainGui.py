@@ -308,7 +308,8 @@ class MainGui(QtGui.QMainWindow):
             self.statusBar().showMessage(self.tr("All operators were removed"))
 
     def run_simulation(self):
-        self.output_signal_counter = 0       
+        self.output_signal_counter = 0
+        self.plot_selection = [] # reset selection in case definition changed
 
         if (len(self.batchlocations) < 2) | (len(self.locationgroups) < 2):
             self.statusBar().showMessage(self.tr("Not enough batch locations found"))

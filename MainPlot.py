@@ -120,8 +120,8 @@ class MultiPlot(QtGui.QMainWindow):
             if num0 in self.parent.plot_selection:
                 
                 axes = self.fig.add_subplot(gs[num1])
-                axes.plot(self.prod_rates_df.index, self.prod_rates_df[i], c=cl[num1 % len(cl)])            
-                axes.text(0.01,0.5,self.prod_rates_df[i].name, horizontalalignment='left', verticalalignment='center', transform=axes.transAxes)
+                axes.plot(self.prod_rates_df.index, self.prod_rates_df.iloc[:,num0], c=cl[num1 % len(cl)]) # need iloc to avoid columns with the same name
+                axes.text(0.01,0.5,i, horizontalalignment='left', verticalalignment='center', transform=axes.transAxes)
                 axes.title.set_visible(False)               
                 axes.set_yticklabels(())
                 if (not num0 == self.parent.plot_selection[-1]):
