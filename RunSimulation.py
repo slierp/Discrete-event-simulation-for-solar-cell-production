@@ -33,7 +33,7 @@ class RunSimulation(object):
         #self.operators = []
         
         self.params = {}
-        self.params['time_limit'] = time_limit*3600
+        self.params['time_limit'] = int(float(time_limit)*3600)
         self.hourly_updates = []
         self.percentage_updates = []        
         self.updates_list = []
@@ -115,7 +115,7 @@ class RunSimulation(object):
         self.updates_list = self.make_unique(self.updates_list)        
 
     def run(self):
-        print "Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration"
+        print "Simulation started with " + str(round(self.params['time_limit'] / (60*60),1)) + " hour duration"
                     
         ### Run simulation ###
         prev_production_volume_update = 0
@@ -154,35 +154,49 @@ class RunSimulation(object):
         print "Simulation finished"
 
     def run_with_profiling(self):
+        if (self.params['time_limit'] < 3601):
+            print "Profiling mode requires longer simulation duration."
+            return
+        
+        print "Simulation started with " + str(round(self.params['time_limit'] / (60*60),1)) + " hour duration"
         curr_time = 0
 
         columns = []
-        columns.append("Time")
         for i in range(len(self.batchlocations)):
             columns.append("[" + str(self.batchlocations[i].__class__.__name__) + "][" + str(self.batchlocations[i].params['name']) + "]")
 
-        df = pd.DataFrame(columns=columns)
+        prod_rates_df = pd.DataFrame(columns=columns)
+
+        prev_prod_volumes = []
+        for i in range(len(self.batchlocations)):
+            prev_prod_volumes.append(0)
+        
 
         ### Run simulation ###
         while True:
             curr_time += 3600            
             self.env.run(curr_time)
                         
-            #print str(self.env.now),
-
-            tmp_list = []
-            tmp_list.append(self.env.now)
+            prod_volumes = []
+            prod_volumes.append(self.env.now)
             for i in range(len(self.batchlocations)):
-                 tmp_list.append(self.batchlocations[i].prod_volume())
+                prod_volumes.append(self.batchlocations[i].prod_volume())
+
+            prod_rates = []
+            for i in range(len(self.batchlocations)):
+                 prod_rates.append((prod_volumes[i]-prev_prod_volumes[i])/3600)
                  
-            df.loc[len(df)] = tmp_list
-                        
+            prod_rates_df.loc[len(prod_rates_df)] = prod_rates
+            
+            prev_prod_volumes = prod_volumes
+            
             if (self.env.now >= self.params['time_limit']):
                 break
 
-        writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
-        df.to_excel(writer,str("output"))             
-        writer.save()
+        prod_rates_df.index += 1
+        prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
+        prod_rates_df.to_csv("output.csv")
+        print "Simulation finished"
     
     """
     def define_simulation(self): # not used at the moment

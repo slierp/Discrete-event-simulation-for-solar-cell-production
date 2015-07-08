@@ -9,9 +9,10 @@ from PyQt4 import QtCore, QtGui
 from MainGui import MainGui
 import Required_resources
 
-def check_int(user_input):
+def check_number(user_input):
     try:
-        return int(user_input)
+        float(user_input)
+        return user_input
     except ValueError:
         print "Duration input not understood."
         exit()
@@ -35,23 +36,23 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:],"hi:d:p",["input_file=","duration=","profile"])
     except getopt.GetoptError:
-        print "Solar cell production simulation"
+        print "Solar cell production simulation program DescPro"
         print "Running with no arguments will start graphical user interface"            
-        print "Command-line usage: " + sys.argv[0] + " file duration"
+        print "Command-line usage: " + sys.argv[0] + " input_file duration"
         print "Options:"
         print "-h, --help: Print help message"
-        print "-p, --profile: Enable profiling mode"
+        print "-p, --profile: Enable profiling mode (output will be written to output.csv)"
         print "input_file: .desc file containing simulation description"
         print "duration: simulation time in hours (1 hour by default)"
         exit()
     for opt, arg in opts:
         if opt == '-h':
-            print "Solar cell production simulation"
+            print "Solar cell production simulation program DescPro"
             print "Running with no arguments will start graphical user interface"            
-            print "Command-line usage: " + sys.argv[0] + " file duration"
+            print "Command-line usage: " + sys.argv[0] + " input_file duration"
             print "Options:"
             print "-h, --help: Print help message"
-            print "-p, --profile: Enable profiling mode"
+            print "-p, --profile: Enable profiling mode (output will be written to output.csv)"
             print "file: .desc file containing simulation description"
             print "duration: simulation time in hours (1 hour by default)"
             sys.exit()
@@ -63,8 +64,8 @@ if __name__ == "__main__":
             profiling = True            
 
     if profiling:
-        thread = RunSimulation(inputfile,check_int(duration))
+        thread = RunSimulation(inputfile,check_number(duration))
         thread.run_with_profiling()
     else:
-        thread = RunSimulation(inputfile,check_int(duration))
+        thread = RunSimulation(inputfile,check_number(duration))
         thread.run()

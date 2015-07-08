@@ -9,6 +9,7 @@ from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
 from RunSimulationThread import RunSimulationThread
+from MainPlot import MultiPlot
 import pickle
 from copy import deepcopy
 
@@ -42,7 +43,11 @@ class MainGui(QtGui.QMainWindow):
         self.simulation_thread.output.sig.connect(self.simulation_output) # Get signal to show simulation progress
         self.simulation_thread.util.sig.connect(self.utilization_output) # Get signal to show utilization results
         self.output_signal_counter = 0        
-        self.output_overload_signal_given = False        
+        self.output_overload_signal_given = False
+        
+        self.wid = None # will contain window for displaying production rates
+        self.profiling_mode = False
+        self.plot_selection = [] # selected items for display
 
         self.prev_dir_path = ""
         self.prev_save_path = ""
@@ -370,6 +375,38 @@ class MainGui(QtGui.QMainWindow):
         self.simulation_thread.stop_simulation = True # sending signal does not work since simulationthread run function will not be interrupted
         self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
 
+    def switch_profiling_mode(self):
+        
+        if (self.profiling_mode):
+            self.profiling_mode = False
+            self.qt_thread.started.disconnect(self.simulation_thread.run_with_profiling) # Start simulation when thread is started
+            self.qt_thread.started.connect(self.simulation_thread.run) # Start simulation when thread is started
+            self.statusBar().showMessage(self.tr("Profiling mode has been turned off"))
+        else:
+            self.profiling_mode = True
+            self.qt_thread.started.disconnect(self.simulation_thread.run) # Start simulation when thread is started
+            self.qt_thread.started.connect(self.simulation_thread.run_with_profiling) # Start simulation when thread is started
+            self.statusBar().showMessage(self.tr("Profiling mode has been turned on"))
+
+    def plot_production_rates(self):
+        
+        if len(self.simulation_thread.prod_rates_df):
+             self.statusBar().showMessage(self.tr("Creating plot window..."))
+        else:
+            self.statusBar().showMessage(self.tr("Please run a simulation first"))
+            return     
+        
+        #if (self.wid):
+        #    if (self.wid.isWindow()):
+        #        # close previous instances of child windows to save system memory                
+        #        self.wid.close()                
+
+        self.wid = MultiPlot(self)
+                        
+        self.wid.show() 
+        
+        self.statusBar().showMessage(self.tr("Ready"))
+
     def keyPressEvent(self, e):
         if (e.modifiers() & QtCore.Qt.ControlModifier): # Ctrl
             selected = self.table_widget.selectedRanges()                 
@@ -561,11 +598,25 @@ class MainGui(QtGui.QMainWindow):
         self.stop_sim_button.setEnabled(False)
         self.stop_sim_button.setShortcut('Escape')
 
+        self.plot_production_rates_button = QtGui.QPushButton()
+        self.plot_production_rates_button.clicked.connect(self.plot_production_rates)
+        self.plot_production_rates_button.setIcon(QtGui.QIcon(":chart.png"))
+        self.plot_production_rates_button.setToolTip(self.tr("Plot production rate results"))
+        self.plot_production_rates_button.setStatusTip(self.tr("Plot production rate results"))
+
+        self.switch_profiling_mode_button = QtGui.QCheckBox()
+        self.switch_profiling_mode_button.clicked.connect(self.switch_profiling_mode)
+        self.switch_profiling_mode_button.setChecked(False)
+        self.switch_profiling_mode_button.setToolTip(self.tr("Turn profiling mode on or off"))
+        self.switch_profiling_mode_button.setStatusTip(self.tr("Turn profiling mode on or off"))
+
         top_buttonbox = QtGui.QDialogButtonBox()
         top_buttonbox.addButton(open_file_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(save_file_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.run_sim_button, QtGui.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.stop_sim_button, QtGui.QDialogButtonBox.ActionRole)
+        top_buttonbox.addButton(self.plot_production_rates_button, QtGui.QDialogButtonBox.ActionRole)
+        top_buttonbox.addButton(self.switch_profiling_mode_button, QtGui.QDialogButtonBox.ActionRole)
 
         self.sim_time_combo = QtGui.QComboBox(self)
         for i in self.sim_time_selection_list:

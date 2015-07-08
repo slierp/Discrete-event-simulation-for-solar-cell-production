@@ -14,6 +14,7 @@ from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 import simpy
 from PyQt4 import QtCore
+import pandas as pd
 
 class StringSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
@@ -29,7 +30,8 @@ class RunSimulationThread(QtCore.QObject):
         self.stop_simulation = False        
         self.signal = StringSignal()        
         self.output = StringSignal()
-        self.util = ListSignal()       
+        self.util = ListSignal()
+        self.prod_rates_df = pd.DataFrame() # for storing production rates
 
     def make_unique(self,nonunique):
         unique = []
@@ -37,11 +39,9 @@ class RunSimulationThread(QtCore.QObject):
             if x not in unique:
                 unique.append(x)
         unique.sort()
-        return unique     
+        return unique
 
-    @QtCore.pyqtSlot()
-    def run(self):
-        self.env = simpy.Environment()
+    def replace_for_real_instances(self):        
    
         ### Replace string elements in production line definition for real class instances ###
         for i, value in enumerate(self.batchlocations):
@@ -88,6 +88,11 @@ class RunSimulationThread(QtCore.QObject):
                 tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        self.env = simpy.Environment()
+        self.replace_for_real_instances() 
 
         ### Calculate time steps needed ###
         no_hourly_updates = self.params['time_limit'] // (60*60)
@@ -164,3 +169,56 @@ class RunSimulationThread(QtCore.QObject):
         self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.params['time_limit'])) + "</b>")        
         
         self.signal.sig.emit('Simulation finished')
+    
+    @QtCore.pyqtSlot()
+    def run_with_profiling(self):        
+        self.env = simpy.Environment()        
+        self.replace_for_real_instances()
+        curr_time = 0
+
+        columns = []
+        for i in range(len(self.batchlocations)):
+            columns.append("[" + str(self.batchlocations[i].__class__.__name__) + "][" + str(self.batchlocations[i].params['name']) + "]")
+
+        self.prod_rates_df = pd.DataFrame(columns=columns)
+
+        prev_prod_volumes = []
+        for i in range(len(self.batchlocations)):
+            prev_prod_volumes.append(0)
+        
+        ### Run simulation ###
+        self.output.sig.emit("<b>Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration</b>")
+
+        while True:
+            curr_time += 3600            
+            self.env.run(curr_time)
+                        
+            prod_volumes = []
+            prod_volumes.append(self.env.now)
+            for i in range(len(self.batchlocations)):
+                prod_volumes.append(self.batchlocations[i].prod_volume())
+
+            prod_rates = []
+            for i in range(len(self.batchlocations)):
+                 prod_rates.append((prod_volumes[i]-prev_prod_volumes[i])/3600)
+                 
+            self.prod_rates_df.loc[len(self.prod_rates_df)] = prod_rates
+            
+            prev_prod_volumes = prod_volumes
+            
+            if (self.env.now >= self.params['time_limit']):
+                break
+
+        self.prod_rates_df.index += 1
+        self.prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
+
+        ### Calculate sum of all produced cells ###
+        prod_vol = 0
+        l_loc = len(self.locationgroups)
+        for i in range(len(self.locationgroups[l_loc-1])):
+            prod_vol += self.locationgroups[l_loc-1][i].output.container.level
+        
+        self.output.sig.emit("<b>Production volume: " + str(prod_vol) + "</b>")
+        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.params['time_limit'])) + "</b>")        
+        
+        self.signal.sig.emit('Simulation finished')        
