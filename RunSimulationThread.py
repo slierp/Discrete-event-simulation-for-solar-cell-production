@@ -171,7 +171,13 @@ class RunSimulationThread(QtCore.QObject):
         self.signal.sig.emit('Simulation finished')
     
     @QtCore.pyqtSlot()
-    def run_with_profiling(self):        
+    def run_with_profiling(self):
+        
+        if (self.params['time_limit'] < 3601):
+            self.output.sig.emit("Profiling mode requires longer simulation duration.")
+            self.signal.sig.emit('Simulation aborted')
+            return
+        
         self.env = simpy.Environment()        
         self.replace_for_real_instances()
         curr_time = 0

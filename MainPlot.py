@@ -107,7 +107,7 @@ class MultiPlot(QtGui.QMainWindow):
         axes.spines['right'].set_color('none')
         axes.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
         axes.set_xlabel(r'$\mathrm{\mathsf{Time\ [hours]}}$', fontsize=24, weight='black')
-        axes.set_ylabel(r'$\mathrm{\mathsf{Production rate\ [a.u.]}}$', fontsize=24, weight='black')
+        axes.set_ylabel(r'$\mathrm{\mathsf{Production\ rate\ [a.u.]}}$', fontsize=24, weight='black')
 
         # define grid for all the subplots
         gs = gridspec.GridSpec(len(self.parent.plot_selection),1)
