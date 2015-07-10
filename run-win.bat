@@ -1,2 +1,2 @@
-python Main.py Example2.desc 24
+python Main.py -i Example0.desc -d 24 -p
 pause
