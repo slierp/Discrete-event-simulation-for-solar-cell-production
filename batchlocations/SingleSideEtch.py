@@ -91,7 +91,7 @@ class SingleSideEtch(QtCore.QObject):
         self.utilization.append("SingleSideEtch")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
-        production_volume = self.transport_counter - self.output.container.level
+        production_volume = self.transport_counter
         production_hours = (self.env.now - self.start_time)/3600
         
         if (self.nominal_throughput() > 0) & (production_hours > 0):

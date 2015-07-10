@@ -200,7 +200,6 @@ class RunSimulationThread(QtCore.QObject):
             self.env.run(curr_time)
                         
             prod_volumes = []
-            prod_volumes.append(self.env.now)
             for i in range(len(self.batchlocations)):
                 prod_volumes.append(self.batchlocations[i].prod_volume())
 

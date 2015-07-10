@@ -115,13 +115,13 @@ class TubePECVD(QtCore.QObject):
         self.env.process(self.run_load_out())
 
     def report(self):
-        string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter - self.output.container.level)
+        string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
         self.output_text.sig.emit(string)      
         
         self.utilization.append("TubePECVD")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
-        production_volume = self.transport_counter - self.output.container.level
+        production_volume = self.transport_counter
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
         
         if (self.nominal_throughput() > 0) & (production_hours > 0):
@@ -133,7 +133,7 @@ class TubePECVD(QtCore.QObject):
             self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])        
 
     def prod_volume(self):
-        return self.transport_counter - self.output.container.level
+        return self.transport_counter
         
     def run_transport(self):
         

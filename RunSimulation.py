@@ -170,7 +170,6 @@ class RunSimulation(object):
         prev_prod_volumes = []
         for i in range(len(self.batchlocations)):
             prev_prod_volumes.append(0)
-        
 
         ### Run simulation ###
         while True:
@@ -178,7 +177,6 @@ class RunSimulation(object):
             self.env.run(curr_time)
                         
             prod_volumes = []
-            prod_volumes.append(self.env.now)
             for i in range(len(self.batchlocations)):
                 prod_volumes.append(self.batchlocations[i].prod_volume())
 

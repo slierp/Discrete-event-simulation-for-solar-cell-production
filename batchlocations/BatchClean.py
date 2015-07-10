@@ -237,13 +237,13 @@ class BatchClean(QtCore.QObject):
         self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
     def report(self):
-        string = "[BatchClean][" + self.params['name'] + "] Units processed: " + str(self.transport3.transport_counter - self.output.container.level)
+        string = "[BatchClean][" + self.params['name'] + "] Units processed: " + str(self.transport3.transport_counter)
         self.output_text.sig.emit(string)
 
         self.utilization.append("BatchClean")
         self.utilization.append(self.params['name'])
         self.utilization.append(self.nominal_throughput())
-        production_volume = self.transport3.transport_counter - self.output.container.level
+        production_volume = self.transport3.transport_counter
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
 
         if (self.nominal_throughput() > 0) & (production_hours > 0):        
@@ -255,7 +255,7 @@ class BatchClean(QtCore.QObject):
             self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])                 
 
     def prod_volume(self):
-        return self.transport3.transport_counter - self.output.container.level
+        return self.transport3.transport_counter
             
     def nominal_throughput(self):
         throughputs = []        
