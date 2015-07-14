@@ -252,9 +252,8 @@ class loadlock(QtCore.QObject):
             self.status = 1
             self.last_downtime = self.env.now
 
-#        if (self.params['verbose']): #DEBUG
-#            string = str(int(self.env.now)) + " [Loadlock][" + self.params['name'] + "] End of downtime" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG            
+            string = str(int(self.env.now)) + " [LoadLock][" + self.params['name'] + "] End of downtime"
+            self.output_text.sig.emit(string)
                 
 class implant_lane(QtCore.QObject):
         

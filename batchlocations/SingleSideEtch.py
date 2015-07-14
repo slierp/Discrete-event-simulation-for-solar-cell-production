@@ -126,9 +126,8 @@ class SingleSideEtch(QtCore.QObject):
                     self.idle_times_internal[i] += downtime_duration
                 self.process_counter = 0
                 
-#                if (verbose): #DEBUG
-#                    string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "][" + str(lane_number) + "] End downtime" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+                string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "][" + str(lane_number) + "] End downtime"
+                self.output_text.sig.emit(string)
 
             if (self.input.container.level > lane_number):
                 # all lanes are started simultaneously, so only continue if there are enough wafers for this particular lane

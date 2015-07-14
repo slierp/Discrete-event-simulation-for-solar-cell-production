@@ -103,9 +103,8 @@ class BatchProcess(QtCore.QObject):
                     self.process_counter = 0
                     self.last_downtime = self.env.now
 
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime " #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG                
+                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime "
+                    self.output_text.sig.emit(string)
 
     def downtime_cycle(self):
         # perform downtime cycle

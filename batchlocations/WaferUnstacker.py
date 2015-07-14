@@ -44,7 +44,7 @@ class WaferUnstacker(QtCore.QObject):
 #        self.params['verbose'] = False #DEBUG
 #        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)    
-        
+
 #        if (self.params['verbose']): #DEBUG
 #            string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker" #DEBUG
 #            self.output_text.sig.emit(string) #DEBUG

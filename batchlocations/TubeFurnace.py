@@ -168,9 +168,8 @@ class TubeFurnace(QtCore.QObject):
                     yield self.env.timeout(downtime_duration)
                     self.process_counter = 0
                     
-#                    if (self.params['verbose']): #DEBUG
-#                        string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] End downtime" #DEBUG
-#                        self.output_text.sig.emit(string) #DEBUG
+                    string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] End downtime"
+                    self.output_text.sig.emit(string)
             
             for i in range(len(batchconnections)):
                 # first check if we can move any batch from tube to cool_down

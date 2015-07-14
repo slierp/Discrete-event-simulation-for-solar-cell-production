@@ -16,9 +16,36 @@ import simpy
 import pickle
 import pandas as pd
 
+### Parse HTML to remove it from output ###
+from HTMLParser import HTMLParser
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+class SignalHandler(object):
+     # redirect code for pyqtSignal to normal print without HTML
+
+    def emit(self, str):
+        s = MLStripper()
+        s.feed(str)
+        print s.get_data()
+        
+class StringSignal(object):
+     # redirect code for pyqtSignal to normal print
+    sig = SignalHandler()
+
 class RunSimulation(object):
     
     def __init__(self,filename,time_limit=1):
+
+        self.output = StringSignal()
+        self.signal = StringSignal()        
         
         try:
             with open(filename) as f: # Pickle is in principle the only reason the program currently needs numpy
@@ -58,27 +85,27 @@ class RunSimulation(object):
         for i, value in enumerate(self.batchlocations):
             # replace class names for real class instances in the same list
             if (self.batchlocations[i][0] == "WaferSource"):
-                self.batchlocations[i] = WaferSource(self.env,"",self.batchlocations[i][1])
+                self.batchlocations[i] = WaferSource(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "WaferUnstacker"):
-                self.batchlocations[i] = WaferUnstacker(self.env,"",self.batchlocations[i][1])
+                self.batchlocations[i] = WaferUnstacker(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchTex"):
-                self.batchlocations[i] = BatchTex(self.env,"",self.batchlocations[i][1])
+                self.batchlocations[i] = BatchTex(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchClean"):
-                self.batchlocations[i] = BatchClean(self.env,"",self.batchlocations[i][1])                
+                self.batchlocations[i] = BatchClean(self.env,self.output,self.batchlocations[i][1])                
             elif (self.batchlocations[i][0] == "TubeFurnace"):
-                self.batchlocations[i] = TubeFurnace(self.env,"",self.batchlocations[i][1])
+                self.batchlocations[i] = TubeFurnace(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "SingleSideEtch"):
-                self.batchlocations[i] = SingleSideEtch(self.env,"",self.batchlocations[i][1]) 
+                self.batchlocations[i] = SingleSideEtch(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "TubePECVD"):
-                self.batchlocations[i] = TubePECVD(self.env,"",self.batchlocations[i][1]) 
+                self.batchlocations[i] = TubePECVD(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "PrintLine"):
-                self.batchlocations[i] = PrintLine(self.env,"",self.batchlocations[i][1]) 
+                self.batchlocations[i] = PrintLine(self.env,self.output,self.batchlocations[i][1]) 
             elif (self.batchlocations[i][0] == "WaferBin"):
-                self.batchlocations[i] = WaferBin(self.env,"",self.batchlocations[i][1])
+                self.batchlocations[i] = WaferBin(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "Buffer"):
-                self.batchlocations[i] = Buffer(self.env,"",self.batchlocations[i][1])                 
+                self.batchlocations[i] = Buffer(self.env,self.output,self.batchlocations[i][1])                 
             elif (self.batchlocations[i][0] == "IonImplanter"):
-                self.batchlocations[i] = IonImplanter(self.env,"",self.batchlocations[i][1]) 
+                self.batchlocations[i] = IonImplanter(self.env,self.output,self.batchlocations[i][1]) 
 
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances
@@ -98,7 +125,7 @@ class RunSimulation(object):
             for j in range(len(self.operators[i][0])):
                 tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
         
-            self.operators[i] = Operator(self.env,tmp_batchconnections,self.operators[i][1])   
+            self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
 
     def calculate_timesteps(self):
 
@@ -142,6 +169,16 @@ class RunSimulation(object):
             
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
+
+        ### Generate summary output in log tab ###
+        string = "<br><b>Production result summary</>"
+        self.output.sig.emit(string)
+
+        for i, value in enumerate(self.batchlocations):
+            self.batchlocations[i].report()
+
+        for i, value in enumerate(self.operators):
+            self.operators[i].report()
 
         ### Calculate sum of all produced cells ###
         prod_vol = 0
@@ -194,6 +231,25 @@ class RunSimulation(object):
         prod_rates_df.index += 1
         prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
         prod_rates_df.to_csv("output.csv")
+
+        ### Generate summary output in log tab ###
+        string = "<br><b>Production result summary</>"
+        self.output.sig.emit(string)
+
+        for i, value in enumerate(self.batchlocations):
+            self.batchlocations[i].report()
+
+        for i, value in enumerate(self.operators):
+            self.operators[i].report()
+
+        ### Calculate sum of all produced cells ###
+        prod_vol = 0
+        l_loc = len(self.locationgroups)
+        for i in range(len(self.locationgroups[l_loc-1])):
+            prod_vol += self.locationgroups[l_loc-1][i].output.container.level
+            
+        print "Production volume: " + str(prod_vol)
+        print "Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit']))
         print "Simulation finished"
     
     """
