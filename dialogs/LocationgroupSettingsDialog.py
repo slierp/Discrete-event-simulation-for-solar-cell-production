@@ -12,6 +12,7 @@ from batchlocations.TubePECVD import TubePECVD
 from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
+from batchlocations.SpatialALD import SpatialALD
 
 class dummy_env(object):
     
@@ -60,6 +61,8 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
             curr_params = Buffer(env).params            
         elif (batchlocation[0] == "IonImplanter"):
             curr_params = IonImplanter(env).params
+        elif (batchlocation[0] == "SpatialALD"):
+            curr_params = SpatialALD(env).params            
         else:
             return                         
         

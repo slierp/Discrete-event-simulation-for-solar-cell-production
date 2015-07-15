@@ -10,6 +10,9 @@ import collections
 Current implementation highly optimized for speed
 Tried various implementations including numpy matrices containing wafer positions
 
+Define microstops for printers
+Make run_belt more sophisticated: Reload cassettes independently when empty
+
 """
 
 class PrintLine(QtCore.QObject):

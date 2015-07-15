@@ -46,6 +46,7 @@ class AddBatchlocationDialog(QtGui.QDialog):
         batchlocation_types.append("SingleSideEtch")
         batchlocation_types.append("PrintLine")
         batchlocation_types.append("IonImplanter")      
+        batchlocation_types.append("SpatialALD")        
 
         self.batchlocation_types_combo = QtGui.QComboBox(self)
         for i in batchlocation_types:
