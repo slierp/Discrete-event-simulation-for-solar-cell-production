@@ -91,7 +91,7 @@ class SpatialALD(QtCore.QObject):
             self.dep_input_positions.append(1 + i*int(self.params['deposition_unit_length']//self.params['unit_distance']))
             
         for i in self.dep_input_positions:
-            self.dep_output_positions.append(1 + i + int(self.params['deposition_unit_length']//self.params['unit_distance']))        
+            self.dep_output_positions.append(-1 + i + int(self.params['deposition_unit_length']//self.params['unit_distance']))        
         
         ### Lists representing deposition unit buffers ###
         
@@ -290,4 +290,4 @@ class SpatialALD(QtCore.QObject):
     
     def nominal_throughput(self):
 
-        return self.params['no_deposition_units']*3600/self.params['time_process']
+        return self.params['no_deposition_units']*3600/(self.params['time_process']+self.params['time_step'])
