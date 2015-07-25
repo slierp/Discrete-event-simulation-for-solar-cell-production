@@ -19,7 +19,6 @@ class MultiPlot(QtGui.QMainWindow):
     def __init__(self, _parent):
         
         QtGui.QMainWindow.__init__(self, _parent)
-        self.showMaximized()
 
         self.fig = None
         self.canvas = None
