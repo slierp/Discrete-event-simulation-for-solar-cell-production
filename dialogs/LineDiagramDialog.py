@@ -2,13 +2,19 @@
 from __future__ import division
 from PyQt4 import QtGui, QtCore, QtSvg
 from blockdiag import parser, builder, drawer
+from blockdiag.imagedraw import svg # needed for pyinstaller
+from blockdiag.noderenderer import roundedbox # needed for pyinstaller
 
 class LineDiagramDialog(QtGui.QDialog):
     def __init__(self, parent):
         super(QtGui.QDialog, self).__init__(parent)
         # create dialog screen for each parameter in curr_params
         
-        self.parent = parent       
+        self.parent = parent   
+
+
+        svg.setup(svg) # needed for pyinstaller
+        roundedbox.setup(roundedbox) # needed for pyinstaller
 
         self.setWindowTitle(self.tr("Production line diagram"))
         vbox = QtGui.QVBoxLayout()
