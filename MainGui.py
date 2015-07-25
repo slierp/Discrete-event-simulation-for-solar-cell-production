@@ -8,6 +8,7 @@ from dialogs.EditBatchlocationView import EditBatchlocationView
 from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
+from dialogs.LineDiagramView import LineDiagramView
 from RunSimulationThread import RunSimulationThread
 from MainPlot import MultiPlot
 import pickle
@@ -188,6 +189,9 @@ class MainGui(QtGui.QMainWindow):
             for j, value1 in enumerate(self.locationgroups[i]):
                 self.locationgroups[i][j] = num
                 num += 1
+
+    def line_diagram_view(self):
+        LineDiagramView(self)
 
     def add_batchlocation_view(self):
         AddBatchlocationView(self)
@@ -482,6 +486,12 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations_view.setUniformRowHeights(True)
         self.batchlocations_view.setDragDropMode(QtGui.QAbstractItemView.NoDragDrop)
         self.batchlocations_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+
+        line_diagram_button = QtGui.QPushButton()
+        line_diagram_button.clicked.connect(self.line_diagram_view)
+        line_diagram_button.setIcon(QtGui.QIcon(":eye.png"))
+        line_diagram_button.setToolTip(self.tr("View line diagram"))
+        line_diagram_button.setStatusTip(self.tr("View line diagram"))
         
         add_batchlocation_button = QtGui.QPushButton()
         add_batchlocation_button.clicked.connect(self.add_batchlocation_view)
@@ -508,6 +518,7 @@ class MainGui(QtGui.QMainWindow):
         empty_batchlocation_view_button.setStatusTip(self.tr("Remove all")) 
 
         buttonbox0 = QtGui.QDialogButtonBox()
+        buttonbox0.addButton(line_diagram_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(add_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(del_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)
         buttonbox0.addButton(edit_batchlocation_button, QtGui.QDialogButtonBox.ActionRole)        
