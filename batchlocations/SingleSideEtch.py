@@ -10,7 +10,15 @@ class SingleSideEtch(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.utilization = []       
+        self.utilization = [] 
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Process lanes", stacked];
+                       C [label = "Output"];
+                       A -> B -> C;                        
+                       } """        
         
         self.params = {}
         self.params['specification'] = "SingleSideEtch consists of:\n"
@@ -19,17 +27,15 @@ class SingleSideEtch(QtCore.QObject):
         self.params['specification'] += "- Output container\n"
         self.params['specification'] += "\n"
         self.params['specification'] += "Each lane runs independently and continuously, "
-        self.params['specification'] += "but can only accept a new unit after a certain time interval. "
-        self.params['specification'] += "Because it runs continuously "
-        self.params['specification'] += "(independent of whether there is an output position available or not) "
-        self.params['specification'] += "the output automation cannot function as a master of the input.\n"
+        self.params['specification'] += "but can only accept a new unit after a certain time interval "
+        self.params['specification'] += "to avoid wafer collisions.\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += "There are several of types of automation. "
-        self.params['specification'] += "Assumed now is that each lane is fed separately with new wafers, "
-        self.params['specification'] += "with no interruption between cassettes (i.e. cassettes stacked on top of each other).\n"
+        self.params['specification'] += "There are several of types of automation available for SSE machines. "
+        self.params['specification'] += "Here each lane is fed separately with new wafers, "
+        self.params['specification'] += "with no interruption for exchanging cassettes.\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which the "
-        self.params['specification'] += "etching solution is replaced."
+        self.params['specification'] += "There is a downtime procedure defined for the whole tool, which is for the "
+        self.params['specification'] += "etching solution replacement.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

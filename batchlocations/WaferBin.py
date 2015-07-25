@@ -11,10 +11,17 @@ class WaferBin(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.idle_times = []
-        self.utilization = []        
+        self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Bin"];
+                       A -> B;                    
+                       } """      
         
         self.params = {}
-        self.params['specification'] = "WaferBin is an imaginary machine that accepts cassettes and places them in an infinitely sized container."
+        self.params['specification'] = "WaferBin is an imaginary machine that accepts cassettes and places them in an infinitely sized container.\n"
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 100

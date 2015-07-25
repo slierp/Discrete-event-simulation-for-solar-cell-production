@@ -47,10 +47,16 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         hbox.addWidget(self.spinbox1)  
         vbox.addLayout(hbox)
 
+        ### Buttonbox for ok or cancel ###
+        hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
-        vbox.addWidget(buttonbox)
+        buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)        
+        hbox.addStretch(1) 
+        hbox.addWidget(buttonbox)
+        hbox.addStretch(1)               
+        vbox.addLayout(hbox)                
 
         self.setLayout(vbox)
 

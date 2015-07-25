@@ -13,6 +13,7 @@ from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
+from batchlocations.InlinePECVD import InlinePECVD
 import simpy
 from PyQt4 import QtCore
 import pandas as pd
@@ -71,6 +72,8 @@ class RunSimulationThread(QtCore.QObject):
                 self.batchlocations[i] = IonImplanter(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "SpatialALD"):
                 self.batchlocations[i] = SpatialALD(self.env,self.output,self.batchlocations[i][1])
+            elif (self.batchlocations[i][0] == "InlinePECVD"):
+                self.batchlocations[i] = InlinePECVD(self.env,self.output,self.batchlocations[i][1])
                 
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances

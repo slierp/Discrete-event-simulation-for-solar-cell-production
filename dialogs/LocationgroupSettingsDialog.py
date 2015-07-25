@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-from PyQt4 import QtGui
+from blockdiag import parser, builder, drawer
+from PyQt4 import QtGui, QtCore, QtSvg
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferUnstacker import WaferUnstacker
 from batchlocations.WaferBin import WaferBin
@@ -13,6 +14,7 @@ from batchlocations.PrintLine import PrintLine
 from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
+from batchlocations.InlinePECVD import InlinePECVD
 
 class dummy_env(object):
     
@@ -38,31 +40,47 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
 
         env = dummy_env()
         curr_params = {}
+        curr_diagram = None
         # load default settings list
         if (batchlocation[0] == "WaferSource"):
             curr_params = WaferSource(env).params
+            curr_diagram  = WaferSource(env).diagram
         elif (batchlocation[0] == "WaferUnstacker"):
             curr_params = WaferUnstacker(env).params
+            curr_diagram  = WaferUnstacker(env).diagram            
         elif (batchlocation[0] == "BatchTex"):
             curr_params = BatchTex(env).params
+            curr_diagram  = BatchTex(env).diagram            
         elif (batchlocation[0] == "BatchClean"):
             curr_params = BatchClean(env).params            
+            curr_diagram  = BatchClean(env).diagram            
         elif (batchlocation[0] == "TubeFurnace"):
             curr_params = TubeFurnace(env).params
+            curr_diagram  = TubeFurnace(env).diagram            
         elif (batchlocation[0] == "SingleSideEtch"):
             curr_params = SingleSideEtch(env).params
+            curr_diagram  = SingleSideEtch(env).diagram            
         elif (batchlocation[0] == "TubePECVD"):
             curr_params = TubePECVD(env).params
+            curr_diagram  = TubePECVD(env).diagram            
         elif (batchlocation[0] == "PrintLine"):
             curr_params = PrintLine(env).params            
+            curr_diagram  = PrintLine(env).diagram            
         elif (batchlocation[0] == "WaferBin"):
             curr_params = WaferBin(env).params
+            curr_diagram  = WaferBin(env).diagram            
         elif (batchlocation[0] == "Buffer"):
             curr_params = Buffer(env).params            
+            curr_diagram  = Buffer(env).diagram            
         elif (batchlocation[0] == "IonImplanter"):
             curr_params = IonImplanter(env).params
+            curr_diagram  = IonImplanter(env).diagram            
         elif (batchlocation[0] == "SpatialALD"):
             curr_params = SpatialALD(env).params            
+            curr_diagram  = SpatialALD(env).diagram            
+        elif (batchlocation[0] == "InlinePECVD"):
+            curr_params = InlinePECVD(env).params 
+            curr_diagram  = InlinePECVD(env).diagram            
         else:
             return                         
         
@@ -72,13 +90,33 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         self.setWindowTitle(self.tr("Available settings"))
         vbox = QtGui.QVBoxLayout()
 
-        if 'specification' in curr_params:
-            spec = QtGui.QPlainTextEdit(curr_params['specification'])
-            spec.setReadOnly(True)
-            vbox.addWidget(spec)
+        ### Add diagram ###
+        hbox = QtGui.QHBoxLayout()
+        tree = parser.parse_string(curr_diagram)
+        diagram = builder.ScreenNodeBuilder.build(tree)
+        draw = drawer.DiagramDraw('SVG', diagram, filename="")
+        draw.draw()
+        svg_string = draw.save()
+
+        svg_widget = QtSvg.QSvgWidget()
+        svg_widget.load(QtCore.QString(svg_string).toLocal8Bit())
+
+        hbox.addWidget(svg_widget)
+        hbox.addStretch(1)            
+        vbox.addLayout(hbox)
+
+        ### Add specification text ###
+        hbox = QtGui.QHBoxLayout()
+        if 'specification' in curr_params:            
+            spec = QtGui.QLabel(curr_params['specification'])
+            spec.setWordWrap(True)
+            hbox.addWidget(spec)
+            hbox.addStretch(1)
         else:
             title_label = QtGui.QLabel(self.tr("Edit settings:"))
-            vbox.addWidget(title_label)             
+            hbox.addWidget(title_label)
+            hbox.addStretch(1)
+        vbox.addLayout(hbox)       
 
         self.strings = []
         self.integers = []
@@ -91,21 +129,21 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 continue
             elif isinstance(curr_params[i], str):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])                
                 self.strings.append(QtGui.QLineEdit(curr_params[i]))
                 self.strings[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
                     self.strings[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(label)
-                hbox.addWidget(self.strings[-1]) 
+                hbox.addWidget(self.strings[-1])
+                hbox.addWidget(description)
+                hbox.addStretch(1)                
                 vbox.addLayout(hbox)
         
         for i in sorted(curr_params.keys()):
         # Make QSpinBox or QDoubleSpinbox for integers and doubles
             if isinstance(curr_params[i], int) & (not i == 'verbose'):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])                
                 self.integers.append(QtGui.QSpinBox())
                 self.integers[-1].setAccelerated(True)
                 self.integers[-1].setMaximum(999999999)
@@ -116,14 +154,14 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 elif (curr_params[i] >= 10):
                     self.integers[-1].setSingleStep(10)                     
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
                     self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
-                hbox.addWidget(label)
                 hbox.addWidget(self.integers[-1])  
+                hbox.addWidget(description)
+                hbox.addStretch(1)                
                 vbox.addLayout(hbox)
             elif isinstance(curr_params[i], float):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])                
                 self.doubles.append(QtGui.QDoubleSpinBox())
                 self.doubles[-1].setAccelerated(True)
                 self.doubles[-1].setMaximum(999999999)
@@ -131,33 +169,54 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 self.doubles[-1].setSingleStep(0.1)
                 self.doubles[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
                     self.doubles[-1].setToolTip(curr_params[i + "_desc"])             
-                hbox.addWidget(label)
                 hbox.addWidget(self.doubles[-1]) 
+                hbox.addWidget(description)
+                hbox.addStretch(1)                
                 vbox.addLayout(hbox)
         
         for i in sorted(curr_params.keys()):
         # Make QCheckBox for booleans
             if isinstance(curr_params[i], bool):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])                
                 self.booleans.append(QtGui.QCheckBox())                
                 self.booleans[-1].setChecked(curr_params[i])
                 self.booleans[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
-                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])               
-                hbox.addWidget(label)
+                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])
                 hbox.addWidget(self.booleans[-1]) 
+                hbox.addWidget(description)
+                hbox.addStretch(1)                
                 vbox.addLayout(hbox)
 
+        ### Widget for scrollable area ###
+        widget = QtGui.QWidget()
+        widget.setLayout(vbox)
+        scroll = QtGui.QScrollArea()   
+        scroll.setWidget(widget)       
+
+        container = QtGui.QVBoxLayout()         
+        container.addWidget(scroll)
+
+        ### Buttonbox for ok or cancel ###
+        hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
-        vbox.addWidget(buttonbox)
+        buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
+        hbox.addStretch(1) 
+        hbox.addWidget(buttonbox)
+        hbox.addStretch(1)                 
+        hbox.setContentsMargins(0,0,0,4)                
+        container.addLayout(hbox)        
+        container.setContentsMargins(0,0,0,0)
 
-        self.setLayout(vbox)
+        self.setLayout(container)
+        if (svg_widget.width() > spec.width()):
+            self.setMinimumWidth(svg_widget.width()+40)
+        else:
+            self.setMinimumWidth(spec.width()+40)
 
     def read(self):
         # read contents of each widget

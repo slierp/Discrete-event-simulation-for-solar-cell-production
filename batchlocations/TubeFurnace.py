@@ -11,6 +11,17 @@ class TubeFurnace(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Load station"];
+                       C [label = "Tube furnaces", stacked];
+                       D [label = "Cooldown shelves", stacked];
+                       E [label = "Output"];
+                       A -> B -> C -> D -> B;
+                       B -> E;                     
+                       } """       
         
         self.params = {}
         self.params['specification'] = "TubeFurnace consists of:\n"
@@ -30,7 +41,7 @@ class TubeFurnace(QtCore.QObject):
         self.params['specification'] += "Unloading has priority as this enables you to start a new process (less idle time).\n"
         self.params['specification'] += "\n"
         self.params['specification'] += "Tool downtime is defined as a procedure where the whole tool is put offline for a short period "
-        self.params['specification'] += "during which preventive maintenance is performed."
+        self.params['specification'] += "during which preventive maintenance is performed.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

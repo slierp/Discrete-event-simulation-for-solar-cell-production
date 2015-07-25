@@ -13,6 +13,19 @@ class BatchTex(QtCore.QObject):
         self.output_text = _output
         self.idle_times = []
         self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Alkaline texture", stacked];
+                       C [label = "Rinse0", stacked];
+                       D [label = "Neutralization", stacked];
+                       E [label = "Rinse1", stacked];
+                       F [label = "Dry", stacked];
+                       G [label = "Output"];
+                       A -> B -> C -> D -> E -> F -> G;
+                       D -> E [folded];                       
+                       } """
         
         self.params = {}
         self.params['specification'] = "BatchTex consists of:\n"
@@ -30,7 +43,7 @@ class BatchTex(QtCore.QObject):
         self.params['specification'] += "- Between dryers and output\n"
         self.params['specification'] += "\n"
         self.params['specification'] += "There is a downtime procedure defined for the texturing baths, during which the "
-        self.params['specification'] += "texturing solution is replaced."
+        self.params['specification'] += "texturing solution is replaced.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

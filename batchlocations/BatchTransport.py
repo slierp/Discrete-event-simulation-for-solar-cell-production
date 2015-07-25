@@ -11,7 +11,7 @@ class BatchTransport(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.batchconnections = _batchconnections        
-        self.output_text = _output        
+        self.output_text = _output     
 
         self.params = {}
         self.params['name'] = ""

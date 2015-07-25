@@ -22,6 +22,24 @@ class PrintLine(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Belt0"];
+                       C [label = "Printer0"];
+                       D [label = "Dryer0"];                       
+                       E [label = "Belt1"];
+                       F [label = "Printer1"];
+                       G [label = "Dryer1"];
+                       H [label = "Belt2"];
+                       I [label = "Printer2"];                     
+                       J [label = "Firing furnace"];
+                       K [label = "Output"];
+                       A -> B -> C -> D -> E -> F -> G -> H -> I -> J -> K;
+                       D -> E [folded];
+                       H -> I [folded];
+                       } """        
         
         self.params = {}
         self.params['specification'] = "PrintLine consists of:\n"
@@ -33,7 +51,7 @@ class PrintLine(QtCore.QObject):
         self.params['specification'] += "The machine accepts cassettes which are unloaded one unit at a time. "
         self.params['specification'] += "Each wafer then travels to a number of printers and dryers, "
         self.params['specification'] += "before entering a firing furnace. "
-        self.params['specification'] += "Lastly, all units are placed in an infinitely sized container."
+        self.params['specification'] += "Lastly, all units are placed in an infinitely sized container.\n"
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

@@ -26,6 +26,29 @@ class IonImplanter(QtCore.QObject):
         self.output_text = _output
         self.idle_times = []        
         self.utilization = []       
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';
+                       A [label = "Input"];
+                       B [label = "Loadlock0"];
+                       C [label = "Loadlock1"];
+                       D [label = "Process belt0"];                       
+                       E [label = "Process belt1"];
+                       F [label = "Buffer0"];
+                       G [label = "Buffer1"];
+                       H [label = "Output"];
+                       A -> B;
+                       C;
+                       B <-> D;
+                       E;
+                       D <-> F;
+                       E <-> G;
+                       B -> H
+                       C;
+                       group { B; C; }
+                       group { D; E; }
+                       
+                       } """       
         
         self.params = {}
         self.params['specification'] = "IonImplanter consists of:\n"
@@ -43,7 +66,7 @@ class IonImplanter(QtCore.QObject):
         self.params['specification'] += "are placed in the output buffer.\n"
         self.params['specification'] += "\n"
         self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which "
-        self.params['specification'] += "maintenance is performed."
+        self.params['specification'] += "maintenance is performed.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual tool"

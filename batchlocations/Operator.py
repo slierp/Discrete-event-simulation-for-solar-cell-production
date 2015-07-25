@@ -14,7 +14,7 @@ class Operator(QtCore.QObject):
         self.params = {}
         self.params['specification'] = "An operator instance functions only as the transporter between batch locations. "
         self.params['specification'] += "Each time interval it will try to do a transport between two locations that were assigned. "
-        self.params['specification'] += "If no transport was possible then it will wait a set amount of time before trying again."
+        self.params['specification'] += "If no transport was possible then it will wait a set amount of time before trying again.\n"
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual operator"

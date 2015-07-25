@@ -12,7 +12,23 @@ class BatchClean(QtCore.QObject):
         
         self.env = _env
         self.output_text = _output
-        self.utilization = []        
+        self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Oxide etch0", stacked];
+                       C [label = "Rinse0", stacked];
+                       D [label = "Chemical oxidation", stacked];
+                       E [label = "Rinse1", stacked];
+                       F [label = "Oxide etch1", stacked];
+                       G [label = "Rinse2", stacked];                       
+                       H [label = "Dry", stacked];
+                       I [label = "Output"];
+                       A -> B -> C -> D -> E -> F -> G -> H -> I;
+                       D -> E [folded];
+                       H -> I [folded];  
+                       } """        
         
         self.params = {}
         self.params['specification'] = "BatchClean consists of:\n"
@@ -30,7 +46,7 @@ class BatchClean(QtCore.QObject):
         self.params['specification'] += "- Between input, first oxide etch and first rinse\n"
         self.params['specification'] += "- Between first rinse, chemical oxidation and second rinse\n"
         self.params['specification'] += "- Between second rinse, second oxide etch, third rinse and dryers\n"
-        self.params['specification'] += "- Between dryers and output"
+        self.params['specification'] += "- Between dryers and output\n"
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

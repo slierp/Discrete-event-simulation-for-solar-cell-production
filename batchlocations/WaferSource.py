@@ -10,10 +10,17 @@ class WaferSource(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.idle_times = []
-        self.utilization = []        
+        self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Source"];
+                       B [label = "Output"];
+                       A -> B;                    
+                       } """       
 
         self.params = {}
-        self.params['specification'] = "WaferSource is an imaginary machine that sources stacks of wafers."
+        self.params['specification'] = "WaferSource is an imaginary machine that sources stacks of wafers.\n"
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 400

@@ -10,7 +10,18 @@ class TubePECVD(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.utilization = []        
+        self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Load station"];
+                       C [label = "Tube PECVD", stacked];
+                       D [label = "Cooldown shelves", stacked];
+                       E [label = "Output"];
+                       A -> B -> C -> D -> B;
+                       B -> E;                     
+                       } """       
         
         self.params = {}
         self.params['specification'] = "TubePECVD consists of:\n"
@@ -30,7 +41,7 @@ class TubePECVD(QtCore.QObject):
         self.params['specification'] += "Unloading has priority as this enables you to start a new process (less idle time).\n"
         self.params['specification'] += "\n"        
         self.params['specification'] += "There is no tool downtime defined because boat cleaning does not impede "
-        self.params['specification'] += "ongoing production, while the preventive maintenance needed is very infrequent."
+        self.params['specification'] += "ongoing production, while the preventive maintenance needed is very infrequent.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

@@ -10,11 +10,16 @@ class Buffer(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.idle_times = []
-        self.utilization = []      
+        self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Buffer"];
+                       A;
+                       } """          
         
         self.params = {}
-        self.params['specification'] = "Buffer consists of:\n"
-        self.params['specification'] += "- Input/output container\n"
+        self.params['specification'] = "Buffer consists of one input/output container\n"
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
         self.params['cassette_size'] = 100

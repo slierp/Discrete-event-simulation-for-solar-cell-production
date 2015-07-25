@@ -20,6 +20,16 @@ class SpatialALD(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.utilization = []
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Main conveyor"];
+                       C [label = "Deposition units", stacked];
+                       D [label = "Output"];
+                       A -> B -> C -> B;
+                       B -> D;        
+                       } """       
         
         self.params = {}
         self.params['specification'] = "SpatialALD consists of:\n"
@@ -31,7 +41,7 @@ class SpatialALD(QtCore.QObject):
         self.params['specification'] += "The machine accepts cassettes which are unloaded one wafer at a time. "
         self.params['specification'] += "Each wafer travels on the main conveyor to a number of depositions units. "
         self.params['specification'] += "After the process the wafers are placed back on the conveyor "
-        self.params['specification'] += "and travel to the output."
+        self.params['specification'] += "and travel to the output.\n"
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

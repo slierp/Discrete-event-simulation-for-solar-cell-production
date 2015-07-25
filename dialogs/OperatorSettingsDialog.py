@@ -35,13 +35,18 @@ class OperatorSettingsDialog(QtGui.QDialog):
         self.setWindowTitle(self.tr("Available settings"))
         vbox = QtGui.QVBoxLayout()
 
-        if 'specification' in curr_params:
-            spec = QtGui.QPlainTextEdit(curr_params['specification'])
-            spec.setReadOnly(True)
-            vbox.addWidget(spec)
+        ### Add specification text ###
+        hbox = QtGui.QHBoxLayout()
+        if 'specification' in curr_params:            
+            spec = QtGui.QLabel(curr_params['specification'])           
+            spec.setWordWrap(True)
+            hbox.addWidget(spec)
+            hbox.addStretch(1)
         else:
-            title_label = QtGui.QLabel(self.tr("Edit settings:"))
-            vbox.addWidget(title_label)             
+            title_label = QtGui.QLabel(self.tr("Edit settings:"))             
+            hbox.addWidget(title_label)
+            hbox.addStretch(1)
+        vbox.addLayout(hbox)             
         
         self.strings = []
         for i in curr_params:
@@ -49,21 +54,21 @@ class OperatorSettingsDialog(QtGui.QDialog):
                 continue
             elif isinstance(curr_params[i], str):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])
                 self.strings.append(QtGui.QLineEdit(curr_params[i]))
                 self.strings[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
                     self.strings[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(label)
                 hbox.addWidget(self.strings[-1]) 
+                hbox.addWidget(description)
+                hbox.addStretch(1)                 
                 vbox.addLayout(hbox)
         
         self.integers = []
         for i in curr_params:
             if isinstance(curr_params[i], int) & (not i == 'verbose'):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])
                 self.integers.append(QtGui.QSpinBox())
                 self.integers[-1].setAccelerated(True)
                 self.integers[-1].setMaximum(999999999)
@@ -74,17 +79,17 @@ class OperatorSettingsDialog(QtGui.QDialog):
                 elif (curr_params[i] >= 10):
                     self.integers[-1].setSingleStep(10)                     
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
-                    self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
-                hbox.addWidget(label)
+                    self.integers[-1].setToolTip(curr_params[i + "_desc"])
                 hbox.addWidget(self.integers[-1])  
+                hbox.addWidget(description)
+                hbox.addStretch(1)                 
                 vbox.addLayout(hbox)
 
         self.doubles = []
         for i in curr_params:
             if isinstance(curr_params[i], float):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])
                 self.doubles.append(QtGui.QDoubleSpinBox())
                 self.doubles[-1].setAccelerated(True)
                 self.doubles[-1].setMaximum(999999999)
@@ -92,33 +97,51 @@ class OperatorSettingsDialog(QtGui.QDialog):
                 self.doubles[-1].setSingleStep(0.1)
                 self.doubles[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
-                    self.doubles[-1].setToolTip(curr_params[i + "_desc"])             
-                hbox.addWidget(label)
-                hbox.addWidget(self.doubles[-1]) 
+                    self.doubles[-1].setToolTip(curr_params[i + "_desc"])
+                hbox.addWidget(self.doubles[-1])
+                hbox.addWidget(description)
+                hbox.addStretch(1)                  
                 vbox.addLayout(hbox)
         
         self.booleans = []
         for i in curr_params:
             if isinstance(curr_params[i], bool):
                 hbox = QtGui.QHBoxLayout()
-                label = QtGui.QLabel(i)
+                description = QtGui.QLabel(curr_params[i + "_desc"])
                 self.booleans.append(QtGui.QCheckBox())                
                 self.booleans[-1].setChecked(curr_params[i])
                 self.booleans[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
-                    label.setToolTip(curr_params[i + "_desc"])
-                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])               
-                hbox.addWidget(label)
-                hbox.addWidget(self.booleans[-1]) 
+                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])
+                hbox.addWidget(self.booleans[-1])
+                hbox.addWidget(description)
+                hbox.addStretch(1)                 
                 vbox.addLayout(hbox)
 
+        ### Widget for scrollable area ###
+        widget = QtGui.QWidget()
+        widget.setLayout(vbox)
+        scroll = QtGui.QScrollArea()      
+        scroll.setWidget(widget)       
+
+        container = QtGui.QVBoxLayout()         
+        container.addWidget(scroll)
+
+        ### Buttonbox for ok or cancel ###
+        hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
-        vbox.addWidget(buttonbox)
+        buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
+        hbox.addStretch(1) 
+        hbox.addWidget(buttonbox)
+        hbox.addStretch(1)
+        hbox.setContentsMargins(0,0,0,4)                
+        container.addLayout(hbox)        
+        container.setContentsMargins(0,0,0,0)
 
-        self.setLayout(vbox)
+        self.setLayout(container)
+        self.setMinimumWidth(spec.width()+40)
 
     def read(self):
         # read contents of each widget

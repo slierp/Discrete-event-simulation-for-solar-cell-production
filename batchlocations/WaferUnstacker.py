@@ -13,11 +13,19 @@ class WaferUnstacker(QtCore.QObject):
         self.idle_times = []
         self.utilization = []        
         self.next_step = self.env.event()
+        self.diagram = """blockdiag {
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';                       
+                       A [label = "Input"];
+                       B [label = "Belt"];
+                       C [label = "Output"];
+                       A -> B -> C;                    
+                       } """        
         
         self.params = {}
         self.params['specification'] = "WaferUnstacker accepts a number of stacks of wafers. "
         self.params['specification'] += "A pick and place machine puts wafers one by one on a belt. "
-        self.params['specification'] += "The belt then transfers the wafers into cassettes."
+        self.params['specification'] += "The belt then transfers the wafers into cassettes.\n"
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
