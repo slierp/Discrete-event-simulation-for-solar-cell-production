@@ -20,15 +20,25 @@ class SpatialALD(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.utilization = []
-        self.diagram = """blockdiag {
+        self.diagram = """blockdiag {               
                        shadow_style = 'none';                      
                        default_shape = 'roundedbox';                       
+                       default_group_color = none
                        A [label = "Input"];
-                       B [label = "Main conveyor"];
-                       C [label = "Deposition units", stacked];
-                       D [label = "Output"];
-                       A -> B -> C -> B;
-                       B -> D;        
+                       B [label = "Main conveyor"];              
+                       C [label = "Input buffer"];
+                       D [label = "Heat-up"];
+                       E [label = "Deposition"];
+                       F [label = "Output buffer"];               
+                       G [label = "Output"];                
+                       A -> B -> C;
+                       B -> G;
+                       F -> B;
+                       C -> D -> E -> F;
+                       D -> E [folded];
+                       group { C; D; E; F; color = "#CCCCCC";}
+                       group { B; G; orientation = portrait; }
+            
                        } """       
         
         self.params = {}

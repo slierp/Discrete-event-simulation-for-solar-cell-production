@@ -11,16 +11,20 @@ class TubeFurnace(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.utilization = []
-        self.diagram = """blockdiag {
+        self.diagram = """blockdiag {     
                        shadow_style = 'none';                      
                        default_shape = 'roundedbox';                       
+                       default_group_color = none               
                        A [label = "Input"];
                        B [label = "Load station"];
                        C [label = "Tube furnaces", stacked];
                        D [label = "Cooldown shelves", stacked];
                        E [label = "Output"];
                        A -> B -> C -> D -> B;
-                       B -> E;                     
+                       C -> D [folded];
+                       B -> E [folded];
+                       group { B; E; }                    
+                       group { C; D; }
                        } """       
         
         self.params = {}

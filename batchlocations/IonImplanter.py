@@ -26,29 +26,28 @@ class IonImplanter(QtCore.QObject):
         self.output_text = _output
         self.idle_times = []        
         self.utilization = []       
-        self.diagram = """blockdiag {
+        self.diagram = """blockdiag {      
                        shadow_style = 'none';                      
                        default_shape = 'roundedbox';
+                       default_group_color = none               
                        A [label = "Input"];
-                       B [label = "Loadlock0"];
-                       C [label = "Loadlock1"];
-                       D [label = "Process belt0"];                       
-                       E [label = "Process belt1"];
-                       F [label = "Buffer0"];
-                       G [label = "Buffer1"];
-                       H [label = "Output"];
-                       A -> B;
-                       C;
-                       B <-> D;
-                       E;
-                       D <-> F;
+                       B [label = "Output"];               
+                       C [label = "Loadlock0"];
+                       D [label = "Loadlock1"];
+                       E [label = "Process belt0"];                       
+                       F [label = "Process belt1"];
+                       G [label = "Buffer0"];
+                       H [label = "Buffer1"];
+                       A -> C;
+                       B <- D;
+                       C <-> E;
                        E <-> G;
-                       B -> H
-                       C;
-                       group { B; C; }
-                       group { D; E; }
+                       F <-> H;
+                       group { A; B; }
+                       group { C; D; color = "#CCCCCC"}
+                       group { E; F; G; H; color = "#CCCCCC"}
                        
-                       } """       
+                       } """      
         
         self.params = {}
         self.params['specification'] = "IonImplanter consists of:\n"

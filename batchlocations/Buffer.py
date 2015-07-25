@@ -11,7 +11,7 @@ class Buffer(QtCore.QObject):
         self.output_text = _output
         self.idle_times = []
         self.utilization = []
-        self.diagram = """blockdiag {
+        self.diagram = """blockdiag {       
                        shadow_style = 'none';                      
                        default_shape = 'roundedbox';                       
                        A [label = "Buffer"];

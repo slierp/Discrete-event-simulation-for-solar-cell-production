@@ -13,7 +13,7 @@ class WaferUnstacker(QtCore.QObject):
         self.idle_times = []
         self.utilization = []        
         self.next_step = self.env.event()
-        self.diagram = """blockdiag {
+        self.diagram = """blockdiag {       
                        shadow_style = 'none';                      
                        default_shape = 'roundedbox';                       
                        A [label = "Input"];

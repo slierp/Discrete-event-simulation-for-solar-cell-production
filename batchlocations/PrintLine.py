@@ -22,7 +22,7 @@ class PrintLine(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.utilization = []
-        self.diagram = """blockdiag {
+        self.diagram = """blockdiag {       
                        shadow_style = 'none';                      
                        default_shape = 'roundedbox';                       
                        A [label = "Input"];
