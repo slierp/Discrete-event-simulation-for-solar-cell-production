@@ -15,6 +15,7 @@ from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
+from sys import platform as _platform
 
 class dummy_env(object):
     
@@ -204,7 +205,8 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
-        buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
+        if _platform == "linux" or _platform == "linux2":
+            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
         hbox.addStretch(1) 
         hbox.addWidget(buttonbox)
         hbox.addStretch(1)                 

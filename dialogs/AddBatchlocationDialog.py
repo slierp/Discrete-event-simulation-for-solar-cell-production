@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from PyQt4 import QtGui
+from sys import platform as _platform
 
 class AddBatchlocationDialog(QtGui.QDialog):
     def __init__(self, parent):
@@ -85,7 +86,8 @@ class AddBatchlocationDialog(QtGui.QDialog):
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject) 
-        buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)        
+        if _platform == "linux" or _platform == "linux2":
+            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)        
         buttonbox_hbox.addStretch(1) 
         buttonbox_hbox.addWidget(buttonbox)
         buttonbox_hbox.addStretch(1)
