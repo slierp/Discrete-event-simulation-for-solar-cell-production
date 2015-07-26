@@ -17,6 +17,9 @@ from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
 from sys import platform as _platform
 
+from blockdiag.imagedraw import svg # needed for pyinstaller
+from blockdiag.noderenderer import roundedbox # needed for pyinstaller
+
 class dummy_env(object):
     
     def process(dummy0=None,dummy1=None):
@@ -34,6 +37,9 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         # create dialog screen for each parameter in curr_params
         
         self.parent = _parent
+
+        svg.setup(svg) # needed for pyinstaller
+        roundedbox.setup(roundedbox) # needed for pyinstaller
 
         # find out which batchlocation was selected
         self.row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row()
