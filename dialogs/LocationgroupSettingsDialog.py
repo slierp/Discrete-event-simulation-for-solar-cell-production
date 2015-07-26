@@ -92,7 +92,6 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         vbox = QtGui.QVBoxLayout()
 
         ### Add diagram ###
-        hbox = QtGui.QHBoxLayout()
         tree = parser.parse_string(curr_diagram)
         diagram = builder.ScreenNodeBuilder.build(tree)
         draw = drawer.DiagramDraw('SVG', diagram, filename="")
@@ -102,8 +101,10 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         svg_widget = QtSvg.QSvgWidget()
         svg_widget.load(QtCore.QString(svg_string).toLocal8Bit())
 
+        hbox = QtGui.QHBoxLayout()
+        hbox.addStretch(1)
         hbox.addWidget(svg_widget)
-        hbox.addStretch(1)            
+        hbox.addStretch(1)
         vbox.addLayout(hbox)
 
         ### Add specification text ###
@@ -191,34 +192,29 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                 hbox.addStretch(1)                
                 vbox.addLayout(hbox)
 
-        ### Widget for scrollable area ###
-        widget = QtGui.QWidget()
-        widget.setLayout(vbox)
-        scroll = QtGui.QScrollArea()   
-        scroll.setWidget(widget)       
+        ### Widget for scrollable area ###        
+        groupbox = QtGui.QGroupBox()
+        groupbox.setLayout(vbox)
+        
+        scroll = QtGui.QScrollArea()       
+        scroll.setWidget(groupbox)
+        scroll.setWidgetResizable(True)
+        
+        layout = QtGui.QVBoxLayout(self)
+        layout.addWidget(scroll)
 
-        container = QtGui.QVBoxLayout()         
-        container.addWidget(scroll)
+        ### Avoid shrinking all the diagrams ###
+        svg_widget.setMinimumHeight(svg_widget.height())
 
         ### Buttonbox for ok or cancel ###
-        hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
             buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
-        hbox.addStretch(1) 
-        hbox.addWidget(buttonbox)
-        hbox.addStretch(1)                 
-        hbox.setContentsMargins(0,0,0,4)                
-        container.addLayout(hbox)        
-        container.setContentsMargins(0,0,0,0)
 
-        self.setLayout(container)
-        if (svg_widget.width() > spec.width()):
-            self.setMinimumWidth(svg_widget.width()+40)
-        else:
-            self.setMinimumWidth(spec.width()+40)
+        layout.addWidget(buttonbox)
+        self.setMinimumWidth(1024)
 
     def read(self):
         # read contents of each widget

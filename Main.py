@@ -27,8 +27,9 @@ if __name__ == "__main__":
         if not app:
             # if no other PyQt program is running (such as the IDE) create a new instance
             app = QtGui.QApplication(sys.argv)
-               
-        window = MainGui()
+    
+        app.setStyle("windows")       
+        window = MainGui()        
         window.show()
         app.exec_()
         exit()

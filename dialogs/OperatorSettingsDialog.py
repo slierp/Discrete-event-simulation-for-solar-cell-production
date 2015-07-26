@@ -119,31 +119,26 @@ class OperatorSettingsDialog(QtGui.QDialog):
                 hbox.addStretch(1)                 
                 vbox.addLayout(hbox)
 
-        ### Widget for scrollable area ###
-        widget = QtGui.QWidget()
-        widget.setLayout(vbox)
-        scroll = QtGui.QScrollArea()      
-        scroll.setWidget(widget)       
-
-        container = QtGui.QVBoxLayout()         
-        container.addWidget(scroll)
+       ### Widget for scrollable area ###        
+        groupbox = QtGui.QGroupBox()
+        groupbox.setLayout(vbox)
+        
+        scroll = QtGui.QScrollArea()       
+        scroll.setWidget(groupbox)
+        scroll.setWidgetResizable(True)
+        
+        layout = QtGui.QVBoxLayout(self)
+        layout.addWidget(scroll)
 
         ### Buttonbox for ok or cancel ###
-        hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
             buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
-        hbox.addStretch(1) 
-        hbox.addWidget(buttonbox)
-        hbox.addStretch(1)
-        hbox.setContentsMargins(0,0,0,4)                
-        container.addLayout(hbox)        
-        container.setContentsMargins(0,0,0,0)
 
-        self.setLayout(container)
-        self.setMinimumWidth(spec.width()+40)
+        layout.addWidget(buttonbox)
+        self.setMinimumWidth(1024)
 
     def read(self):
         # read contents of each widget

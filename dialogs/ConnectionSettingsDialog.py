@@ -49,16 +49,12 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         vbox.addLayout(hbox)
 
         ### Buttonbox for ok or cancel ###
-        hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)        
-        hbox.addStretch(1) 
-        hbox.addWidget(buttonbox)
-        hbox.addStretch(1)               
-        vbox.addLayout(hbox)                
+            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft) 
+        vbox.addWidget(buttonbox)
 
         self.setLayout(vbox)
 

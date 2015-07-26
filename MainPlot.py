@@ -129,7 +129,7 @@ class MultiPlot(QtGui.QMainWindow):
 
             num0 += 1
 
-        self.canvas.draw()
+        self.canvas.draw()    
         
     def on_redraw(self):
         

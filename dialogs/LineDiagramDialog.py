@@ -8,10 +8,10 @@ from blockdiag.noderenderer import roundedbox # needed for pyinstaller
 class LineDiagramDialog(QtGui.QDialog):
     def __init__(self, parent):
         super(QtGui.QDialog, self).__init__(parent)
-        # create dialog screen for each parameter in curr_params
         
-        self.parent = parent   
-
+        self.parent = parent
+        
+        self.clip = QtGui.QApplication.clipboard()
 
         svg.setup(svg) # needed for pyinstaller
         roundedbox.setup(roundedbox) # needed for pyinstaller
@@ -53,23 +53,44 @@ class LineDiagramDialog(QtGui.QDialog):
         
         ### Convert to PyQt supported format ###
         QtGui.QImageReader.supportedImageFormats()
-        svg_widget = QtSvg.QSvgWidget()
-        svg_widget.load(QtCore.QString(svg_string).toLocal8Bit())
+        self.svg_widget = QtSvg.QSvgWidget()
+        self.svg_widget.load(QtCore.QString(svg_string).toLocal8Bit())
 
         ### Add SVG widget ###
         hbox = QtGui.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        hbox.addWidget(svg_widget)
+        hbox.addWidget(self.svg_widget)
         vbox.addLayout(hbox)
 
         ### Add ok button for closing the dialog ###
         hbox = QtGui.QHBoxLayout()
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
         buttonbox.accepted.connect(self.close)
-        hbox.addStretch(1) 
+
+        copy_button = QtGui.QPushButton()
+        copy_button.setText('Copy to clipboard')
+        copy_button.clicked.connect(self.copy_to_clipboard)
+        copy_button.setShortcut('Ctrl-C')        
+        
         hbox.addWidget(buttonbox)
+        hbox.addWidget(copy_button)
         hbox.addStretch(1)
         hbox.setContentsMargins(0,0,0,4)
         vbox.addLayout(hbox)
 
-        self.setLayout(vbox)
+        self.setLayout(vbox)        
+
+    def copy_to_clipboard(self):
+
+        image = QtGui.QImage(self.svg_widget.size(), QtGui.QImage.Format_ARGB32_Premultiplied)
+        painter = QtGui.QPainter()
+        painter.begin(image)        
+        self.svg_widget.render(painter)
+        painter.end()
+        
+        self.clip.setImage(image)        
+        
+    def closeEvent(self, event):
+        # make sure to empty clipboard to avoid delay after program was exited
+        self.clip.clear()
+        event.accept() 

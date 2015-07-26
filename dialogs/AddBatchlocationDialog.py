@@ -79,25 +79,20 @@ class AddBatchlocationDialog(QtGui.QDialog):
 
             self.copy_checkbox = QtGui.QCheckBox()
             self.copy_checkbox.setChecked(True)
-            hbox2.addWidget(self.copy_checkbox) 
+            hbox2.addWidget(self.copy_checkbox)    
 
-        ### Add ok and cancel buttons ###
-        buttonbox_hbox = QtGui.QHBoxLayout()
+        ### Buttonbox for ok or cancel ###
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
-        buttonbox.rejected.connect(self.reject) 
+        buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)        
-        buttonbox_hbox.addStretch(1) 
-        buttonbox_hbox.addWidget(buttonbox)
-        buttonbox_hbox.addStretch(1)
-        buttonbox_hbox.setContentsMargins(0,0,0,4)        
+            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft) 
         
         vbox.addLayout(hbox1)
         if (self.child_item): vbox.addLayout(hbox2)
-        vbox.addLayout(buttonbox_hbox)
+        vbox.addWidget(buttonbox)
 
-        self.setLayout(vbox)
+        self.setLayout(vbox)  
 
     def read(self):
 

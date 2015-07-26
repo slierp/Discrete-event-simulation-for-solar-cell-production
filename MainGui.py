@@ -28,6 +28,16 @@ class MainGui(QtGui.QMainWindow):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell production simulation"))
         self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
+
+        ### Set initial geometry and center the window on the screen ###
+        self.resize(1024, 576)
+        frameGm = self.frameGeometry()
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())        
+        
+        ### Set default font size ###
+        self.setStyleSheet('font-size: 14pt;')        
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
