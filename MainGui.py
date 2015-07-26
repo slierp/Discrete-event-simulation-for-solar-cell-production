@@ -37,7 +37,7 @@ class MainGui(QtGui.QMainWindow):
         self.move(frameGm.topLeft())        
         
         ### Set default font size ###
-        self.setStyleSheet('font-size: 14pt;')        
+        self.setStyleSheet('font-size: 12pt;')        
         
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
