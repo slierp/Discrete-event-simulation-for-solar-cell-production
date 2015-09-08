@@ -44,7 +44,6 @@ class BatchProcess(QtCore.QObject):
     def run(self):
         batch_size = self.params['batch_size']
         process_time = self.params['process_time']
-        downtime_runs = self.params['downtime_runs']
 #        verbose = self.params['verbose'] #DEBUG
         
         while True:
@@ -65,11 +64,6 @@ class BatchProcess(QtCore.QObject):
 #                    if (verbose): #DEBUG
 #                        string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process " #DEBUG
 #                        self.output_text.sig.emit(string) #DEBUG
-                    
-            if downtime_runs:
-                # see if downtime period is needed 
-                if (self.process_counter >= downtime_runs):
-                    self.env.process(self.downtime_cycle())
             
     def space_available(self,_batch_size):
         # see if space is available for the specified _batch_size
@@ -81,6 +75,12 @@ class BatchProcess(QtCore.QObject):
     def start_process(self):
         self.start.succeed()
         self.start = self.env.event() # make new event
+
+    def check_downtime(self): # will be called by BatchTransport
+        if self.params['downtime_runs']:
+            # see if downtime period is needed 
+            if (self.process_counter >= self.params['downtime_runs']):
+                self.env.process(self.downtime_cycle())
 
     def uptime_counter(self):
         # check repeatedly whether time limit has been reached

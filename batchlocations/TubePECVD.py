@@ -192,6 +192,7 @@ class TubePECVD(QtCore.QObject):
                         yield batchconnections[i][1].container.put(batch_size)
 
                         batchconnections[i][0].process_finished = 0
+                        batchconnections[i][0].check_downtime()
                         batchconnections[i][1].start_process()
                         
 #                        if (verbose): #DEBUG
