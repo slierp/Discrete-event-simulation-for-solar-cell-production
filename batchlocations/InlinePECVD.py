@@ -25,8 +25,7 @@ class InlinePECVD(QtCore.QObject):
         self.diagram = """blockdiag {} """          
         
         self.params = {}
-        self.params['specification'] = "DO NOT USE\n"
-        self.params['specification'] += "InlinePECVD consists of:\n"
+        self.params['specification'] = "InlinePECVD consists of:\n"
         self.params['specification'] += "- Input container\n"
         self.params['specification'] += "- Load-in conveyor\n"
         self.params['specification'] += "- Tray load/unload position\n"
@@ -38,8 +37,8 @@ class InlinePECVD(QtCore.QObject):
         self.params['specification'] += "- Load-out conveyor\n"        
         self.params['specification'] += "- Output container\n"
         self.params['specification'] += "\n"
-        self.params['specification'] += "The machine accepts cassettes which are unloaded one wafer at a time. "
-        self.params['specification'] += "The tray is loaded one row at a time. When finished it goes through the machine. "
+        self.params['specification'] += "The machine accepts cassettes which are unloaded one wafer at a time onto a belt. "
+        self.params['specification'] += "The tray is loaded one belt row at a time. The tray subsequently goes through the machine. "
         self.params['specification'] += "After the deposition(s) the tray is returned to the original position. "
         self.params['specification'] += "Wafers are unloaded one row at a time onto the load-out conveyor and then "
         self.params['specification'] += "placed back into cassettes.\n"
@@ -93,6 +92,11 @@ class InlinePECVD(QtCore.QObject):
         self.input_conveyor = collections.deque([False for rows in range(self.params['no_tray_rows'])])
         self.output_conveyor = collections.deque([False for rows in range(self.params['no_tray_rows'])])
         
+        ### Trays ###
+        trays = []
+        for i in range(self.params['no_trays']):
+            trays.append(BatchContainer(self.env,"tray" + str(i),self.params['no_tray_rows']*self.params['no_tray_columns'],1))
+        
         ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
@@ -145,6 +149,21 @@ class InlinePECVD(QtCore.QObject):
                 restart = True
                 
             yield self.env.timeout(time_step)                
+
+    def run_tray_load_in(self):
+        return
+        current_tray = 0
+
+        while True:
+
+            self.trays[current_tray].container.request()
+            
+            if(self.input_conveyor[-1]): # if input belt is full
+            
+                return
+                
+            current_tray += 1
+            
             
     def run_load_out_conveyor(self):
         wafer_counter = 0

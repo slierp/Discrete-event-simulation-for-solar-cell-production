@@ -44,8 +44,8 @@ class TubePECVD(QtCore.QObject):
         self.params['specification'] += "\n"
         self.params['specification'] += "Unloading has priority as this enables you to start a new process (less idle time).\n"
         self.params['specification'] += "\n"        
-        self.params['specification'] += "There is no tool downtime defined because boat cleaning does not impede "
-        self.params['specification'] += "ongoing production, while the preventive maintenance needed is very infrequent.\n"
+        self.params['specification'] += "There is PECVD furnace downtime procedure defined for coating runs that need to be run after "
+        self.params['specification'] += "a boat cleaning run. The cleaning itself is done externally so it does not affect the throughput significantly.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
@@ -55,6 +55,11 @@ class TubePECVD(QtCore.QObject):
         self.params['process_time_desc'] = "Time for a single process (seconds)"
         self.params['cool_time'] = 10*60
         self.params['cool_time_desc'] = "Time for a single cooldown (seconds)"
+
+        self.params['downtime_runs'] = 100
+        self.params['downtime_runs_desc'] = "Number of PECVD processes before downtime"
+        self.params['downtime_duration'] = 75*60
+        self.params['downtime_duration_desc'] = "Time for a single PECVD furnace downtime cycle (seconds)"
         
         self.params['no_of_processes'] = 4
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
@@ -109,7 +114,9 @@ class TubePECVD(QtCore.QObject):
             process_params['name'] = "t" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['process_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
+            process_params['downtime_runs'] = self.params['downtime_runs']
+            process_params['downtime_duration'] = self.params['downtime_duration']          
+            process_params['verbose'] = True #self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         ### Add cooldown processes ###
