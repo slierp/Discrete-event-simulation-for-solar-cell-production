@@ -382,7 +382,7 @@ class MainGui(QtGui.QMainWindow):
             self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
             self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
-            self.qt_thread.start() # Start separate thread and automatically start simulation also  
+            self.qt_thread.start() # Start separate thread and automatically start simulation also
             self.statusBar().showMessage(self.tr("Simulation started")) 
 
 

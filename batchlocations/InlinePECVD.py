@@ -4,6 +4,7 @@ from __future__ import division
 from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 import collections
+import sys
 
 """
 
@@ -61,34 +62,35 @@ class InlinePECVD(QtCore.QObject):
         self.params['time_new_cassette'] = 10
         self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
 
-        self.params['no_trays'] = 4
+        self.params['no_trays'] = 6
         self.params['no_trays_desc'] = "Number of trays that cycle through the system"
         self.params['no_tray_rows'] = 6
         self.params['no_tray_rows_desc'] = "Number of rows in the tray (equal to number of units on conveyors)"
         self.params['no_tray_columns'] = 4
         self.params['no_tray_columns_desc'] = "Number of columns in the tray"
-        self.params['tray_load_unload_time'] = 10
-        self.params['tray_load_unload_time_desc'] = "Time for loading/unloading one tray row (seconds)"        
+        self.params['tray_load_unload_time'] = 5
+        self.params['tray_load_unload_time_desc'] = "Time for loading/unloading one tray row (seconds)"
         
         self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one unit distance on input/output conveyor (seconds)"
   
         self.params['process_chamber_length'] = 6.0
-        self.params['process_chamber_length_desc'] = "Tray transport distance for processing from load-lock to load-lock (meters)" 
+        self.params['process_chamber_length_desc'] = "Tray transport distance in the process chamber (meters)" 
         self.params['process_chamber_speed'] = 5.0
         self.params['process_chamber_speed_desc'] = "Tray speed in process chamber (meters per minute)" 
         
-        self.params['time_loadlock'] = 60
-        self.params['time_loadlock_desc'] = "Time for evacuation/venting procedures in both load-locks (seconds)"           
+        self.params['time_loadlock'] = 30
+        self.params['time_loadlock_desc'] = "Time for load-in/out and evacuation/venting procedures in both load-locks (seconds)"           
 
-        self.params['tray_return_speed'] = 5.0
+        self.params['tray_return_speed'] = 10.0
         self.params['tray_return_speed_desc'] = "Tray speed during transport back to load-in position (meters per minute)"
+        self.params['tray_return_distance'] = 8.0
+        self.params['tray_return_distance_desc'] = "Tray transport distance for return to load-in position (meters)"
         
 #        self.params['verbose'] = False #DEBUG
 #        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
         
-        self.time_step = self.params['time_step']
         self.transport_counter = 0
         
 #        if (self.params['verbose']): #DEBUG     
@@ -103,24 +105,24 @@ class InlinePECVD(QtCore.QObject):
         self.output_conveyor = collections.deque([False for rows in range(self.params['no_tray_rows'])])
         
         ### Trays ###
-        self.trays = []
-        self.process_states = [] # 0 is ready for pre-heat; 1 is ready for process; 2 is ready for cool-down; 3 is ready for load-out
+        self.tray = []
+        self.tray_state = [] # 0 is ready for load-in; 1 is ready for pre-heat; 2 is ready for process; 3 is ready for cool-down; 4 is ready for load-out; 5 is ready for return
         for i in range(self.params['no_trays']):
-            self.trays.append(BatchContainer(self.env,"tray" + str(i),self.params['no_tray_rows']*self.params['no_tray_columns'],1))
-            self.process_states.append(0)
+            self.tray.append(BatchContainer(self.env,"tray" + str(i),self.params['no_tray_rows']*self.params['no_tray_columns'],1))
+            self.tray_state.append(0)
         
         ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Start processes ###
         self.env.process(self.run_load_in_conveyor())
+        self.env.process(self.run_load_out_conveyor())        
         self.env.process(self.run_tray_load_in())
+        self.env.process(self.run_tray_load_out())        
         self.env.process(self.run_evacuate_chamber())
-        self.env.process(self.run_process_chamber())
+        self.env.process(self.run_process_chamber())        
         self.env.process(self.run_venting_chamber())
         self.env.process(self.run_tray_return())
-        self.env.process(self.run_tray_load_out())
-        self.env.process(self.run_load_out_conveyor())
 
     def report(self):
         string = "[InlinePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
@@ -170,19 +172,18 @@ class InlinePECVD(QtCore.QObject):
 
     def run_tray_load_in(self):
         current_tray = 0
-        no_trays = self.params['no_trays']
-        time_step = self.params['time_step']        
+        no_trays = self.params['no_trays']       
         no_tray_rows = self.params['no_tray_rows']
         no_tray_columns = self.params['no_tray_columns']
         tray_load_unload_time = self.params['tray_load_unload_time']
 
         while True:
 
-            if (self.trays[current_tray].container.level > 0): # wait until tray is empty
-                yield self.env.timeout(time_step)
+            if self.tray_state[current_tray]: # wait until tray is ready for load-in (state 0)
+                yield self.env.timeout(1)
                 continue
 
-            with self.trays[current_tray].oper_resource.request() as request:
+            with self.tray[current_tray].oper_resource.request() as request:
                 yield request
                 
                 for i in range(no_tray_columns):                    
@@ -190,70 +191,157 @@ class InlinePECVD(QtCore.QObject):
                         if(self.input_conveyor[-1]): # if input belt is full
                             for i in range(no_tray_rows):
                                 self.input_conveyor[i] = False
+                                
                             yield self.env.timeout(tray_load_unload_time)
-                            yield self.trays[current_tray].container.put(no_tray_rows)
+                            yield self.tray[current_tray].container.put(no_tray_rows)
                             break
                         else:
-                            yield self.env.timeout(time_step)
+                            yield self.env.timeout(1)
 
 #            if self.params['verbose']: #DEBUG
 #                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully loaded with " + str(self.trays[current_tray].container.level) + " wafers" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
-                
+
+            self.tray_state[current_tray] += 1
+            
             current_tray += 1
             
             if (current_tray == no_trays):
                 current_tray = 0
                 
     def run_evacuate_chamber(self):
-        yield self.env.timeout(self.params['time_step'])
+        current_tray = 0
+        no_trays = self.params['no_trays']
+        time_loadlock = self.params['time_loadlock']
+
+        while True:
+            
+            if not self.tray_state[current_tray] == 1: # wait until tray is ready for evacuation (state 1)
+                yield self.env.timeout(1)
+                continue            
+
+            with self.tray[current_tray].oper_resource.request() as request:
+                yield request
+                yield self.env.timeout(time_loadlock)
+            
+            self.tray_state[current_tray] += 1
+            
+            current_tray += 1
+            
+            if (current_tray == no_trays):
+                current_tray = 0            
 
     def run_process_chamber(self):
-        yield self.env.timeout(self.params['time_step'])
+        current_tray = 0
+        no_trays = self.params['no_trays']
+        time_process = 60*self.params['process_chamber_length']/self.params['process_chamber_speed']
+
+        while True:        
+            if not self.tray_state[current_tray] == 2: # wait until tray is ready for process (state 2)
+                yield self.env.timeout(1)
+                continue            
+
+            self.env.process(self.run_process(current_tray,time_process)) # use separate process to enable multiple trays
+            
+            current_tray += 1
+            
+            if (current_tray == no_trays):
+                current_tray = 0 
+
+    def run_process(self,current_tray,time_process):
+        
+        with self.tray[current_tray].oper_resource.request() as request:            
+            yield request
+            yield self.env.timeout(time_process)
+        
+        self.tray_state[current_tray] += 1
         
     def run_venting_chamber(self):
-        yield self.env.timeout(self.params['time_step'])
+        current_tray = 0
+        no_trays = self.params['no_trays']
+        time_loadlock = self.params['time_loadlock']
 
-    def run_tray_return(self):
-        yield self.env.timeout(self.params['time_step'])
+        while True:        
+            if not self.tray_state[current_tray] == 3: # wait until tray is ready for venting (state 3)
+                yield self.env.timeout(1)
+                continue            
+
+            with self.tray[current_tray].oper_resource.request() as request:
+                yield request
+                yield self.env.timeout(time_loadlock)
+            
+            self.tray_state[current_tray] += 1         
+            
+            current_tray += 1
+            
+            if (current_tray == no_trays):
+                current_tray = 0
 
     def run_tray_load_out(self):
         current_tray = 0
-        no_trays = self.params['no_trays']        
-        time_step = self.params['time_step']        
+        no_trays = self.params['no_trays']                
         no_tray_rows = self.params['no_tray_rows']
         no_tray_columns = self.params['no_tray_columns']
-        tray_volume = no_tray_rows*no_tray_columns
         tray_load_unload_time = self.params['tray_load_unload_time']        
 
         while True:
             
-            if (self.trays[current_tray].container.level < tray_volume): # wait until tray is full
-                yield self.env.timeout(time_step)
+            if not self.tray_state[current_tray] == 4: # wait until tray is ready for unloading (state 4)
+                yield self.env.timeout(1)
                 continue
 
-            with self.trays[current_tray].oper_resource.request() as request:
+            with self.tray[current_tray].oper_resource.request() as request:
                 yield request
                 
                 for i in range(no_tray_columns):
+                    
+                    yield self.tray[current_tray].container.get(no_tray_rows)
+                    yield self.env.timeout(tray_load_unload_time)
+                    
                     while True:
-                        if(not self.input_conveyor[-1]): # if output belt is empty
-                            yield self.trays[current_tray].container.get(no_tray_rows)
-                            yield self.env.timeout(tray_load_unload_time)
+                        if(not self.output_conveyor.count(True)): # if output belt is empty place wafers
                             for i in range(no_tray_rows):
                                 self.output_conveyor[i] = True
                             break
                         else:
-                            yield self.env.timeout(time_step)
+                            yield self.env.timeout(1)
 
 #            if self.params['verbose']: #DEBUG
 #                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully unloaded" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
+
+            self.tray_state[current_tray] += 1        
                 
             current_tray += 1
 
             if (current_tray == no_trays):
                 current_tray = 0            
+
+    def run_tray_return(self):
+
+        current_tray = 0
+        no_trays = self.params['no_trays']
+        time_return = 60*self.params['tray_return_distance']/self.params['tray_return_speed']
+
+        while True:        
+            if not self.tray_state[current_tray] == 5: # wait until tray is ready for return (state 5)
+                yield self.env.timeout(1)
+                continue            
+
+            self.env.process(self.run_return(current_tray,time_return)) # use separate process to enable multiple trays
+            
+            current_tray += 1
+            
+            if (current_tray == no_trays):
+                current_tray = 0           
+
+    def run_return(self,current_tray,time_return):
+        
+        with self.tray[current_tray].oper_resource.request() as request:            
+            yield request
+            yield self.env.timeout(time_return)
+        
+        self.tray_state[current_tray] = 0
             
     def run_load_out_conveyor(self):
         wafer_counter = 0
@@ -261,7 +349,6 @@ class InlinePECVD(QtCore.QObject):
         time_new_cassette = self.params['time_new_cassette']
         cassette_size = self.params['cassette_size']
         time_step = self.params['time_step']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:            
 
@@ -273,9 +360,11 @@ class InlinePECVD(QtCore.QObject):
             if (self.output_conveyor[0]): 
                 self.output_conveyor[0] = False               
                 yield self.output.container.put(1)
+                self.output_conveyor.rotate(-1)
+                                
                 wafer_counter += 1
 
-#                if (verbose): #DEBUG
+#                if self.params['verbose']: #DEBUG
 #                    string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Put wafer from load-out conveyor into cassette" #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG                
                 
@@ -283,7 +372,8 @@ class InlinePECVD(QtCore.QObject):
                 self.output_conveyor.rotate(-1)                                              
                     
             if (wafer_counter == cassette_size):
-                # if current cassette is full then delay to load a new cassette                             
+                # if current cassette is full then delay to load a new cassette
+                self.transport_counter += cassette_size
                 wafer_counter = 0                
                 restart = True                            
 
