@@ -482,7 +482,7 @@ class MainGui(QtGui.QMainWindow):
         self.statusBar().showMessage(self.tr("Simulation has ended"))
 
     def on_about(self):
-        msg = self.tr("Solar cell production simulation\n\n- Author: Ronald Naber (rnaber@tempress.nl)\n- License: Public domain")
+        msg = self.tr("Solar cell production simulation\nAuthor: Ronald Naber\nLicense: Public domain")
         QtGui.QMessageBox.about(self, self.tr("About the application"), msg)
     
     def create_main_frame(self):
