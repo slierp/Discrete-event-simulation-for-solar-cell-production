@@ -117,7 +117,7 @@ class InlinePECVD(QtCore.QObject):
         
         ### Trays ###
         self.tray = []
-        self.tray_state = [] # 0 is ready for load-in; 1 is ready for pre-heat; 2 is ready for process; 3 is ready for cool-down; 4 is ready for load-out; 5 is ready for return
+        self.tray_state = [] # 0 is ready for load-in; 1 is ready for pre-heat; 2 is ready for process; 3 is in process; 4 is ready for cool-down; 5 is ready for load-out; 6 is ready for return; 7 is returning
         for i in range(self.params['no_trays']):
             self.tray.append(BatchContainer(self.env,"tray" + str(i),self.params['no_tray_rows']*self.params['no_tray_columns'],1))
             self.tray_state.append(0)
@@ -282,8 +282,9 @@ class InlinePECVD(QtCore.QObject):
         while True:        
             if not self.tray_state[current_tray] == 2: # wait until tray is ready for process (state 2)
                 yield self.env.timeout(1)
-                continue            
+                continue           
 
+            self.tray_state[current_tray] += 1
             self.env.process(self.run_process(current_tray,time_process)) # use separate process to enable multiple trays
             
             current_tray += 1
@@ -305,7 +306,7 @@ class InlinePECVD(QtCore.QObject):
         time_loadlock = self.params['time_loadlock']
 
         while True:        
-            if not self.tray_state[current_tray] == 3: # wait until tray is ready for venting (state 3)
+            if not self.tray_state[current_tray] == 4: # wait until tray is ready for venting (state 4)
                 yield self.env.timeout(1)
                 continue            
 
@@ -329,7 +330,7 @@ class InlinePECVD(QtCore.QObject):
 
         while True:
             
-            if not self.tray_state[current_tray] == 4: # wait until tray is ready for unloading (state 4)
+            if not self.tray_state[current_tray] == 5: # wait until tray is ready for unloading (state 5)
                 yield self.env.timeout(1)
                 continue
 
@@ -367,10 +368,11 @@ class InlinePECVD(QtCore.QObject):
         time_return = 60*self.params['tray_return_distance']/self.params['tray_return_speed']
 
         while True:        
-            if not self.tray_state[current_tray] == 5: # wait until tray is ready for return (state 5)
+            if not self.tray_state[current_tray] == 6: # wait until tray is ready for return (state 5)
                 yield self.env.timeout(1)
                 continue            
 
+            self.tray_state[current_tray] += 1
             self.env.process(self.run_return(current_tray,time_return)) # use separate process to enable multiple trays
             
             current_tray += 1
