@@ -4,13 +4,15 @@ from __future__ import division
 from PyQt4 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 import collections
-import sys
 
 """
 
 No separate versions implemented for different applications
 Single ARC / double-sided nitride / AlOx plus double-sided nitride can be simulated using a longer process chamber length
 However, AlOx strictly speaking requires an additional loadlock for gas separation
+
+TODO
+Finish utilization implementation > how to define idle time?
 
 """
 
@@ -52,6 +54,8 @@ class InlinePECVD(QtCore.QObject):
         self.params['specification'] += "After the deposition(s) the trays are returned to the original position. "
         self.params['specification'] += "Wafers are unloaded one row at a time onto the load-out conveyor and then "
         self.params['specification'] += "placed back into cassettes.\n"
+        self.params['specification'] += "There is a downtime procedure defined for the whole tool, which is for the "
+        self.params['specification'] += "required deposition chamber cleaning procedure.\n"
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
@@ -62,7 +66,7 @@ class InlinePECVD(QtCore.QObject):
         self.params['time_new_cassette'] = 10
         self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
 
-        self.params['no_trays'] = 6
+        self.params['no_trays'] = 8
         self.params['no_trays_desc'] = "Number of trays that cycle through the system"
         self.params['no_tray_rows'] = 6
         self.params['no_tray_rows_desc'] = "Number of rows in the tray (equal to number of units on conveyors)"
@@ -86,11 +90,18 @@ class InlinePECVD(QtCore.QObject):
         self.params['tray_return_speed_desc'] = "Tray speed during transport back to load-in position (meters per minute)"
         self.params['tray_return_distance'] = 8.0
         self.params['tray_return_distance_desc'] = "Tray transport distance for return to load-in position (meters)"
+
+        self.params['downtime_interval'] = 160
+        self.params['downtime_interval_desc'] = "Number of hours before downtime"
+        self.params['downtime_duration'] = 8
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (hours)"                
         
 #        self.params['verbose'] = False #DEBUG
 #        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
         
+        self.start_time = 0
+        self.first_run = True        
         self.transport_counter = 0
         
 #        if (self.params['verbose']): #DEBUG     
@@ -126,7 +137,24 @@ class InlinePECVD(QtCore.QObject):
 
     def report(self):
         string = "[InlinePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)         
+        self.output_text.sig.emit(string)
+
+        self.utilization.append("InlinePECVD")
+        self.utilization.append(self.params['name'])
+        self.utilization.append(self.nominal_throughput())
+        production_volume = self.transport_counter
+        production_hours = (self.env.now - self.start_time)/3600
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0):
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        else:
+            self.utilization.append(0)            
+        
+        #if self.first_run:
+        #    idle_time = 100.0
+        #elif ((self.env.now-self.start_time) > 0):
+        #    idle_time = 100.0*self.idle_time_internal/(self.env.now-self.start_time[i])
+        #self.utilization.append(["p",round(idle_time,1)])           
 
     def prod_volume(self):
         return self.transport_counter
@@ -138,6 +166,8 @@ class InlinePECVD(QtCore.QObject):
         cassette_size = self.params['cassette_size']
         time_step = self.params['time_step']
         wafer_available = False
+        downtime_interval = 3600*self.params['downtime_interval']
+        downtime_duration = 3600*self.params['downtime_duration']
 #        verbose = self.params['verbose'] #DEBUG
         
         while True:
@@ -145,6 +175,11 @@ class InlinePECVD(QtCore.QObject):
             if (not wafer_available): # if we don't already have a wafer in position try to get one
                 yield self.input.container.get(1)
                 wafer_available = True
+                
+            if self.first_run:
+                self.start_time = self.env.now
+                last_downtime = self.env.now
+                self.first_run = False
 
             if (restart):
                 #time delay for loading new cassette if input had been completely empty
@@ -167,6 +202,14 @@ class InlinePECVD(QtCore.QObject):
                 # if current cassette is empty then delay to load a new cassette                                   
                 wafer_counter = 0                
                 restart = True
+                
+                if ((self.env.now - last_downtime) >= downtime_interval): # stop load-in during downtime
+                    yield self.env.timeout(downtime_duration)
+                    last_downtime = self.env.now
+
+#                if (verbose): #DEBUG
+#                    string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] End downtime" #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG                    
                 
             yield self.env.timeout(time_step)                
 
@@ -378,3 +421,12 @@ class InlinePECVD(QtCore.QObject):
                 restart = True                            
 
             yield self.env.timeout(time_step)
+            
+    def nominal_throughput(self):
+        tray_content = self.params['no_tray_rows']*self.params['no_tray_columns']      
+        process_time = 60*self.params['process_chamber_length']/(self.params['no_trays']*self.params['process_chamber_speed'])
+
+        throughputs = []        
+        throughputs.append(tray_content*3600/process_time)
+        throughputs.append(tray_content*3600/self.params['time_loadlock'])
+        return min(throughputs)        
