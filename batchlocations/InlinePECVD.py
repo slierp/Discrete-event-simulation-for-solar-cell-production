@@ -6,12 +6,10 @@ from batchlocations.BatchContainer import BatchContainer
 import collections
 
 """
-TODO
 
-Make separate versions of this tool:
-- InlinePECVD for single ARC
-- InlinePECVD (DS) for double-sided nitride
-- InlinePECVD (PERC) for AlOx plus double-sided nitride
+No separate versions implemented for different applications
+Single ARC / double-sided nitride / AlOx plus double-sided nitride can be simulated using a longer process chamber length
+However, AlOx strictly speaking requires an additional loadlock for gas separation
 
 """
 
@@ -21,25 +19,36 @@ class InlinePECVD(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.utilization = []
-        self.diagram = """blockdiag {} """          
+        self.utilization = []         
+        self.diagram = """blockdiag {      
+                       shadow_style = 'none';                      
+                       default_shape = 'roundedbox';
+                       default_group_color = none               
+                       A [label = "Input"];
+                       B [label = "Output"];               
+                       C [label = "Tray load-in"];
+                       D [label = "Tray load-out"];
+                       E [label = "Evacuation"];                       
+                       F [label = "Process"];
+                       G [label = "Venting"];
+                       A -> C -> E -> F -> G -> D -> B;
+                       F -> G [folded];                       
+                       } """
         
         self.params = {}
         self.params['specification'] = "InlinePECVD consists of:\n"
         self.params['specification'] += "- Input container\n"
         self.params['specification'] += "- Load-in conveyor\n"
         self.params['specification'] += "- Tray load/unload position\n"
-        self.params['specification'] += "- Loadlock chamber for load-in\n"
-        self.params['specification'] += "- Buffer for pre-heating\n"
-        self.params['specification'] += "- One process chamber\n"
-        self.params['specification'] += "- Buffer for cool-down\n"
-        self.params['specification'] += "- Loadlock chamber for load-out\n"       
+        self.params['specification'] += "- Evacuation chamber\n"
+        self.params['specification'] += "- Process chamber (including heat-up/cool-down sections)\n"
+        self.params['specification'] += "- Venting chamber\n"       
         self.params['specification'] += "- Load-out conveyor\n"        
         self.params['specification'] += "- Output container\n"
         self.params['specification'] += "\n"
         self.params['specification'] += "The machine accepts cassettes which are unloaded one wafer at a time onto a belt. "
-        self.params['specification'] += "The tray is loaded one belt row at a time. The tray subsequently goes through the machine. "
-        self.params['specification'] += "After the deposition(s) the tray is returned to the original position. "
+        self.params['specification'] += "The trays are loaded one belt row at a time and subsequently go through the machine. "
+        self.params['specification'] += "After the deposition(s) the trays are returned to the original position. "
         self.params['specification'] += "Wafers are unloaded one row at a time onto the load-out conveyor and then "
         self.params['specification'] += "placed back into cassettes.\n"
         
@@ -55,24 +64,25 @@ class InlinePECVD(QtCore.QObject):
         self.params['no_trays'] = 4
         self.params['no_trays_desc'] = "Number of trays that cycle through the system"
         self.params['no_tray_rows'] = 6
-        self.params['no_tray_rows_desc'] = "Number of units in one row in the tray (equal to number of units on conveyors)"
+        self.params['no_tray_rows_desc'] = "Number of rows in the tray (equal to number of units on conveyors)"
         self.params['no_tray_columns'] = 4
-        self.params['no_tray_columns_desc'] = "Number of units in one column in the tray"
-        self.params['tray_length'] = 1.1
-        self.params['tray_length_desc'] = "Length of tray (meters)"        
+        self.params['no_tray_columns_desc'] = "Number of columns in the tray"
+        self.params['tray_load_unload_time'] = 10
+        self.params['tray_load_unload_time_desc'] = "Time for loading/unloading one tray row (seconds)"        
         
         self.params['time_step'] = 1.0
-        self.params['time_step_desc'] = "Time for one wafer to progress one unit distance on main conveyor (seconds)"
+        self.params['time_step_desc'] = "Time for one wafer to progress one unit distance on input/output conveyor (seconds)"
+  
+        self.params['process_chamber_length'] = 6.0
+        self.params['process_chamber_length_desc'] = "Tray transport distance for processing from load-lock to load-lock (meters)" 
+        self.params['process_chamber_speed'] = 5.0
+        self.params['process_chamber_speed_desc'] = "Tray speed in process chamber (meters per minute)" 
+        
+        self.params['time_loadlock'] = 60
+        self.params['time_loadlock_desc'] = "Time for evacuation/venting procedures in both load-locks (seconds)"           
 
-        self.params['buffer_length'] = 1.0
-        self.params['buffer_length_desc'] = "Length of each pre-heat and cool-down buffer (meters)"  
-        self.params['deposition_unit_length'] = 2.0
-        self.params['deposition_unit_length_desc'] = "Length of each deposition unit (meters)" 
-        self.params['loadlock_length'] = 1.0
-        self.params['loadlock_length_desc'] = "Length of each load lock (meters)"       
-
-        self.params['chamber_speed'] = 5.0
-        self.params['chamber_speed_desc'] = "Tray speed in process chamber (meters per minute)"     
+        self.params['tray_return_speed'] = 5.0
+        self.params['tray_return_speed_desc'] = "Tray speed during transport back to load-in position (meters per minute)"
         
 #        self.params['verbose'] = False #DEBUG
 #        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
@@ -93,15 +103,23 @@ class InlinePECVD(QtCore.QObject):
         self.output_conveyor = collections.deque([False for rows in range(self.params['no_tray_rows'])])
         
         ### Trays ###
-        trays = []
+        self.trays = []
+        self.process_states = [] # 0 is ready for pre-heat; 1 is ready for process; 2 is ready for cool-down; 3 is ready for load-out
         for i in range(self.params['no_trays']):
-            trays.append(BatchContainer(self.env,"tray" + str(i),self.params['no_tray_rows']*self.params['no_tray_columns'],1))
+            self.trays.append(BatchContainer(self.env,"tray" + str(i),self.params['no_tray_rows']*self.params['no_tray_columns'],1))
+            self.process_states.append(0)
         
         ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Start processes ###
         self.env.process(self.run_load_in_conveyor())
+        self.env.process(self.run_tray_load_in())
+        self.env.process(self.run_evacuate_chamber())
+        self.env.process(self.run_process_chamber())
+        self.env.process(self.run_venting_chamber())
+        self.env.process(self.run_tray_return())
+        self.env.process(self.run_tray_load_out())
         self.env.process(self.run_load_out_conveyor())
 
     def report(self):
@@ -151,19 +169,91 @@ class InlinePECVD(QtCore.QObject):
             yield self.env.timeout(time_step)                
 
     def run_tray_load_in(self):
-        return
         current_tray = 0
+        no_trays = self.params['no_trays']
+        time_step = self.params['time_step']        
+        no_tray_rows = self.params['no_tray_rows']
+        no_tray_columns = self.params['no_tray_columns']
+        tray_load_unload_time = self.params['tray_load_unload_time']
 
         while True:
 
-            self.trays[current_tray].container.request()
-            
-            if(self.input_conveyor[-1]): # if input belt is full
-            
-                return
+            if (self.trays[current_tray].container.level > 0): # wait until tray is empty
+                yield self.env.timeout(time_step)
+                continue
+
+            with self.trays[current_tray].oper_resource.request() as request:
+                yield request
+                
+                for i in range(no_tray_columns):                    
+                    while True:
+                        if(self.input_conveyor[-1]): # if input belt is full
+                            for i in range(no_tray_rows):
+                                self.input_conveyor[i] = False
+                            yield self.env.timeout(tray_load_unload_time)
+                            yield self.trays[current_tray].container.put(no_tray_rows)
+                            break
+                        else:
+                            yield self.env.timeout(time_step)
+
+#            if self.params['verbose']: #DEBUG
+#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully loaded with " + str(self.trays[current_tray].container.level) + " wafers" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
                 
             current_tray += 1
             
+            if (current_tray == no_trays):
+                current_tray = 0
+                
+    def run_evacuate_chamber(self):
+        yield self.env.timeout(self.params['time_step'])
+
+    def run_process_chamber(self):
+        yield self.env.timeout(self.params['time_step'])
+        
+    def run_venting_chamber(self):
+        yield self.env.timeout(self.params['time_step'])
+
+    def run_tray_return(self):
+        yield self.env.timeout(self.params['time_step'])
+
+    def run_tray_load_out(self):
+        current_tray = 0
+        no_trays = self.params['no_trays']        
+        time_step = self.params['time_step']        
+        no_tray_rows = self.params['no_tray_rows']
+        no_tray_columns = self.params['no_tray_columns']
+        tray_volume = no_tray_rows*no_tray_columns
+        tray_load_unload_time = self.params['tray_load_unload_time']        
+
+        while True:
+            
+            if (self.trays[current_tray].container.level < tray_volume): # wait until tray is full
+                yield self.env.timeout(time_step)
+                continue
+
+            with self.trays[current_tray].oper_resource.request() as request:
+                yield request
+                
+                for i in range(no_tray_columns):
+                    while True:
+                        if(not self.input_conveyor[-1]): # if output belt is empty
+                            yield self.trays[current_tray].container.get(no_tray_rows)
+                            yield self.env.timeout(tray_load_unload_time)
+                            for i in range(no_tray_rows):
+                                self.output_conveyor[i] = True
+                            break
+                        else:
+                            yield self.env.timeout(time_step)
+
+#            if self.params['verbose']: #DEBUG
+#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully unloaded" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
+                
+            current_tray += 1
+
+            if (current_tray == no_trays):
+                current_tray = 0            
             
     def run_load_out_conveyor(self):
         wafer_counter = 0
@@ -193,7 +283,7 @@ class InlinePECVD(QtCore.QObject):
                 self.output_conveyor.rotate(-1)                                              
                     
             if (wafer_counter == cassette_size):
-                # if current cassette is full then delay to load a new cassette                                   
+                # if current cassette is full then delay to load a new cassette                             
                 wafer_counter = 0                
                 restart = True                            
 
