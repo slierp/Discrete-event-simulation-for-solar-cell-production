@@ -102,6 +102,9 @@ class SpatialALD(QtCore.QObject):
         self.conveyor =  collections.deque([0 for rows in range(self.units_on_conveyor)])
         self.transport_counter = 0
         
+        ### Keep track of number of wafers in system ###
+        self.wafers_in_system = 0        
+        
         ### Calculate input/output positions for each deposition unit ###
 
         self.dep_input_positions = []
@@ -165,7 +168,7 @@ class SpatialALD(QtCore.QObject):
         production_volume = self.transport_counter
         production_hours = (self.env.now - self.start_time[0])/3600
         
-        if (self.nominal_throughput() > 0) & (production_hours > 0):
+        if (self.nominal_throughput() > 0) and (production_hours > 0):
             self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
         else:
             self.utilization.append(0)            
@@ -197,10 +200,11 @@ class SpatialALD(QtCore.QObject):
 
                 p = next(j for j, x in enumerate(priority_list) if x) # find current priority in list
                 
-                if (self.input_buffers[p].count(0) > self.wafers_sent[p]):
+                if (self.input_buffers[p].count(0) > self.wafers_sent[p]) and (self.output.space_available(self.wafers_in_system+1)): # only insert wafer if there is room in the output
                     self.conveyor[0] = p+1 # number indicates which DU it is intended for
                     wafer_ready = False # need new wafer
                     self.wafers_sent[p] += 1 # keep track of what is on the conveyor
+                    self.wafers_in_system += 1 # keep track of total wafer number in system
                     
 #                    if (self.params['verbose']): #DEBUG     
 #                        string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "] Placed wafer on conveyor belt for DU " + str(p) #DEBUG
@@ -223,6 +227,7 @@ class SpatialALD(QtCore.QObject):
                 self.conveyor[-1] = 0
                 yield self.output.container.put(1)
                 self.transport_counter += 1
+                self.wafers_in_system -= 1 # keep track of total wafer number in system
             
             yield self.env.timeout(self.time_step)
 
@@ -264,7 +269,7 @@ class SpatialALD(QtCore.QObject):
 
         while True:
             
-            if (self.input_buffers[num][-1] > 0) & (self.dep_unit[num][0] == 0):                
+            if (self.input_buffers[num][-1] > 0) and (self.dep_unit[num][0] == 0):                
                 # preheat wafer if wafer and room available                
                 
                 self.input_buffers[num][-1] = 0
@@ -289,7 +294,7 @@ class SpatialALD(QtCore.QObject):
                 self.start_time[num] = self.env.now
                 self.first_run[num] = False  
             
-            if (self.dep_unit[num][0] > 0) & (self.dep_unit[num][-1] == 0):                
+            if (self.dep_unit[num][0] > 0) and (self.dep_unit[num][-1] == 0):                
                 # perform deposition if wafer and room is available
             
                 self.dep_unit[num].rotate(1)
