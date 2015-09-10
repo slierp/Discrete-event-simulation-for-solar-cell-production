@@ -256,8 +256,8 @@ class MainGui(QtGui.QMainWindow):
         # generate a default batchconnections list from locationgroups        
         self.batchconnections = []
 
-        transport_time = 90
-        time_per_unit = 20
+        transport_time = 90 # default duration for transport action
+        time_per_unit = 10 # default additional duration for each unit
                            
         #num = 0
         for i in range(len(self.locationgroups)-1):
