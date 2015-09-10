@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from PyQt4 import QtCore
-from batchlocations.BatchProcess import BatchProcess
 from batchlocations.BatchContainer import BatchContainer
+
+"""
+
+TODO
+
+Build in mechanism to have a preference for moving full boats to loadstation for load-out; should yield more load-outs when the input stops temporarily
+
+"""
 
 class TubePECVD(QtCore.QObject):
         
@@ -29,37 +36,30 @@ class TubePECVD(QtCore.QObject):
         
         self.params = {}
         self.params['specification'] = "TubePECVD consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Boat-load-unload container\n"
+        self.params['specification'] += "- Input buffer\n"
+        self.params['specification'] += "- Loadstation\n"
         self.params['specification'] += "- Process tubes\n"
         self.params['specification'] += "- Cooldown locations\n"
-        self.params['specification'] += "- Output container\n"
+        self.params['specification'] += "- Output buffer"
         self.params['specification'] += "\n"
-        self.params['specification'] += "There are two transporters:\n"
-        self.params['specification'] += "transport1: from load-in to boat-load-unload and from boat-load-unload to output\n"
-        self.params['specification'] += "transport2: from boat-load-unload to tube process to cool-down to boat-load-unload\n"
-        self.params['specification'] += "transport2 triggers transport1 when to do something (load or unload)\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "The number of batches in the system is limited by the no_of_boats variable.\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "Unloading has priority as this enables you to start a new process (less idle time).\n"
-        self.params['specification'] += "\n"        
-        self.params['specification'] += "There is PECVD furnace downtime procedure defined for coating runs that need to be run after "
-        self.params['specification'] += "a boat cleaning run. The cleaning itself is done externally so it does not affect the throughput significantly.\n"
+        self.params['specification'] += "Boats are loaded and unloaded with wafers in the loadstation. "
+        self.params['specification'] += "Wafer loading is performed only if there are enough wafers available in the input buffer. "      
+        self.params['specification'] += "There is a downtime procedure for coating runs that need to be done after "
+        self.params['specification'] += "the required boat cleaning. The cleaning itself is done externally so it does not affect the throughput significantly.\n"
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 294
         self.params['batch_size_desc'] = "Number of units in a single process batch"
-        self.params['process_time'] = 30*60
+        self.params['process_time'] = 35*60
         self.params['process_time_desc'] = "Time for a single process (seconds)"
-        self.params['cool_time'] = 10*60
+        self.params['cool_time'] = 5*60
         self.params['cool_time_desc'] = "Time for a single cooldown (seconds)"
 
-        self.params['downtime_runs'] = 100
-        self.params['downtime_runs_desc'] = "Number of PECVD processes before downtime"
-        self.params['downtime_duration'] = 75*60
-        self.params['downtime_duration_desc'] = "Time for a single PECVD furnace downtime cycle (seconds)"
+        self.params['runs_before_boatclean'] = 100
+        self.params['runs_before_boatclean_desc'] = "Number of PECVD processes before boat needs to be cleaned"
+        self.params['coating_run_duration'] = 75*60
+        self.params['coating_run_duration_desc'] = "Time for a single PECVD coating run (seconds)"
         
         self.params['no_of_processes'] = 4
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
@@ -86,7 +86,7 @@ class TubePECVD(QtCore.QObject):
         self.params['automation_time'] = 10
         self.params['automation_time_desc'] = "Time for a single loading/unloading automation cycle (seconds)"
 
-        self.params['wait_time'] = 60
+        self.params['wait_time'] = 10
         self.params['wait_time_desc'] = "Wait period between boat transport attempts (seconds)"
         
 #        self.params['verbose'] = False #DEBUG
@@ -97,7 +97,6 @@ class TubePECVD(QtCore.QObject):
         self.batches_loaded = 0
         self.load_in_start = self.env.event()
         self.load_out_start = self.env.event()
-        self.load_in_out_end = self.env.event()
         
 #        if (self.params['verbose']): #DEBUG
 #            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube PECVD" #DEBUG
@@ -105,32 +104,59 @@ class TubePECVD(QtCore.QObject):
         
         ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.boat_load_unload = BatchContainer(self.env,"boat_load_unload",self.params['batch_size'],1)
+        
+        ### Add boats ###
+        self.boat = [] # container for keeping tracking of wafer count
+        self.boat_runs = [] # keep track of number of runs
+        self.boat_status = [] # 0 is unprocessed; 1 is processed; 2 is cooled down
+        for i in range(self.params['no_of_boats']):
+            self.boat.append(BatchContainer(self.env,"boat",self.params['batch_size'],1))
+            self.boat_runs.append(0)
+            self.boat_status.append(0)
 
-        ### Add batch processes ###
-        self.batchprocesses = [] 
+        ### Add furnaces ###
+        self.furnace = []
+        self.furnace_status = []
         for i in range(self.params['no_of_processes']):
-            process_params = {}
-            process_params['name'] = "t" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['process_time']
-            process_params['downtime_runs'] = self.params['downtime_runs']
-            process_params['downtime_duration'] = self.params['downtime_duration']          
-            process_params['verbose'] = True #self.params['verbose'] #DEBUG
-            self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
+            self.furnace.append(-1) # -1 is empty; 0 and onwards is boat number
+            self.furnace_status.append(0) # 0 is free; 1 is busy
 
-        ### Add cooldown processes ###
-        self.coolprocesses = []            
+        ### Add cooldowns ###
+        self.cooldown = []
+        self.cooldown_status = []
         for i in range(self.params['no_of_cooldowns']):
-            process_params = {}
-            process_params['name'] = "c" + str(i)
-            process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['cool_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
-            self.coolprocesses.append(BatchProcess(self.env,self.output_text,process_params))            
+            self.cooldown.append(-1) # -1 is empty; 0 and onwards is boat number
+            self.cooldown_status.append(0) # 0 is free; 1 is busy
+            
+        ### Add loadstation ###
+        self.loadstation = -1  # -1 is empty; 0 and onwards is boat number
+        self.loadstation_status = 0 # 0 is free; 1 is busy        
             
         ### Add output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])        
+     
+        ### Distribute boats ###
+        no_boats = self.params['no_of_boats']
+
+        if no_boats:
+            self.loadstation = 0
+            no_boats -= 1        
+            
+        if no_boats:
+            for i in range(self.params['no_of_cooldowns']):
+                self.cooldown[i] = i+1
+                no_boats -= 1
+                
+                if not no_boats:
+                    break
+                
+        if no_boats:
+            for i in range(self.params['no_of_processes']):
+                self.furnace[i] = i+self.params['no_of_cooldowns']+1
+                no_boats -= 1
+                
+                if not no_boats:
+                    break
      
         self.env.process(self.run_transport())   
         self.env.process(self.run_load_in())
@@ -138,115 +164,113 @@ class TubePECVD(QtCore.QObject):
 
     def report(self):
         string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)      
+        self.output_text.sig.emit(string)
         
-        self.utilization.append("TubePECVD")
-        self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
-        production_volume = self.transport_counter
-        production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
-        
-        if (self.nominal_throughput() > 0) & (production_hours > 0):
-            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
-        else:
-            self.utilization.append(0)            
-        
-        for i in range(len(self.batchprocesses)):
-            self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])        
+#        self.utilization.append("TubePECVD")
+#        self.utilization.append(self.params['name'])
+#        self.utilization.append(self.nominal_throughput())
+#        production_volume = self.transport_counter
+#        production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
+#        
+#        if (self.nominal_throughput() > 0) and (production_hours > 0):
+#            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
+#        else:
+#            self.utilization.append(0)            
+#        
+#        for i in range(len(self.batchprocesses)):
+#            self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])        
 
     def prod_volume(self):
         return self.transport_counter
+
+    def run_cooldown(self,num):
+        yield self.env.timeout(self.params['cool_time'])
+        self.boat_status[self.cooldown[num]] = 2 # set status as cooled down
+        self.cooldown_status[num] = 0 # set status as non-busy
+        #print "Cooldown " + str(num) + " finished on boat " + str(self.cooldown[num])
+
+    def run_process(self,num,normal_process=True):
+        if normal_process:
+            yield self.env.timeout(self.params['process_time'])
+        else:
+            yield self.env.timeout(self.params['coating_run_duration'])
+        self.boat_runs[self.furnace[num]] += 1 # keep track of number of runs with this boat
+        self.boat_status[self.furnace[num]] = 1 # set boat status as processed     
+        self.furnace_status[num] = 0 # set status furnace as non-busy
+        #print "Process " + str(num) + " finished on boat " + str(self.furnace[num])
         
     def run_transport(self):
-        
-        batchconnections = []
-        j = 0
-        for i in range(self.params['no_of_processes']*self.params['no_of_cooldowns']):
-            if (i%self.params['no_of_processes'] == 0) & (i > 0):
-                j += 1
-                
-            batchconnections.append([self.batchprocesses[i%self.params['no_of_processes']],self.coolprocesses[j]])
 
         batch_size = self.params['batch_size']
         transfer0_time = self.params['transfer0_time']
         transfer1_time = self.params['transfer1_time']
         transfer2_time = self.params['transfer2_time']
-        no_of_boats = self.params['no_of_boats']
+        no_of_processes = self.params['no_of_processes']
+        no_of_cooldowns = self.params['no_of_cooldowns']
+        runs_before_boatclean = self.params['runs_before_boatclean']        
         wait_time = self.params['wait_time']
-#        verbose = self.params['verbose'] #DEBUG
-        
-        while True:
-            for i in range(len(batchconnections)):
-                # first check if we can move any batch from tube to cool_down
-                if (batchconnections[i][0].container.level > 0) & \
-                        (batchconnections[i][1].container.level == 0) & \
-                            batchconnections[i][0].process_finished:
-                                        
-                    with batchconnections[i][0].resource.request() as request_input, \
-                        batchconnections[i][1].resource.request() as request_output: 
-                        yield request_input                 
-                        yield request_output
 
-                        yield batchconnections[i][0].container.get(batch_size)
-                        yield self.env.timeout(transfer1_time)
-                        yield batchconnections[i][1].container.put(batch_size)
+        while True:            
+            for i in range(no_of_processes): # first check if we can move any batch from tube to cool_down
+                if (not self.furnace_status[i]) and (not (self.furnace[i] == -1)): # if boat is available
+                    for j in range(no_of_cooldowns): # check cooldown locations
+                        if (not self.cooldown_status[j]) and (self.cooldown[j] == -1): # if empty
+                            boat = self.furnace[i] # store boat number
+                            self.furnace[i] = -1 # empty the furnace
+                            yield self.env.timeout(transfer1_time) # wait for transfer
+                            self.cooldown[j] = boat # enter boat into cooldown
+                            self.cooldown_status[j] = 1 # cooldown is busy status
+                            self.env.process(self.run_cooldown(j)) # start process for cooldown
+                            #print "Moved boat " + str(boat) + " to cooldown"                            
+                            break # discontinue search for free cooldown locations for this boat
 
-                        batchconnections[i][0].process_finished = 0
-                        batchconnections[i][0].check_downtime()
-                        batchconnections[i][1].start_process()
+            if (not self.loadstation_status) and (self.loadstation == -1): # if loadstation is not busy and empty
+                for i in range(no_of_cooldowns): # check if we can move a boat from cooldown to loadstation (should be followed by a re-load if possible)
+                    if (not self.cooldown_status[i]) and (not self.cooldown[i] == -1):
+                        boat = self.cooldown[i] # store boat number
+                        self.cooldown[i] = -1 # empty the cooldown
+                        yield self.env.timeout(transfer2_time) # wait for transfer
+                        self.loadstation = boat # enter boat into loadstation
+                        #print "Moved boat " + str(boat) + " to loadstation"
                         
-#                        if (verbose): #DEBUG
-#                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved batch to cooldown" #DEBUG
-#                            self.output_text.sig.emit(string) #DEBUG
+                        if self.boat[self.loadstation].container.level and (self.boat_status[self.loadstation] == 2): # if there are wafers in the boat and they have been processed
+                            self.loadstation_status = 1 # set status as busy
+                            yield self.load_out_start.succeed() # ask for load-out
+                            self.load_out_start = self.env.event() # create new event
+                            #print "Asked for load-out"
+                        break # stop search for available boat to put into loadstation
 
-            for i in range(len(self.coolprocesses)):
-                # check if we can unload a batch (should be followed by a re-load if possible)
-                if (self.coolprocesses[i].container.level > 0) & \
-                        (self.boat_load_unload.container.level == 0) & \
-                            self.coolprocesses[i].process_finished:
-                
-                    with self.coolprocesses[i].resource.request() as request_input:
-                        yield request_input
-
-                        yield self.coolprocesses[i].container.get(batch_size)
-                        yield self.env.timeout(transfer2_time)
-                        yield self.boat_load_unload.container.put(batch_size)
-                        
-#                        if (verbose): #DEBUG
-#                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Moved processed batch for load-out" #DEBUG
-#                            self.output_text.sig.emit(string) #DEBUG
-                    
-                        self.coolprocesses[i].process_finished = 0                    
-                    
-                        yield self.load_out_start.succeed()
-                        yield self.load_in_out_end
-                        self.load_out_start = self.env.event()                    
-            
-            if (self.batches_loaded < no_of_boats) & (self.input.container.level >= batch_size) & \
-                    (self.boat_load_unload.container.level == 0):
-                # ask for more wafers if there is a boat and wafers available
-                yield self.load_in_start.succeed()
-                yield self.load_in_out_end
-                self.load_in_start = self.env.event() # make new event                
-
-            for i in range(len(self.batchprocesses)):
-                # check if we can load new wafers into a tube
-                if (self.batchprocesses[i].container.level == 0) & \
-                        (self.boat_load_unload.container.level == batch_size):
-
-                    with self.batchprocesses[i].resource.request() as request_output:                  
-                        yield request_output
-                        
-                        yield self.boat_load_unload.container.get(batch_size)
-                        yield self.env.timeout(transfer0_time)
-                        yield self.batchprocesses[i].container.put(batch_size)
-
-                        self.batchprocesses[i].start_process()
-                        
-#                        if (verbose): #DEBUG
-#                            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Started a process" #DEBUG
-#                            self.output_text.sig.emit(string) #DEBUG
-            
+            if (not self.loadstation_status) and (not (self.loadstation == -1)): # if loadstation is not busy and contains boat 
+                if (self.boat_runs[self.loadstation] >= runs_before_boatclean): # if boat needs coating run
+                    for i in range(no_of_processes):
+                        if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
+                            boat = self.loadstation # store boat number
+                            self.loadstation = -1 # empty the loadstation                        
+                            yield self.env.timeout(transfer0_time) # wait for transfer
+                            self.furnace[i] = boat # put boat into furnace
+                            self.furnace_status[i] = 1 # furnace is busy status
+                            self.boat_runs[boat] = 0 # reset number of runs
+                            self.env.process(self.run_process(i, False)) # start coating run for furnace
+                            #print "Moved boat " + str(boat) + " to furnace for coating run"                            
+                            break # discontinue search for a free furnace for this boat                    
+                elif (not self.boat[self.loadstation].container.level) and (self.input.container.level >= batch_size): # if boat is empty and wafers available ask for load-in (and boat does not require)
+                    self.loadstation_status = 1 # set status as busy
+                    yield self.load_in_start.succeed()
+                    self.load_in_start = self.env.event() # create new event                    
+                    #print "Asked for load-in"
+                elif self.boat[self.loadstation].container.level and (not self.boat_status[self.loadstation]): # if boat is full and has not been processed try to load to furnace
+                    #print "Boat " + str(self.loadstation) + " in loadstation contains unprocessed wafers"
+                    for i in range(no_of_processes):
+                        if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
+                            boat = self.loadstation # store boat number
+                            self.loadstation = -1 # empty the loadstation                        
+                            yield self.env.timeout(transfer0_time) # wait for transfer
+                            self.furnace[i] = boat # put boat into furnace
+                            self.furnace_status[i] = 1 # furnace is busy status
+                            self.env.process(self.run_process(i)) # start process for furnace
+                            #print "Moved boat " + str(boat) + " to furnace"                            
+                            break # discontinue search for a free furnace for this boat
+                                    
             yield self.env.timeout(wait_time)                        
             
     def run_load_in(self):
@@ -257,40 +281,34 @@ class TubePECVD(QtCore.QObject):
         
         while True:
             yield self.load_in_start
-            for i in range(no_loads):
-                yield self.env.timeout(automation_time)
-                yield self.input.container.get(automation_loadsize)            
-                yield self.boat_load_unload.container.put(automation_loadsize)
-            
-            self.batches_loaded += 1
-            yield self.load_in_out_end.succeed()
-            self.load_in_out_end = self.env.event() # make new event
 
-#            if (verbose): #DEBUG
-#                string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Loaded batch" #DEBUG
-#                self.output_text.sig.emit(string) #DEBUG
+            #print "Starting load-in"
+            for i in range(no_loads):
+                yield self.input.container.get(automation_loadsize)                
+                yield self.env.timeout(automation_time)            
+                yield self.boat[self.loadstation].container.put(automation_loadsize)
+            
+            self.boat_status[self.loadstation] = 0 # set boat status to unprocessed
+            self.loadstation_status = 0 # set loadstation status to non-busy
+            #print "Finished load-in for boat " + str(self.loadstation)
 
     def run_load_out(self):
         no_loads = self.params['batch_size'] // self.params['automation_loadsize']
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             yield self.load_out_start
+            
+            #print "Starting load-out"
             for i in range(no_loads):
-                yield self.env.timeout(automation_time) 
-                yield self.boat_load_unload.container.get(automation_loadsize) 
+                yield self.boat[self.loadstation].container.get(automation_loadsize)                
+                yield self.env.timeout(automation_time)             
                 yield self.output.container.put(automation_loadsize)
                 self.transport_counter += automation_loadsize
             
-            self.batches_loaded -= 1
-            yield self.load_in_out_end.succeed()
-            self.load_in_out_end = self.env.event() # make new event            
-
-#            if (verbose): #DEBUG        
-#                string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Unloaded batch" #DEBUG
-#                self.output_text.sig.emit(string) #DEBUG
+            self.loadstation_status = 0
+            #print "Finished load-out for boat " + str(self.loadstation)
 
     def nominal_throughput(self):
         throughputs = []        

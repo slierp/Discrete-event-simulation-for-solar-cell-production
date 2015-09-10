@@ -1,0 +1,4 @@
+Bugfix: average throughput uses set simulation time; not actual
+Implement microstops
+Custom dialogs for each tool
+Load/save for individual tools
