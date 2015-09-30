@@ -28,22 +28,15 @@ class BatchTex(QtCore.QObject):
                        } """
         
         self.params = {}
-        self.params['specification'] = "BatchTex consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Texturing baths\n"
-        self.params['specification'] += "- Rinse baths\n"
-        self.params['specification'] += "- Neutralization baths\n"
-        self.params['specification'] += "- Rinse baths\n"
-        self.params['specification'] += "- Dryers\n"
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There are three batch transporters:\n"
-        self.params['specification'] += "- Between input, texture and first rinse\n"
-        self.params['specification'] += "- Between first rinse, neutralization, second rinse and the dryers\n"
-        self.params['specification'] += "- Between dryers and output\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There is a downtime procedure defined for the texturing baths, during which the "
-        self.params['specification'] += "texturing solution is replaced.\n"
+        
+        self.params['specification'] = """
+<h3>General description</h3>
+A batch texture is used for etching wafers to create a surface texture.
+The wafers are loaded into special cassettes that can withstand harsh chemicals.
+There is a downtime procedure defined for the texturing baths, during which the texturing solution is replaced.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

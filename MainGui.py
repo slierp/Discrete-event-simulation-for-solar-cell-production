@@ -9,6 +9,7 @@ from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
 from dialogs.LineDiagramView import LineDiagramView
+from dialogs.HelpDialog import HelpDialog
 from RunSimulationThread import RunSimulationThread
 from MainPlot import MultiPlot
 import pickle
@@ -481,6 +482,11 @@ class MainGui(QtGui.QMainWindow):
         self.stop_sim_button.setEnabled(False)
         self.statusBar().showMessage(self.tr("Simulation has ended"))
 
+    def open_help_dialog(self):
+        help_dialog = HelpDialog(self)
+        help_dialog.setModal(True)
+        help_dialog.show() 
+
     def on_about(self):
         msg = self.tr("Solar cell production simulation\nAuthor: Ronald Naber\nLicense: Public domain")
         QtGui.QMessageBox.about(self, self.tr("About the application"), msg)
@@ -649,7 +655,7 @@ class MainGui(QtGui.QMainWindow):
         toolbar_hbox.addWidget(self.sim_time_combo)        
         
         bottom_tabwidget = QtGui.QTabWidget()
-        bottom_tabwidget.addTab(self.edit, QtCore.QString("Activity log"))
+        bottom_tabwidget.addTab(self.edit, QtCore.QString("Activity"))
 
         ##### Idle time tab #####       
         self.table_widget.setRowCount(64)
@@ -724,6 +730,14 @@ class MainGui(QtGui.QMainWindow):
            
         self.help_menu = self.menuBar().addMenu(self.tr("Help"))
 
+        tip = self.tr("Help information")        
+        help_action = QtGui.QAction(self.tr("Help..."), self)
+        help_action.setIcon(QtGui.QIcon(":help.png"))
+        help_action.triggered.connect(self.open_help_dialog)         
+        help_action.setToolTip(tip)
+        help_action.setStatusTip(tip)
+        help_action.setShortcut('H')
+
         tip = self.tr("About the application")        
         about_action = QtGui.QAction(self.tr("About..."), self)
         about_action.setIcon(QtGui.QIcon(":info.png"))
@@ -732,4 +746,5 @@ class MainGui(QtGui.QMainWindow):
         about_action.setStatusTip(tip)
         about_action.setShortcut('F1')
 
+        self.help_menu.addAction(help_action)
         self.help_menu.addAction(about_action)

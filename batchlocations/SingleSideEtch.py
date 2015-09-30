@@ -21,21 +21,17 @@ class SingleSideEtch(QtCore.QObject):
                        } """        
         
         self.params = {}
-        self.params['specification'] = "SingleSideEtch consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- A number of process lanes\n"
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "Each lane runs independently and continuously, "
-        self.params['specification'] += "but can only accept a new unit after a certain time interval "
-        self.params['specification'] += "to avoid wafer collisions.\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There are several of types of automation available for SSE machines. "
-        self.params['specification'] += "Here each lane is fed separately with new wafers, "
-        self.params['specification'] += "with no interruption for exchanging cassettes.\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There is a downtime procedure defined for the whole tool, which is for the "
-        self.params['specification'] += "etching solution replacement.\n"
+        
+        self.params['specification'] = """
+<h3>General description</h3>
+A single side etch is used for etching, polishing or texturing wafers.
+Each lane runs independently and continuously, but can only accept a new unit after a certain time interval to avoid wafer collisions.
+Each lane is fed separately with new wafers with no interruption for exchanging cassettes.
+There is a downtime procedure available where the whole tool goes down for a certain period after running a set number of wafers.
+Such downtimes are required for exchanging the etching solution.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

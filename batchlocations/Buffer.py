@@ -19,7 +19,14 @@ class Buffer(QtCore.QObject):
                        } """          
         
         self.params = {}
-        self.params['specification'] = "Buffer consists of one input/output container\n"
+        
+        self.params['specification'] = """
+<h3>General description</h3>
+A buffer is used to store wafers temporarily.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """        
+        
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
         self.params['cassette_size'] = 100

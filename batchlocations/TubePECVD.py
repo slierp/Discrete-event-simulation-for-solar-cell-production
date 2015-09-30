@@ -35,17 +35,15 @@ class TubePECVD(QtCore.QObject):
                        } """       
         
         self.params = {}
-        self.params['specification'] = "TubePECVD consists of:\n"
-        self.params['specification'] += "- Input buffer\n"
-        self.params['specification'] += "- Loadstation\n"
-        self.params['specification'] += "- Process tubes\n"
-        self.params['specification'] += "- Cooldown locations\n"
-        self.params['specification'] += "- Output buffer"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "Boats are loaded and unloaded with wafers in the loadstation. "
-        self.params['specification'] += "Wafer loading is performed only if there are enough wafers available in the input buffer. "      
-        self.params['specification'] += "There is a downtime procedure for coating runs that need to be done after "
-        self.params['specification'] += "the required boat cleaning. The cleaning itself is done externally so it does not affect the throughput significantly.\n"
+        self.params['specification'] = """
+<h3>General description</h3>
+A TubePECVD serves to deposit dielectric layers on wafers. Wafers are first loaded into boats in the loadstation and then transferred to the process tubes where the deposition are performed.
+When the processes are finished the boats are transferred to a cooldown shelf and then back to the loadstation for wafer load-out.
+There is a downtime procedure in light of the required boat cleaning after using it for a defined number of depositions.
+The cleaning itself is done externally but the boats need to undergo a coating run before re-using them.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

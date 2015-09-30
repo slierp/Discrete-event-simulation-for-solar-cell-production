@@ -21,7 +21,14 @@ class WaferBin(QtCore.QObject):
                        } """      
         
         self.params = {}
-        self.params['specification'] = "WaferBin is an imaginary machine that accepts cassettes and places them in an infinitely sized container.\n"
+
+        self.params['specification'] = """
+<h3>General description</h3>
+WaferBin is an imaginary machine that accepts cassettes and places them in an infinitely sized container.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """         
+        
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 100

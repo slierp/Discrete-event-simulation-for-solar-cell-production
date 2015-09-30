@@ -96,8 +96,11 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         # update default settings list with currently stored settings
         curr_params.update(batchlocation[1])
         
-        self.setWindowTitle(self.tr("Available settings"))
-        vbox = QtGui.QVBoxLayout() # vbox for all elements in scroll area
+        self.setWindowTitle(self.tr("Batchlocation settings"))
+
+        tabwidget = QtGui.QTabWidget()
+
+        vbox_description = QtGui.QVBoxLayout() # vbox for description elements
 
         ### Add diagram ###
         tree = parser.parse_string(curr_diagram)
@@ -113,25 +116,26 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1)
         hbox.addWidget(svg_widget)
         hbox.addStretch(1)
-        vbox.addLayout(hbox)
+        vbox_description.addLayout(hbox)
 
         ### Add specification text ###
-        hbox = QtGui.QHBoxLayout()
-        if 'specification' in curr_params:            
-            spec = QtGui.QLabel(curr_params['specification'])
-            spec.setWordWrap(True)
-            hbox.addWidget(spec)
-            hbox.addStretch(1)
-        else:
-            title_label = QtGui.QLabel(self.tr("Edit settings:"))             
-            hbox.addWidget(title_label)
-            hbox.addStretch(1)
-        vbox.addLayout(hbox)          
+        hbox = QtGui.QHBoxLayout()         
+        spec = QtGui.QLabel(curr_params['specification'])
+        spec.setWordWrap(True)
+        hbox.addWidget(spec)
+        vbox_description.addLayout(hbox)
+        vbox_description.addStretch(1)
+        
+        generic_widget_description = QtGui.QWidget()
+        generic_widget_description.setLayout(vbox_description)
+        tabwidget.addTab(generic_widget_description, QtCore.QString("Description"))
         
         self.strings = []
         self.integers = []
         self.doubles = []
         self.booleans = []
+        
+        vbox = QtGui.QVBoxLayout() # vbox for all settings  
         
         for i in sorted(curr_params.keys()):
         # Make QLineEdits for strings            
@@ -201,16 +205,13 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                 hbox.addStretch(1)                
                 vbox.addLayout(hbox)  
 
-        ### Widget for scrollable area ###        
-        groupbox = QtGui.QGroupBox()
-        groupbox.setLayout(vbox)
-        
-        scroll = QtGui.QScrollArea()       
-        scroll.setWidget(groupbox)
-        scroll.setWidgetResizable(True)
+        vbox.addStretch(1)
+        generic_widget_settings = QtGui.QWidget()
+        generic_widget_settings.setLayout(vbox)
+        tabwidget.addTab(generic_widget_settings, QtCore.QString("Settings"))
         
         layout = QtGui.QVBoxLayout(self)
-        layout.addWidget(scroll)
+        layout.addWidget(tabwidget)        
 
         ### Avoid shrinking all the diagrams ###
         svg_widget.setMinimumHeight(svg_widget.height()) 

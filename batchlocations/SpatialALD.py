@@ -42,16 +42,16 @@ class SpatialALD(QtCore.QObject):
                        } """       
         
         self.params = {}
-        self.params['specification'] = "SpatialALD consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Main conveyor\n"
-        self.params['specification'] += "- Deposition units with small input and output buffers\n"
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "The machine accepts cassettes which are unloaded one wafer at a time. "
-        self.params['specification'] += "Each wafer travels on the main conveyor to a number of depositions units. "
-        self.params['specification'] += "After the process the wafers are placed back on the conveyor "
-        self.params['specification'] += "and travel to the output.\n"
+        
+        self.params['specification'] = """
+<h3>General description</h3>
+A spatial ALD is used to deposit dielectric layers for surface passivation.
+The machine accepts cassettes which are unloaded one wafer at a time
+Each wafer travels on the main conveyor to a number of depositions units.
+After the process the wafers are placed back on the conveyor and travel to the output.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

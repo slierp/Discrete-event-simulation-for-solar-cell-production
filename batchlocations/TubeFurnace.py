@@ -28,24 +28,14 @@ class TubeFurnace(QtCore.QObject):
                        } """       
         
         self.params = {}
-        self.params['specification'] = "TubeFurnace consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Boat-load-unload container\n"
-        self.params['specification'] += "- Process tubes\n"
-        self.params['specification'] += "- Cooldown locations\n"
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There are two transporters:\n"
-        self.params['specification'] += "transport1: from load-in to boat-load-unload and from boat-load-unload to output\n"
-        self.params['specification'] += "transport2: from boat-load-unload to tube process to cool-down to boat-load-unload\n"
-        self.params['specification'] += "transport2 triggers transport1 when to do something (load or unload)\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "The number of batches in the system is limited by the no_of_boats variable.\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "Unloading has priority as this enables you to start a new process (less idle time).\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "Tool downtime is defined as a procedure where the whole tool is put offline for a short period "
-        self.params['specification'] += "during which preventive maintenance is performed.\n"
+
+        self.params['specification'] = """
+<h3>General description</h3>
+A tube furnace is used for high-temperature processes such as diffusion.
+Tool downtime is defined as a procedure where the whole tool is put offline for a short period during which preventive maintenance is performed.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED. The number of batches in the system is limited by the no_of_boats variable.\n
+        """
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

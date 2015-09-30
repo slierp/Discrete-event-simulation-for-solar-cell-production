@@ -50,22 +50,18 @@ class IonImplanter(QtCore.QObject):
                        } """      
         
         self.params = {}
-        self.params['specification'] = "IonImplanter consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Two loadlocks for two cassettes each\n"
-        self.params['specification'] += "- Two processing belts\n"
-        self.params['specification'] += "- Two buffer cassettes\n"
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "Cassettes are loaded into the loadlocks, which are "
-        self.params['specification'] += "then held for a set time for evacuation. Subsequently, the "
-        self.params['specification'] += "wafers are processed on belts and enter into buffer cassettes. "
-        self.params['specification'] += "When the buffer cassette is full, the wafers return on the same belt "
-        self.params['specification'] += "to the loadlock. After repressurization the cassettes "
-        self.params['specification'] += "are placed in the output buffer.\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There is a downtime procedure defined for the whole tool, during which "
-        self.params['specification'] += "maintenance is performed.\n"
+
+        self.params['specification'] = """
+<h3>General description</h3>
+An ion implanter is used for applying dopant into wafers in a single-sided fashion.
+Cassettes are loaded into the loadlocks, which are then held for a set time for evacuation.
+Subsequently, the wafers are processed on belts and enter into buffer cassettes.
+When the buffer cassette is full, the wafers return on the same belt to the loadlock.
+After repressurization the cassettes are placed in the output buffer.
+There is a downtime procedure available during which maintenance is performed.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
 
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual tool"

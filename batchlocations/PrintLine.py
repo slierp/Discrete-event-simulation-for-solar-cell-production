@@ -42,16 +42,16 @@ class PrintLine(QtCore.QObject):
                        } """        
         
         self.params = {}
-        self.params['specification'] = "PrintLine consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Print and dry stations\n"
-        self.params['specification'] += "- Firing furnace\n"
-        self.params['specification'] += "- Output container (infinite)\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "The machine accepts cassettes which are unloaded one unit at a time. "
-        self.params['specification'] += "Each wafer then travels to a number of printers and dryers, "
-        self.params['specification'] += "before entering a firing furnace. "
-        self.params['specification'] += "Lastly, all units are placed in an infinitely sized container.\n"
+
+        self.params['specification'] = """
+<h3>General description</h3>
+A print line is used for screen-printing metallization pastes and for drying and firing the pastes afterwards.
+The machine accepts cassettes which are unloaded one unit at a time.
+Each wafer then travels to a number of printers and dryers, before entering a firing furnace.
+Lastly, all units are placed in an infinitely sized container.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

@@ -23,9 +23,13 @@ class WaferUnstacker(QtCore.QObject):
                        } """        
         
         self.params = {}
-        self.params['specification'] = "WaferUnstacker accepts a number of stacks of wafers. "
-        self.params['specification'] += "A pick and place machine puts wafers one by one on a belt. "
-        self.params['specification'] += "The belt then transfers the wafers into cassettes.\n"
+        self.params['specification'] = """
+<h3>General description</h3>
+WaferUnstacker accepts a number of stacks of wafers. A pick and place machine puts wafers one by one on a belt.
+The belt then transfers the wafers into cassettes.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

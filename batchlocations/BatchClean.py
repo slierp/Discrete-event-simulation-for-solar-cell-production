@@ -31,22 +31,13 @@ class BatchClean(QtCore.QObject):
                        } """        
         
         self.params = {}
-        self.params['specification'] = "BatchClean consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- First oxide etch baths\n"
-        self.params['specification'] += "- Rinse baths\n"
-        self.params['specification'] += "- Chemical oxidation baths\n"
-        self.params['specification'] += "- Rinse baths\n"
-        self.params['specification'] += "- Second oxide etch baths\n"
-        self.params['specification'] += "- Rinse baths\n"
-        self.params['specification'] += "- Dryers\n"
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "There are four batch transporters:\n"
-        self.params['specification'] += "- Between input, first oxide etch and first rinse\n"
-        self.params['specification'] += "- Between first rinse, chemical oxidation and second rinse\n"
-        self.params['specification'] += "- Between second rinse, second oxide etch, third rinse and dryers\n"
-        self.params['specification'] += "- Between dryers and output\n"
+
+        self.params['specification'] = """
+<h3>General description</h3>
+A batch clean is used for cleaning wafers whilst loaded into special cassettes that can withstand harsh chemicals.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"

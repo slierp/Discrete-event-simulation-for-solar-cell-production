@@ -39,23 +39,18 @@ class InlinePECVD(QtCore.QObject):
                        } """
         
         self.params = {}
-        self.params['specification'] = "InlinePECVD consists of:\n"
-        self.params['specification'] += "- Input container\n"
-        self.params['specification'] += "- Load-in conveyor\n"
-        self.params['specification'] += "- Tray load/unload position\n"
-        self.params['specification'] += "- Evacuation chamber\n"
-        self.params['specification'] += "- Process chamber (including heat-up/cool-down sections)\n"
-        self.params['specification'] += "- Venting chamber\n"       
-        self.params['specification'] += "- Load-out conveyor\n"        
-        self.params['specification'] += "- Output container\n"
-        self.params['specification'] += "\n"
-        self.params['specification'] += "The machine accepts cassettes which are unloaded one wafer at a time onto a belt. "
-        self.params['specification'] += "The trays are loaded one belt row at a time and subsequently go through the machine. "
-        self.params['specification'] += "After the deposition(s) the trays are returned to the original position. "
-        self.params['specification'] += "Wafers are unloaded one row at a time onto the load-out conveyor and then "
-        self.params['specification'] += "placed back into cassettes.\n"
-        self.params['specification'] += "There is a downtime procedure defined for the whole tool, which is for the "
-        self.params['specification'] += "required deposition chamber cleaning procedure.\n"
+        
+        self.params['specification'] = """
+<h3>General description</h3>
+An inline PECVD is used for the deposition of dielectric layers on wafers.
+The machine accepts cassettes which are unloaded one wafer at a time onto a belt.
+Deposition trays are loaded one belt row at a time and they subsequently go through the machine.
+Wafers are unloaded one row at a time onto the load-out conveyor and then placed back into cassettes.
+After the deposition the trays are returned to the original position.
+There is a downtime procedure defined for the whole tool, which is for the required deposition chamber cleaning procedure.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual batch location"
