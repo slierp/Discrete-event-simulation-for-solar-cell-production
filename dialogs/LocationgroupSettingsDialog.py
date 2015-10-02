@@ -220,7 +220,7 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
             buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
 
         layout.addWidget(buttonbox)
-        self.setMinimumWidth(1024)
+        self.setMinimumWidth(800)
 
     def read(self):
         # read contents of each widget
@@ -247,5 +247,5 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
             index = self.parent.batchlocations_model.index(self.row, 0)
             self.parent.batchlocations_view.setExpanded(index, True)
         
-        self.parent.statusBar().showMessage(self.tr("Location group settings updated"))
+        self.parent.statusBar().showMessage(self.tr("Tool group settings updated"))
         self.accept()

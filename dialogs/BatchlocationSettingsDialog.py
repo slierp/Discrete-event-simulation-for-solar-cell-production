@@ -224,7 +224,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
 
         layout.addWidget(buttonbox)
-        self.setMinimumWidth(1024)
+        self.setMinimumWidth(800)
 
     def read(self):
         # read contents of each widget
@@ -249,5 +249,5 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             index = self.parent.batchlocations_model.index(self.row, 0)
             self.parent.batchlocations_view.setExpanded(index, True)
         
-        self.parent.statusBar().showMessage(self.tr("Batch location settings updated"))
+        self.parent.statusBar().showMessage(self.tr("Tool settings updated"))
         self.accept()

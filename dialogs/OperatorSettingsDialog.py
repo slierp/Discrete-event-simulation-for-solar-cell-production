@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from batchlocations.Operator import Operator
 from sys import platform as _platform
 
@@ -33,21 +33,24 @@ class OperatorSettingsDialog(QtGui.QDialog):
         # update default settings list with currently stored settings
         curr_params.update(self.parent.operators[self.row][1])
 
-        self.setWindowTitle(self.tr("Available settings"))
-        vbox = QtGui.QVBoxLayout()
+        self.setWindowTitle(self.tr("Operator settings"))
 
+        tabwidget = QtGui.QTabWidget()
+        
+        vbox_description = QtGui.QVBoxLayout() # vbox for description elements        
+        
         ### Add specification text ###
-        hbox = QtGui.QHBoxLayout()
-        if 'specification' in curr_params:            
-            spec = QtGui.QLabel(curr_params['specification'])           
-            spec.setWordWrap(True)
-            hbox.addWidget(spec)
-            hbox.addStretch(1)
-        else:
-            title_label = QtGui.QLabel(self.tr("Edit settings:"))             
-            hbox.addWidget(title_label)
-            hbox.addStretch(1)
-        vbox.addLayout(hbox)             
+        hbox = QtGui.QHBoxLayout()           
+        spec = QtGui.QLabel(curr_params['specification'])           
+        spec.setWordWrap(True)
+        hbox.addWidget(spec)
+        vbox_description.addLayout(hbox)             
+
+        generic_widget_description = QtGui.QWidget()
+        generic_widget_description.setLayout(vbox_description)
+        tabwidget.addTab(generic_widget_description, QtCore.QString("Description"))
+
+        vbox = QtGui.QVBoxLayout() # vbox for all settings  
         
         self.strings = []
         for i in curr_params:
@@ -119,16 +122,13 @@ class OperatorSettingsDialog(QtGui.QDialog):
                 hbox.addStretch(1)                 
                 vbox.addLayout(hbox)
 
-       ### Widget for scrollable area ###        
-        groupbox = QtGui.QGroupBox()
-        groupbox.setLayout(vbox)
-        
-        scroll = QtGui.QScrollArea()       
-        scroll.setWidget(groupbox)
-        scroll.setWidgetResizable(True)
-        
+        vbox.addStretch(1)
+        generic_widget_settings = QtGui.QWidget()
+        generic_widget_settings.setLayout(vbox)
+        tabwidget.addTab(generic_widget_settings, QtCore.QString("Settings"))
+
         layout = QtGui.QVBoxLayout(self)
-        layout.addWidget(scroll)
+        layout.addWidget(tabwidget) 
 
         ### Buttonbox for ok or cancel ###
         buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
@@ -138,7 +138,7 @@ class OperatorSettingsDialog(QtGui.QDialog):
             buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
 
         layout.addWidget(buttonbox)
-        self.setMinimumWidth(1024)
+        self.setMinimumWidth(800)
 
     def read(self):
         # read contents of each widget

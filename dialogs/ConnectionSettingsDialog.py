@@ -6,34 +6,32 @@ from sys import platform as _platform
 class ConnectionSettingsDialog(QtGui.QDialog):
     def __init__(self, _parent, _batchconnection):
         super(QtGui.QDialog, self).__init__(_parent)
-        # create dialog screen for changing two connection parameters
+        # create dialog screen for changing connection parameters
         
         self.parent = _parent
         self.batchconnection = _batchconnection
-        self.setWindowTitle(self.tr("Available settings"))
-        vbox = QtGui.QVBoxLayout()
-
-        title_label = QtGui.QLabel(self.tr("Edit settings:"))
-        vbox.addWidget(title_label)             
+        self.setWindowTitle(self.tr("Connection settings"))
+        vbox = QtGui.QVBoxLayout()            
         
         hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("transport_time")
+        label = QtGui.QLabel("Time needed for a single transport action")
         self.spinbox0 = QtGui.QSpinBox()
         self.spinbox0.setAccelerated(True)
         self.spinbox0.setMaximum(999999999)
         self.spinbox0.setValue(self.batchconnection[2])
-        label.setToolTip("Time for one transport")
-        self.spinbox0.setToolTip("Time for one transport")
+        label.setToolTip("Time needed for a single transport action")
+        self.spinbox0.setToolTip("Time needed for a single transport action")
         if (self.batchconnection[2] >= 100):
             self.spinbox0.setSingleStep(100)
         elif (self.batchconnection[2] >= 10):
             self.spinbox0.setSingleStep(10) 
-        hbox.addWidget(label)
         hbox.addWidget(self.spinbox0)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
         vbox.addLayout(hbox)
 
         hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("time_per_unit")
+        label = QtGui.QLabel("Time added for each additional batch")
         self.spinbox1 = QtGui.QSpinBox()
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999999999)
@@ -44,8 +42,21 @@ class ConnectionSettingsDialog(QtGui.QDialog):
             self.spinbox1.setSingleStep(100)
         elif (self.batchconnection[3] >= 10):
             self.spinbox1.setSingleStep(10) 
-        hbox.addWidget(label)
         hbox.addWidget(self.spinbox1)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
+
+        hbox = QtGui.QHBoxLayout()
+        label = QtGui.QLabel("Apply current settings to all connections")
+        self.boolean = QtGui.QCheckBox()
+        self.boolean.setChecked(False)
+        label.setToolTip("Apply current settings to all connections")
+        self.boolean.setToolTip("Apply current settings to all connections")        
+        label.mouseReleaseEvent = self.switch_boolean        
+        hbox.addWidget(self.boolean)
+        hbox.addWidget(label)
+        hbox.addStretch(1)                 
         vbox.addLayout(hbox)
 
         ### Buttonbox for ok or cancel ###
@@ -56,12 +67,25 @@ class ConnectionSettingsDialog(QtGui.QDialog):
             buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft) 
         vbox.addWidget(buttonbox)
 
-        self.setLayout(vbox)
+        self.setLayout(vbox)        
+
+    def switch_boolean(self, event):
+        # function for making QLabel near checkbox clickable
+        self.boolean.setChecked(not self.boolean.isChecked())
 
     def read(self):
         # read contents of each widget
-        # update settings in batchconnection
-        self.batchconnection[2] = int(self.spinbox0.text())
-        self.batchconnection[3] = int(self.spinbox1.text())        
-        self.parent.statusBar().showMessage(self.tr("Connection settings updated"))
+        # update settings in batchconnection(s)
+        if self.boolean.isChecked():
+            for i in range(len(self.parent.batchconnections)):
+                self.parent.batchconnections[i][2] = int(self.spinbox0.text())
+                self.parent.batchconnections[i][3] = int(self.spinbox1.text())
+            
+            self.parent.statusBar().showMessage(self.tr("All connection settings updated"))
+        else:
+            self.batchconnection[2] = int(self.spinbox0.text())
+            self.batchconnection[3] = int(self.spinbox1.text())
+            self.parent.statusBar().showMessage(self.tr("Connection settings updated"))
+        
+        
         self.accept()

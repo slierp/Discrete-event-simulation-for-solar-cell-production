@@ -12,14 +12,20 @@ class Operator(QtCore.QObject):
         self.batchconnections = _batchconnections
 
         self.params = {}
-        self.params['specification'] = "An operator instance functions only as the transporter between batch locations. "
-        self.params['specification'] += "Each time interval it will try to do a transport between two locations that were assigned. "
-        self.params['specification'] += "If no transport was possible then it will wait a set amount of time before trying again.\n"
+
+        self.params['specification'] = """
+<h3>General description</h3>
+An operator instance functions as a wafer transporter between tools.
+It will regularly check whether a transport action is possible, considering the input and output status of the various tools that it was assigned to.
+If no transport was possible then it will wait a set amount of time before trying again.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED\n
+        """
         
         self.params['name'] = ""
         self.params['name_desc'] = "Name of the individual operator"
         self.params['min_no_batches'] = 1
-        self.params['min_no_batches_desc'] = "Minimum number of batches needed for transport"
+        self.params['min_no_batches_desc'] = "Minimum number of batches needed for transport action"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between transport attempts (seconds)"
 #        self.params['verbose'] = False #DEBUG
