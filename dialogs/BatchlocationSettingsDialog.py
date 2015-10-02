@@ -96,7 +96,7 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         # update default settings list with currently stored settings
         curr_params.update(batchlocation[1])
         
-        self.setWindowTitle(self.tr("Batchlocation settings"))
+        self.setWindowTitle(self.tr("Tool settings"))
 
         tabwidget = QtGui.QTabWidget()
 

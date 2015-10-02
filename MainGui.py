@@ -165,7 +165,7 @@ class MainGui(QtGui.QMainWindow):
             self.exec_locationgroups()
             
         self.batchlocations_model.clear()
-        self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])           
+        self.batchlocations_model.setHorizontalHeaderLabels(['Tools'])           
 
         for i, value in enumerate(self.locationgroups):
             parent = QtGui.QStandardItem(self.batchlocations[self.locationgroups[i][0]][0])
@@ -217,7 +217,7 @@ class MainGui(QtGui.QMainWindow):
         msgBox = QtGui.QMessageBox(self)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtGui.QMessageBox.Warning)
-        msgBox.setText(self.tr("This will remove all batch locations. Continue?"))
+        msgBox.setText(self.tr("This will remove all tools. Continue?"))
         msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         msgBox.setDefaultButton(QtGui.QMessageBox.Ok)
         ret = msgBox.exec_()
@@ -227,8 +227,8 @@ class MainGui(QtGui.QMainWindow):
             self.locationgroups = []
             self.batchconnections = []
             self.batchlocations_model.clear()
-            self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations']) 
-            self.statusBar().showMessage(self.tr("All batch locations were removed"))
+            self.batchlocations_model.setHorizontalHeaderLabels(['Tools']) 
+            self.statusBar().showMessage(self.tr("All tools were removed"))
 
     def print_batchlocation(self, num):
         if (num >= len(self.batchlocations)):
@@ -269,7 +269,7 @@ class MainGui(QtGui.QMainWindow):
     def import_batchlocations(self):
         self.exec_locationgroups() # reload connections again just to be sure
         self.load_definition_operators() # default operators list
-        self.statusBar().showMessage(self.tr("Batch locations imported"))
+        self.statusBar().showMessage(self.tr("Tools imported"))
 
     def print_batchconnection(self, num):
         if (num >= len(self.batchconnections)):
@@ -497,7 +497,7 @@ class MainGui(QtGui.QMainWindow):
         ##### Batch locations #####        
         self.batchlocations_view.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.batchlocations_view.setExpandsOnDoubleClick(False)
-        self.batchlocations_model.setHorizontalHeaderLabels(['Batch locations'])
+        self.batchlocations_model.setHorizontalHeaderLabels(['Tools'])
         self.batchlocations_view.setModel(self.batchlocations_model)
         self.batchlocations_view.setUniformRowHeights(True)
         self.batchlocations_view.setDragDropMode(QtGui.QAbstractItemView.NoDragDrop)
@@ -506,20 +506,20 @@ class MainGui(QtGui.QMainWindow):
         line_diagram_button = QtGui.QPushButton()
         line_diagram_button.clicked.connect(self.line_diagram_view)
         line_diagram_button.setIcon(QtGui.QIcon(":eye.png"))
-        line_diagram_button.setToolTip(self.tr("View line diagram"))
-        line_diagram_button.setStatusTip(self.tr("View line diagram"))
+        line_diagram_button.setToolTip(self.tr("View production line"))
+        line_diagram_button.setStatusTip(self.tr("View production line"))
         
         add_batchlocation_button = QtGui.QPushButton()
         add_batchlocation_button.clicked.connect(self.add_batchlocation_view)
         add_batchlocation_button.setIcon(QtGui.QIcon(":plus.png"))
-        add_batchlocation_button.setToolTip(self.tr("Add batchlocation"))
-        add_batchlocation_button.setStatusTip(self.tr("Add batchlocation"))
+        add_batchlocation_button.setToolTip(self.tr("Add"))
+        add_batchlocation_button.setStatusTip(self.tr("Add"))
         
         del_batchlocation_button = QtGui.QPushButton()
         del_batchlocation_button.clicked.connect(self.del_batchlocation_view)
         del_batchlocation_button.setIcon(QtGui.QIcon(":minus.png"))
-        del_batchlocation_button.setToolTip(self.tr("Remove batchlocation"))
-        del_batchlocation_button.setStatusTip(self.tr("Remove batchlocation"))
+        del_batchlocation_button.setToolTip(self.tr("Remove"))
+        del_batchlocation_button.setStatusTip(self.tr("Remove"))
         
         edit_batchlocation_button = QtGui.QPushButton()
         edit_batchlocation_button.clicked.connect(self.edit_batchlocation_view)        
@@ -556,20 +556,20 @@ class MainGui(QtGui.QMainWindow):
         import_batchlocations_button = QtGui.QPushButton()
         import_batchlocations_button.clicked.connect(self.import_batchlocations)        
         import_batchlocations_button.setIcon(QtGui.QIcon(":import.png"))
-        import_batchlocations_button.setToolTip(self.tr("Import locations"))
-        import_batchlocations_button.setStatusTip(self.tr("Import locations"))
+        import_batchlocations_button.setToolTip(self.tr("Import tools"))
+        import_batchlocations_button.setStatusTip(self.tr("Import tools"))
 
         add_operator_button = QtGui.QPushButton()
         add_operator_button.clicked.connect(self.add_operator_view)           
         add_operator_button.setIcon(QtGui.QIcon(":plus.png"))
-        add_operator_button.setToolTip(self.tr("Add operator"))
-        add_operator_button.setStatusTip(self.tr("Add operator"))
+        add_operator_button.setToolTip(self.tr("Add"))
+        add_operator_button.setStatusTip(self.tr("Add"))
         
         del_operator_button = QtGui.QPushButton()
         del_operator_button.clicked.connect(self.del_operator_view)          
         del_operator_button.setIcon(QtGui.QIcon(":minus.png"))
-        del_operator_button.setToolTip(self.tr("Remove operator"))
-        del_operator_button.setStatusTip(self.tr("Remove operator"))
+        del_operator_button.setToolTip(self.tr("Remove"))
+        del_operator_button.setStatusTip(self.tr("Remove"))
 
         edit_operator_button = QtGui.QPushButton()
         edit_operator_button.clicked.connect(self.edit_operator_view)        
