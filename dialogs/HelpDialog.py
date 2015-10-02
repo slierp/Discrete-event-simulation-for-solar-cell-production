@@ -125,9 +125,9 @@ There are scripts available in the cython-simpy_scripts directory in the source 
 <ol>
 <li>Remove the default production line that is loaded at program start-up.
 Click on the 'remove' button underneath the 'Tools' window.</li>
-<li>Add wafer source. Click on 'Add tool' and select 'WaferSource'.</li>
-<li>Add tube furnace. Click on 'Add tool' and select 'TubeFurnace'.</li>
-<li>Add wafer bin. Click on 'Add tool' and select 'WaferBin'.</li>
+<li>Add wafer source. Click on 'Add' and select 'WaferSource'.</li>
+<li>Add tube furnace. Click on 'Add' and select 'TubeFurnace'.</li>
+<li>Add wafer bin. Click on 'Add' and select 'WaferBin'.</li>
 <li>Automatically add one operator for each tool connection.
 Click on 'Import tools' underneath the operators window.</li>
 <li>Make sure that the batch sizes are equal for each tool connection.
