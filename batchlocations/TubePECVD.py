@@ -7,8 +7,6 @@ from batchlocations.BatchContainer import BatchContainer
 
 TODO
 
-Build in mechanism to have a preference for moving full boats to loadstation for load-out; should yield more load-outs when the input stops temporarily
-
 """
 
 class TubePECVD(QtCore.QObject):
@@ -37,12 +35,25 @@ class TubePECVD(QtCore.QObject):
         self.params = {}
         self.params['specification'] = """
 <h3>General description</h3>
-A TubePECVD serves to deposit dielectric layers on wafers. Wafers are first loaded into boats in the loadstation and then transferred to the process tubes where the deposition are performed.
+A TubePECVD serves to deposit dielectric layers on wafers.
+Wafers are first loaded into boats in the loadstation and then transferred to the process tubes where the deposition are performed.
 When the processes are finished the boats are transferred to a cooldown shelf and then back to the loadstation for wafer load-out.
 There is a downtime procedure in light of the required boat cleaning after using it for a defined number of depositions.
-The cleaning itself is done externally but the boats need to undergo a coating run before re-using them.\n
+The cleaning itself is done externally but the boats need to undergo a coating run before re-using them.
 <h3>Description of the algorithm</h3>
-TO BE ADDED\n
+The main loop is primarily concerned with the boat transport inside the tool, as described in the list below.
+If conditions are met it will ask for a load-in or load-out of wafers in a boat in the loadstation.
+<ul>
+<li>Go into downtime mode if a set number of processes has been run and all wafers were loaded out</li>
+<li>Try to move boat from furnace to cooldown; try full boats first</li>
+<li>Try to move boat from cooldown to loadstation; try full boats first</li>
+<li>Perform action on boat in loadstation depending on state of boat and wafers:</li>
+<ul>
+<li>Perform coating run on empty boat if boat has been used for a set number of times</li>
+<li>Start wafer load-in if boat is empty and wafers are available, except if downtime is required</li>
+<li>If boat is sitting idle and there are batches in the system that need to be loaded out, check idle time and move boat to furnace if it is too long</li>
+<li>If boat is full and not yet processed, try to move it to a furnace for processing</li>
+</ul></ul>
         """
 
         self.params['name'] = ""
@@ -55,9 +66,14 @@ TO BE ADDED\n
         self.params['cool_time_desc'] = "Time for a single cooldown (seconds)"
 
         self.params['runs_before_boatclean'] = 100
-        self.params['runs_before_boatclean_desc'] = "Number of PECVD processes before boat needs to be cleaned"
+        self.params['runs_before_boatclean_desc'] = "Number of PECVD processes before boat needs to be cleaned (0 to disable function)"
         self.params['coating_run_duration'] = 75*60
         self.params['coating_run_duration_desc'] = "Time for a single PECVD coating run (seconds)"
+
+        self.params['downtime_runs'] = 0
+        self.params['downtime_runs_desc'] = "Number of PECVD processes before downtime of the whole tool (0 to disable function)"
+        self.params['downtime_duration'] = 60*60
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
         
         self.params['no_of_processes'] = 4
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
@@ -83,22 +99,20 @@ TO BE ADDED\n
         self.params['automation_loadsize_desc'] = "Number of units per loading/unloading automation cycle"
         self.params['automation_time'] = 10
         self.params['automation_time_desc'] = "Time for a single loading/unloading automation cycle (seconds)"
+        
+        self.params['idle_boat_timeout'] = 300
+        self.params['idle_boat_timeout_desc'] = "Time before idle boat in the loadstation is moved to furnace to enable continued load-out (seconds)"
 
         self.params['wait_time'] = 10
         self.params['wait_time_desc'] = "Wait period between boat transport attempts (seconds)"
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)        
 
         self.transport_counter = 0
-        self.batches_loaded = 0
+        self.batches_loaded = 0        
         self.load_in_start = self.env.event()
         self.load_out_start = self.env.event()
-        
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " - [TubePECVD][" + self.params['name'] + "] Added a tube PECVD" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
+        self.process_counter = 0
         
         ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -206,11 +220,12 @@ TO BE ADDED\n
         if normal_process:
             yield self.env.timeout(self.params['process_time'])
             self.furnace_runs[num] += 1 # keep track of number of normal runs in this furnace
+            self.process_counter += 1 # keep track of total number or process runs             
         else:
             yield self.env.timeout(self.params['coating_run_duration'])
         self.boat_runs[self.furnace[num]] += 1 # keep track of number of runs with this boat
         self.boat_status[self.furnace[num]] = 1 # set boat status as processed     
-        self.furnace_status[num] = 0 # set status furnace as non-busy
+        self.furnace_status[num] = 0 # set status furnace as non-busy       
         #print "Process " + str(num) + " finished on boat " + str(self.furnace[num])
         
     def run_transport(self):
@@ -221,11 +236,35 @@ TO BE ADDED\n
         transfer2_time = self.params['transfer2_time']
         no_of_processes = self.params['no_of_processes']
         no_of_cooldowns = self.params['no_of_cooldowns']
-        runs_before_boatclean = self.params['runs_before_boatclean']        
+        runs_before_boatclean = self.params['runs_before_boatclean']
+        downtime_runs = self.params['downtime_runs']
+        downtime_duration = self.params['downtime_duration']        
         wait_time = self.params['wait_time']
+        idle_boat_timeout = self.params['idle_boat_timeout']
+        idle_boat = 0
 
-        while True:            
-            for i in range(no_of_processes): # first check if we can move any batch from tube to cool_down
+        while True:
+            
+            if (downtime_runs > 0) and (self.process_counter >= downtime_runs) and (self.batches_loaded == 0):
+                    # if downtime is needed and all batches have been unloaded, enter downtime
+                    yield self.env.timeout(downtime_duration) # stop automation during downtime
+                    self.process_counter = 0 # reset total number of process runs
+            
+            ### MOVE FROM FURNACE TO COOLDOWN ###
+            for i in range(no_of_processes): # first check if we can move a full boat from tube to cooldown
+                if (not self.furnace_status[i]) and (not (self.furnace[i] == -1)) and (self.boat[self.furnace[i]].container.level): # if full boat is available
+                    for j in range(no_of_cooldowns): # check cooldown locations
+                        if (not self.cooldown_status[j]) and (self.cooldown[j] == -1): # if empty
+                            boat = self.furnace[i] # store boat number
+                            self.furnace[i] = -1 # empty the furnace
+                            yield self.env.timeout(transfer1_time) # wait for transfer
+                            self.cooldown[j] = boat # enter boat into cooldown
+                            self.cooldown_status[j] = 1 # cooldown is busy status
+                            self.env.process(self.run_cooldown(j)) # start process for cooldown
+                            #print "Moved boat " + str(boat) + " to cooldown " + str(j)
+                            break # discontinue search for free cooldown locations for this boat
+
+            for i in range(no_of_processes): # check if we can move any boat from tube to cooldown
                 if (not self.furnace_status[i]) and (not (self.furnace[i] == -1)): # if boat is available
                     for j in range(no_of_cooldowns): # check cooldown locations
                         if (not self.cooldown_status[j]) and (self.cooldown[j] == -1): # if empty
@@ -235,11 +274,28 @@ TO BE ADDED\n
                             self.cooldown[j] = boat # enter boat into cooldown
                             self.cooldown_status[j] = 1 # cooldown is busy status
                             self.env.process(self.run_cooldown(j)) # start process for cooldown
-                            #print "Moved boat " + str(boat) + " to cooldown"                            
+                            #print "Moved boat " + str(boat) + " to cooldown " + str(j)
                             break # discontinue search for free cooldown locations for this boat
 
-            if (not self.loadstation_status) and (self.loadstation == -1): # if loadstation is not busy and empty
-                for i in range(no_of_cooldowns): # check if we can move a boat from cooldown to loadstation (should be followed by a re-load if possible)
+            ### MOVE FROM COOLDOWN TO LOADSTATION ###
+            if (not self.loadstation_status) and (self.loadstation == -1) and (self.batches_loaded > 0): # if loadstation is not busy and empty and there are batches in the system
+                for i in range(no_of_cooldowns): # check if we can move a full boat from cooldown to loadstation; always proceed with load-out immediately after
+                    if (not self.cooldown_status[i]) and (not self.cooldown[i] == -1) and (self.boat[self.cooldown[i]].container.level):
+                        boat = self.cooldown[i] # store boat number
+                        self.cooldown[i] = -1 # empty the cooldown
+                        yield self.env.timeout(transfer2_time) # wait for transfer
+                        self.loadstation = boat # enter boat into loadstation
+                        #print "Moved boat " + str(boat) + " to loadstation"
+                        
+                        self.loadstation_status = 1 # set status as busy
+                        yield self.load_out_start.succeed() # ask for load-out
+                        self.load_out_start = self.env.event() # create new event
+                        #print "Asked for load-out"
+                        
+                        break # stop search for available boat to put into loadstation
+            
+            if (not self.loadstation_status) and (self.loadstation == -1): # if loadstation is still not busy and empty
+                for i in range(no_of_cooldowns): # check if we can move an empty boat from cooldown to loadstation; do not proceed with load-in immediately after as there may be downtime planned
                     if (not self.cooldown_status[i]) and (not self.cooldown[i] == -1):
                         boat = self.cooldown[i] # store boat number
                         self.cooldown[i] = -1 # empty the cooldown
@@ -247,15 +303,11 @@ TO BE ADDED\n
                         self.loadstation = boat # enter boat into loadstation
                         #print "Moved boat " + str(boat) + " to loadstation"
                         
-                        if self.boat[self.loadstation].container.level and (self.boat_status[self.loadstation] == 2): # if there are wafers in the boat and they have been processed
-                            self.loadstation_status = 1 # set status as busy
-                            yield self.load_out_start.succeed() # ask for load-out
-                            self.load_out_start = self.env.event() # create new event
-                            #print "Asked for load-out"
                         break # stop search for available boat to put into loadstation
 
+            ### RUN LOAD-IN AND MOVE TO FURNACE ###
             if (not self.loadstation_status) and (not (self.loadstation == -1)): # if loadstation is not busy and contains boat 
-                if (self.boat_runs[self.loadstation] >= runs_before_boatclean): # if boat needs coating run
+                if (runs_before_boatclean > 0) and (self.boat_runs[self.loadstation] >= runs_before_boatclean): # if boat needs coating run
                     for i in range(no_of_processes):
                         if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
                             boat = self.loadstation # store boat number
@@ -265,14 +317,30 @@ TO BE ADDED\n
                             self.furnace_status[i] = 1 # furnace is busy status
                             self.boat_runs[boat] = 0 # reset number of runs
                             self.env.process(self.run_process(i, False)) # start coating run for furnace
-                            #print "Moved boat " + str(boat) + " to furnace for coating run"                            
-                            break # discontinue search for a free furnace for this boat                    
-                elif (not self.boat[self.loadstation].container.level) and (self.input.container.level >= batch_size): # if boat is empty and wafers available ask for load-in (and boat does not require)
+                            #print "Moved boat " + str(boat) + " to furnace " + str(i) + " for coating run"                            
+                            break # discontinue search for a free furnace for this boat                           
+                elif (not self.boat[self.loadstation].container.level) and (self.input.container.level >= batch_size) and ((downtime_runs == 0) or (self.process_counter <= downtime_runs)):
+                    # if boat is empty and wafers are available ask for load-in, except if downtime is required
                     self.loadstation_status = 1 # set status as busy
                     yield self.load_in_start.succeed()
                     self.load_in_start = self.env.event() # create new event                    
                     #print "Asked for load-in"
-                elif self.boat[self.loadstation].container.level and (not self.boat_status[self.loadstation]): # if boat is full and has not been processed try to load to furnace
+                elif (not self.boat[self.loadstation].container.level) and (self.batches_loaded > 0):
+                    # if boat is empty and there are batches in the system check if the situation has been like this for a while; if so, try to move empty boat to furnace
+                    if (idle_boat > 0) and ((self.env.now - idle_boat) >= idle_boat_timeout): # if we waited for new wafers for more than 5 minutes
+                        #print "Try to move idle boat from loadstation to furnace"
+                        for i in range(no_of_processes):
+                            if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
+                                boat = self.loadstation # store boat number
+                                self.loadstation = -1 # empty the loadstation                        
+                                yield self.env.timeout(transfer0_time) # wait for transfer
+                                self.furnace[i] = boat # put boat into furnace
+                                #print "Moved idle boat from loadstation to furnace " + str(i)
+                        idle_boat = 0
+                    elif (idle_boat == 0):
+                        idle_boat = self.env.now
+                        #print "Idle boat in loadstation"
+                elif self.boat[self.loadstation].container.level and (not self.boat_status[self.loadstation]): # if boat is full and has not been processed then try to load to furnace
                     #print "Boat " + str(self.loadstation) + " in loadstation contains unprocessed wafers"
                     for i in range(no_of_processes):
                         if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
@@ -282,7 +350,7 @@ TO BE ADDED\n
                             self.furnace[i] = boat # put boat into furnace
                             self.furnace_status[i] = 1 # furnace is busy status
                             self.env.process(self.run_process(i)) # start process for furnace
-                            #print "Moved boat " + str(boat) + " to furnace"                            
+                            #print "Moved boat " + str(boat) + " to furnace " + str(i)                            
                             break # discontinue search for a free furnace for this boat
                                     
             yield self.env.timeout(wait_time)                        
@@ -291,7 +359,6 @@ TO BE ADDED\n
         no_loads = self.params['batch_size'] // self.params['automation_loadsize']
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             yield self.load_in_start
@@ -301,8 +368,9 @@ TO BE ADDED\n
                 yield self.input.container.get(automation_loadsize)                
                 yield self.env.timeout(automation_time)            
                 yield self.boat[self.loadstation].container.put(automation_loadsize)
-            
+                        
             self.boat_status[self.loadstation] = 0 # set boat status to unprocessed
+            self.batches_loaded += 1 # keep track of number of loads in the system
             self.loadstation_status = 0 # set loadstation status to non-busy
             #print "Finished load-in for boat " + str(self.loadstation)
 
@@ -321,7 +389,8 @@ TO BE ADDED\n
                 yield self.output.container.put(automation_loadsize)
                 self.transport_counter += automation_loadsize
             
-            self.loadstation_status = 0
+            self.batches_loaded -= 1 # keep track of number of loads in the system
+            self.loadstation_status = 0 # set loadstation status to non-busy
             #print "Finished load-out for boat " + str(self.loadstation)
 
     def nominal_throughput(self):
