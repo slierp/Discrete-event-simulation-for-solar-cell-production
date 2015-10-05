@@ -1,4 +1,9 @@
 Bugfix: average throughput uses set simulation time; not actual
-Implement microstops
-Custom dialogs for each tool
-Load/save for individual tools
+PrintLine > implement screen change and screen clean
+Implement new default parameters
+Copy TubePECVD to furnace and implement preventive maintenance on both; also put in preference for full boat transfer to loadstation
+Render error when batch sizes between tools do not match
+Add laser opening process step
+Implement microstops; keep operator busy with it
+Add algorithm descriptions
+Integrate profiling mode into normal mode to get normal output during profiling mode?
