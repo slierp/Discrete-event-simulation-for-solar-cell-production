@@ -133,79 +133,62 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         self.doubles = []
         self.booleans = []
         
-        vbox = QtGui.QVBoxLayout() # vbox for all settings        
-        
-        for i in sorted(curr_params.keys()):
-        # Make QLineEdits for strings (excluding name)
-            if ("_desc" in i) | ('specification' in i) | ('name' in i):
+        setting_types = ["configuration","process","automation","downtime"]
+        setting_type_tabs = {"configuration" : "Configuration",
+                               "process" : "Process",
+                               "automation" : "Automation",
+                               "downtime" : "Downtime"}        
+        setting_type_titles = {"configuration" : "<b>Tool configuration</b>",
+                               "process" : "<b>Process settings</b>",
+                               "automation" : "<b>Automation settings</b>",
+                               "downtime" : "<b>Downtime settings</b>"}
+        for j in setting_types:
+            if not (j in curr_params.values()):
                 continue
-            elif isinstance(curr_params[i], str):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])                
-                self.strings.append(QtGui.QLineEdit(curr_params[i]))
-                self.strings[-1].setObjectName(i)
-                if i + "_desc" in curr_params:
-                    self.strings[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(self.strings[-1])
-                hbox.addWidget(description)
-                hbox.addStretch(1)                
-                vbox.addLayout(hbox)
-        
-        for i in sorted(curr_params.keys()):
-        # Make QSpinBox or QDoubleSpinbox for integers and doubles
-            if isinstance(curr_params[i], int) & (not i == 'verbose'):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])                
-                self.integers.append(QtGui.QSpinBox())
-                self.integers[-1].setAccelerated(True)
-                self.integers[-1].setMaximum(999999999)
-                self.integers[-1].setValue(curr_params[i])
-                self.integers[-1].setObjectName(i)
-                if (curr_params[i] >= 100):
-                    self.integers[-1].setSingleStep(100)
-                elif (curr_params[i] >= 10):
-                    self.integers[-1].setSingleStep(10)                     
-                if i + "_desc" in curr_params:
-                    self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
-                hbox.addWidget(self.integers[-1])  
-                hbox.addWidget(description)
-                hbox.addStretch(1)                
-                vbox.addLayout(hbox)
-            elif isinstance(curr_params[i], float):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])                
-                self.doubles.append(QtGui.QDoubleSpinBox())
-                self.doubles[-1].setAccelerated(True)
-                self.doubles[-1].setMaximum(999999999)
-                self.doubles[-1].setValue(curr_params[i])
-                self.doubles[-1].setSingleStep(0.1)
-                self.doubles[-1].setObjectName(i)
-                if i + "_desc" in curr_params:
-                    self.doubles[-1].setToolTip(curr_params[i + "_desc"])             
-                hbox.addWidget(self.doubles[-1]) 
-                hbox.addWidget(description)
-                hbox.addStretch(1)                
-                vbox.addLayout(hbox)
-        
-        for i in sorted(curr_params.keys()):
-        # Make QCheckBox for booleans
-            if isinstance(curr_params[i], bool):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])                
-                self.booleans.append(QtGui.QCheckBox())                
-                self.booleans[-1].setChecked(curr_params[i])
-                self.booleans[-1].setObjectName(i)
-                if i + "_desc" in curr_params:
-                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(self.booleans[-1]) 
-                hbox.addWidget(description)
-                hbox.addStretch(1)                
-                vbox.addLayout(hbox)
+            
+            vbox = QtGui.QVBoxLayout()
+            vbox.addWidget(QtGui.QLabel(setting_type_titles[j]))
+            
+            for i in sorted(curr_params.keys()):
+            # Make QSpinBox or QDoubleSpinbox for integers and doubles
+                if isinstance(curr_params[i], int) and (curr_params[i + "_type"] == j):
+                    hbox = QtGui.QHBoxLayout()
+                    description = QtGui.QLabel(curr_params[i + "_desc"])                
+                    self.integers.append(QtGui.QSpinBox())
+                    self.integers[-1].setAccelerated(True)
+                    self.integers[-1].setMaximum(999999999)
+                    self.integers[-1].setValue(curr_params[i])
+                    self.integers[-1].setObjectName(i)
+                    if (curr_params[i] >= 100):
+                        self.integers[-1].setSingleStep(100)
+                    elif (curr_params[i] >= 10):
+                        self.integers[-1].setSingleStep(10)                     
+                    if i + "_desc" in curr_params:
+                        self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
+                    hbox.addWidget(self.integers[-1])  
+                    hbox.addWidget(description)
+                    hbox.addStretch(1)                
+                    vbox.addLayout(hbox)
+                elif isinstance(curr_params[i], float) and (curr_params[i + "_type"] == j):
+                    hbox = QtGui.QHBoxLayout()
+                    description = QtGui.QLabel(curr_params[i + "_desc"])                
+                    self.doubles.append(QtGui.QDoubleSpinBox())
+                    self.doubles[-1].setAccelerated(True)
+                    self.doubles[-1].setMaximum(999999999)
+                    self.doubles[-1].setValue(curr_params[i])
+                    self.doubles[-1].setSingleStep(0.1)
+                    self.doubles[-1].setObjectName(i)
+                    if i + "_desc" in curr_params:
+                        self.doubles[-1].setToolTip(curr_params[i + "_desc"])             
+                    hbox.addWidget(self.doubles[-1]) 
+                    hbox.addWidget(description)
+                    hbox.addStretch(1)                
+                    vbox.addLayout(hbox)
 
-        vbox.addStretch(1)
-        generic_widget_settings = QtGui.QWidget()
-        generic_widget_settings.setLayout(vbox)
-        tabwidget.addTab(generic_widget_settings, QtCore.QString("Settings"))
+            vbox.addStretch(1)
+            generic_widget = QtGui.QWidget()
+            generic_widget.setLayout(vbox)
+            tabwidget.addTab(generic_widget, QtCore.QString(setting_type_tabs[j]))
         
         layout = QtGui.QVBoxLayout(self)
         layout.addWidget(tabwidget) 
@@ -235,9 +218,6 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
 
         for i in self.doubles:
             new_params[str(i.objectName())] = float(i.text())
-
-        for i in self.booleans:
-            new_params[str(i.objectName())] = i.isChecked()
         
         for i in self.parent.locationgroups[self.row]:
             self.parent.batchlocations[i][1].update(new_params)

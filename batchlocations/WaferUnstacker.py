@@ -32,26 +32,34 @@ TO BE ADDED\n
         """
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['stack_size'] = 400
         self.params['stack_size_desc'] = "Number of units in a single stack"
+        self.params['stack_size_type'] = "configuration"
         self.params['max_stack_no'] = 3
         self.params['max_stack_no_desc'] = "Maximum number of stacks at the input side"
+        self.params['max_stack_no_type'] = "configuration"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of output cassette positions"
+        self.params['max_cassette_no_type'] = "configuration"
         self.params['units_on_belt'] = 5
         self.params['units_on_belt_desc'] = "Number of units that fit on the belt"
+        self.params['units_on_belt_type'] = "configuration"
         
         self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one position on belt or into cassette (seconds)"
+        self.params['time_step_type'] = "automation"
         self.params['time_new_cassette'] = 10
         self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
+        self.params['time_new_cassette_type'] = "automation"
         self.params['time_new_stack'] = 10
         self.params['time_new_stack_desc'] = "Time for putting a new stack in unloading position (seconds)"
+        self.params['time_new_stack_type'] = "automation"
         self.params['time_pick_and_place'] = 1.0
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds)"
+        self.params['time_pick_and_place_type'] = "automation"
         
         self.params.update(_params)    
 

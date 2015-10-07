@@ -34,24 +34,31 @@ TO BE ADDED\n
         """
 
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['no_of_lanes'] = 5
         self.params['no_of_lanes_desc'] = "Number of process lanes"
+        self.params['no_of_lanes_type'] = "configuration"
         self.params['tool_length'] = 10
-        self.params['tool_length_desc'] = "Distance between input and output (meters)"
+        self.params['tool_length_desc'] = "Travel distance for wafers between input and output (meters)"
+        self.params['tool_length_type'] = "configuration"
         self.params['belt_speed'] = 1.8
         self.params['belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
+        self.params['belt_speed_type'] = "process"
         self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
+        self.params['unit_distance_type'] = "configuration"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
+        self.params['max_cassette_no_type'] = "configuration"
         
-        self.params['downtime_volume'] = 100000
-        self.params['downtime_volume_desc'] = "Number of entered wafers before downtime"
-        self.params['downtime_duration'] = 60*60
-        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
+        self.params['downtime_volume'] = 100
+        self.params['downtime_volume_desc'] = "Number of entered wafers before downtime (x1000) (0 to disable function)"
+        self.params['downtime_volume_type'] = "downtime"
+        self.params['downtime_duration'] = 60
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
+        self.params['downtime_duration_type'] = "downtime"
         
         self.params.update(_params)         
         
@@ -109,8 +116,8 @@ TO BE ADDED\n
         # Loads wafers if available
         # Implementation optimized for minimal timeouts
         # All processes timeout with the same duration
-        downtime_volume = self.params['downtime_volume']
-        downtime_duration = self.params['downtime_duration']
+        downtime_volume = 1000*self.params['downtime_volume']
+        downtime_duration = 60*self.params['downtime_duration']
         no_of_lanes = self.params['no_of_lanes']
         time_step = 60*self.params['unit_distance']/self.params['belt_speed']
     

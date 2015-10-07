@@ -30,13 +30,15 @@ TO BE ADDED\n
         """         
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 100
-        self.params['batch_size_desc'] = "Number of units in a single batch"
+        self.params['batch_size_desc'] = "Number of units in a single cassette"
+        self.params['batch_size_type'] = "configuration"
         self.params['max_batch_no'] = 4
-        self.params['max_batch_no_desc'] = "Number of input batch positions"
+        self.params['max_batch_no_desc'] = "Number of input cassette positions"
+        self.params['max_batch_no_type'] = "configuration"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between wafer removal attempts (seconds)"
+        self.params['wait_time_type'] = "automation"
         self.params.update(_params)
         
 #        string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG

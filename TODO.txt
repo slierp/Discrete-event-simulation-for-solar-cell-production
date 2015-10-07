@@ -1,9 +1,8 @@
 PrintLine > implement screen change and screen clean
 Implement new default parameters
-Copy TubePECVD to furnace and implement preventive maintenance on both; also put in preference for full boat transfer to loadstation
 Render error when batch sizes between tools do not match
 Add laser opening process step
 Implement microstops; keep operator busy with it
 Add algorithm descriptions
-Divide settings into three categories: tool configuration, process settings and downtime settings
+Invert uptime in utilization tab
 Add maintenance engineer for addressing microstops?

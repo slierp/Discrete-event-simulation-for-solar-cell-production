@@ -23,7 +23,6 @@ TO BE ADDED\n
         """
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual operator"
         self.params['min_no_batches'] = 1
         self.params['min_no_batches_desc'] = "Minimum number of batches needed for transport action"
         self.params['wait_time'] = 60

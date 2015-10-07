@@ -40,6 +40,7 @@ Wafers are first loaded into boats in the loadstation and then transferred to th
 When the processes are finished the boats are transferred to a cooldown shelf and then back to the loadstation for wafer load-out.
 There is a downtime procedure in light of the required boat cleaning after using it for a defined number of depositions.
 The cleaning itself is done externally but the boats need to undergo a coating run before re-using them.
+There is also a downtime procedure available for preventive maintenance after a set number of process runs, but this is not enabled by default.
 <h3>Description of the algorithm</h3>
 The main loop is primarily concerned with the boat transport inside the tool, as described in the list below:
 <ol>
@@ -60,54 +61,72 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         """
 
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 294
         self.params['batch_size_desc'] = "Number of units in a single process batch"
-        self.params['process_time'] = 35*60
-        self.params['process_time_desc'] = "Time for a single process (seconds)"
-        self.params['cool_time'] = 5*60
-        self.params['cool_time_desc'] = "Time for a single cooldown (seconds)"
+        self.params['batch_size_type'] = "configuration"
+        self.params['process_time'] = 35
+        self.params['process_time_desc'] = "Time for a single process (minutes)"
+        self.params['process_time_type'] = "process"
+        self.params['cool_time'] = 5
+        self.params['cool_time_desc'] = "Time for a single cooldown (minutes)"
+        self.params['cool_time_type'] = "process"
 
         self.params['runs_before_boatclean'] = 100
         self.params['runs_before_boatclean_desc'] = "Number of PECVD processes before boat needs to be cleaned (0 to disable function)"
-        self.params['coating_run_duration'] = 75*60
-        self.params['coating_run_duration_desc'] = "Time for a single PECVD coating run (seconds)"
+        self.params['runs_before_boatclean_type'] = "downtime"
+        self.params['coating_run_duration'] = 75
+        self.params['coating_run_duration_desc'] = "Time for a single PECVD coating run (minutes)"
+        self.params['coating_run_duration_type'] = "downtime"
 
         self.params['downtime_runs'] = 0
         self.params['downtime_runs_desc'] = "Number of PECVD processes before downtime of the whole tool (0 to disable function)"
-        self.params['downtime_duration'] = 60*60
-        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
+        self.params['downtime_runs_type'] = "downtime"
+        self.params['downtime_duration'] = 60
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
+        self.params['downtime_duration_type'] = "downtime"
         
         self.params['no_of_processes'] = 4
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
+        self.params['no_of_processes_type'] = "configuration"
         self.params['no_of_cooldowns'] = 3
         self.params['no_of_cooldowns_desc'] = "Number of cooldown locations in the tool"
+        self.params['no_of_cooldowns_type'] = "configuration"
         
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 5
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
+        self.params['max_cassette_no_type'] = "configuration"
         
         self.params['no_of_boats'] = 6
         self.params['no_of_boats_desc'] = "Number of boats available"
+        self.params['no_of_boats_type'] = "configuration"
         
         self.params['transfer0_time'] = 90
         self.params['transfer0_time_desc'] = "Time for boat transfer from load-in to process tube (seconds)"
+        self.params['transfer0_time_type'] = "automation"
         self.params['transfer1_time'] = 90
         self.params['transfer1_time_desc'] = "Time for boat transfer from process tube to cooldown (seconds)"
+        self.params['transfer1_time_type'] = "automation"
         self.params['transfer2_time'] = 90
         self.params['transfer2_time_desc'] = "Time for boat transfer from cooldown to load-out (seconds)"
+        self.params['transfer2_time_type'] = "automation"
         
         self.params['automation_loadsize'] = 21
         self.params['automation_loadsize_desc'] = "Number of units per loading/unloading automation cycle"
+        self.params['automation_loadsize_type'] = "automation"
         self.params['automation_time'] = 10
         self.params['automation_time_desc'] = "Time for a single loading/unloading automation cycle (seconds)"
+        self.params['automation_time_type'] = "automation"
         
         self.params['idle_boat_timeout'] = 300
         self.params['idle_boat_timeout_desc'] = "Time before idle boat in the loadstation is moved to furnace to enable continued load-out (seconds)"
+        self.params['idle_boat_timeout_type'] = "automation"
 
         self.params['wait_time'] = 10
         self.params['wait_time_desc'] = "Wait period between boat transport attempts (seconds)"
+        self.params['wait_time_type'] = "automation"
         
         self.params.update(_params)        
 
@@ -205,7 +224,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         for i in range(self.params['no_of_processes']):
             if ((self.env.now - self.furnace_start_time[0]) > 0):
-                util = 100-100*(self.furnace_runs[i]*self.params['process_time'])/(self.env.now - self.furnace_start_time[0])
+                util = 100-100*(self.furnace_runs[i]*60*self.params['process_time'])/(self.env.now - self.furnace_start_time[0])
             else:
                 util = 100
             self.utilization.append(["p" + str(i),round(util,1)])
@@ -214,7 +233,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         return self.transport_counter
 
     def run_cooldown(self,num):
-        yield self.env.timeout(self.params['cool_time'])
+        yield self.env.timeout(60*self.params['cool_time'])
         self.boat_status[self.cooldown[num]] = 2 # set status as cooled down
         self.cooldown_status[num] = 0 # set status as non-busy
         #print "Cooldown " + str(num) + " finished on boat " + str(self.cooldown[num])
@@ -226,11 +245,11 @@ The process batch size therefore needs to be a multiple of the automation loadsi
             self.furnace_first_run[num] = False
         
         if normal_process:
-            yield self.env.timeout(self.params['process_time'])
+            yield self.env.timeout(60*self.params['process_time'])
             self.furnace_runs[num] += 1 # keep track of number of normal runs in this furnace
             self.process_counter += 1 # keep track of total number or process runs             
         else:
-            yield self.env.timeout(self.params['coating_run_duration'])
+            yield self.env.timeout(60*self.params['coating_run_duration'])
         self.boat_runs[self.furnace[num]] += 1 # keep track of number of runs with this boat
         self.boat_status[self.furnace[num]] = 1 # set boat status as processed     
         self.furnace_status[num] = 0 # set status furnace as non-busy       
@@ -246,7 +265,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         no_of_cooldowns = self.params['no_of_cooldowns']
         runs_before_boatclean = self.params['runs_before_boatclean']
         downtime_runs = self.params['downtime_runs']
-        downtime_duration = self.params['downtime_duration']        
+        downtime_duration = 60*self.params['downtime_duration']        
         wait_time = self.params['wait_time']
         idle_boat_timeout = self.params['idle_boat_timeout']
         idle_boat = 0
@@ -403,6 +422,6 @@ The process batch size therefore needs to be a multiple of the automation loadsi
 
     def nominal_throughput(self):
         throughputs = []        
-        throughputs.append(self.params['batch_size']*self.params['no_of_processes']*3600/self.params['process_time'])
-        throughputs.append(self.params['batch_size']*self.params['no_of_cooldowns']*3600/self.params['cool_time'])
+        throughputs.append(self.params['batch_size']*self.params['no_of_processes']*3600/(60*self.params['process_time']))
+        throughputs.append(self.params['batch_size']*self.params['no_of_cooldowns']*3600/(60*self.params['cool_time']))
         return min(throughputs)                

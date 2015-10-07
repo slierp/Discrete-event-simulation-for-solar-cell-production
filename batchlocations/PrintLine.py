@@ -54,34 +54,44 @@ TO BE ADDED\n
         """
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input"
+        self.params['max_cassette_no_type'] = "configuration"
         self.params['time_new_cassette'] = 10
-        self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"        
+        self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
+        self.params['time_new_cassette_type'] = "automation"
         self.params['units_on_belt_input'] = 8
         self.params['units_on_belt_input_desc'] = "Number of units that fit on the belt between wafer source and printer"
+        self.params['units_on_belt_input_type'] = "configuration"
         
         self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one position on belts (seconds)"
+        self.params['time_step_type'] = "automation"
         self.params['time_print'] = 2.5
         self.params['time_print_desc'] = "Time to print one wafer (seconds)"
+        self.params['time_print_type'] = "process"
         self.params['time_dry'] = 90
         self.params['time_dry_desc'] = "Time for one wafer to go from printer to dryer and "
         self.params['time_dry_desc'] += "to next input (printing or firing) (seconds)"
+        self.params['time_dry_type'] = "process"
         
         self.params['no_print_steps'] = 3
         self.params['no_print_steps_desc'] = "Number of print and dry stations"
+        self.params['no_print_steps_type'] = "configuration"
         
         self.params['firing_tool_length'] = 10.0
-        self.params['firing_tool_length_desc'] = "Length of last dryer and firing furnace (meters)"
+        self.params['firing_tool_length_desc'] = "Travel distance for wafers in the last dryer and firing furnace (meters)"
+        self.params['firing_tool_length_type'] = "configuration"
         self.params['firing_belt_speed'] = 5.0 # 5 is roughly 200 ipm
         self.params['firing_belt_speed_desc'] = "Belt speed of last dryer and firing furnace (meters per minute)"
+        self.params['firing_belt_speed_type'] = "process"
 
         self.params['unit_distance'] = 0.2
-        self.params['unit_distance_desc'] = "Minimal distance between wafers on firing furnace (meters)"        
+        self.params['unit_distance_desc'] = "Minimal distance between wafers on firing furnace (meters)"
+        self.params['unit_distance_type'] = "configuration"
         
         self.params.update(_params)    
         

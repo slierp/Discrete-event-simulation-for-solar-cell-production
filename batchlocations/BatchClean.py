@@ -40,60 +40,80 @@ TO BE ADDED\n
         """
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 400
         self.params['batch_size_desc'] = "Number of units in a single process batch"
+        self.params['batch_size_type'] = "configuration"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
+        self.params['max_cassette_no_type'] = "configuration"
         
         self.params['oxetch0_baths'] = 1
         self.params['oxetch0_baths_desc'] = "Number of baths for first oxide etch"
-        self.params['oxetch0_time'] = 2*60
-        self.params['oxetch0_time_desc'] = "Time for a single oxide etch process (seconds)"
+        self.params['oxetch0_baths_type'] = "configuration"
+        self.params['oxetch0_time'] = 2
+        self.params['oxetch0_time_desc'] = "Time for a single oxide etch process (minutes)"
+        self.params['oxetch0_time_type'] = "process"
         
         self.params['rinse0_baths'] = 1
         self.params['rinse0_baths_desc'] = "Number of rinse baths after first oxide etch"
-        self.params['rinse0_time'] = 5*60
-        self.params['rinse0_time_desc'] = "Time for a single rinse cycle after first oxide etch (seconds)"
+        self.params['rinse0_baths_type'] = "configuration"
+        self.params['rinse0_time'] = 5
+        self.params['rinse0_time_desc'] = "Time for a single rinse cycle after first oxide etch (minutes)"
+        self.params['rinse0_time_type'] = "process"
         
         self.params['chemox_baths'] = 1
         self.params['chemox_baths_desc'] = "Number of baths for chemical oxidation"
-        self.params['chemox_time'] = 5*60
-        self.params['chemox_time_desc'] = "Time for a single chemical oxidation process (seconds)"
+        self.params['chemox_baths_type'] = "configuration"
+        self.params['chemox_time'] = 5
+        self.params['chemox_time_desc'] = "Time for a single chemical oxidation process (minutes)"
+        self.params['chemox_time_type'] = "process"
         
         self.params['rinse1_baths'] = 1
         self.params['rinse1_baths_desc'] = "Number of rinse baths after chemical oxidation"
-        self.params['rinse1_time'] = 5*60
-        self.params['rinse1_time_desc'] = "Time for a single rinse cycle after chemical oxidation (seconds)"
+        self.params['rinse1_baths_type'] = "configuration"
+        self.params['rinse1_time'] = 5
+        self.params['rinse1_time_desc'] = "Time for a single rinse cycle after chemical oxidation (minutes)"
+        self.params['rinse1_time_type'] = "process"
         
         self.params['oxetch1_baths'] = 1
         self.params['oxetch1_baths_desc'] = "Number of baths for second oxide etch"
-        self.params['oxetch1_time'] = 2*60
-        self.params['oxetch1_time_desc'] = "Time for a single oxide etch process (seconds)"
+        self.params['oxetch1_baths_type'] = "configuration"
+        self.params['oxetch1_time'] = 2
+        self.params['oxetch1_time_desc'] = "Time for a single oxide etch process (minutes)"
+        self.params['oxetch1_time_type'] = "process"
 
         self.params['rinse2_baths'] = 1
         self.params['rinse2_baths_desc'] = "Number of rinse baths after second oxide etch"
-        self.params['rinse2_time'] = 5*60
-        self.params['rinse2_time_desc'] = "Time for a single rinse cycle after second oxide etch (seconds)"
+        self.params['rinse2_baths_type'] = "configuration"
+        self.params['rinse2_time'] = 5
+        self.params['rinse2_time_desc'] = "Time for a single rinse cycle after second oxide etch (minutes)"
+        self.params['rinse2_time_type'] = "process"
 
         self.params['dryer_count'] = 2
         self.params['dryer_count_desc'] = "Number of dryers"
-        self.params['dry_time'] = 10*60
-        self.params['dry_time_desc'] = "Time for a single dry cycle (seconds)"
+        self.params['dryer_count_type'] = "configuration"
+        self.params['dry_time'] = 10
+        self.params['dry_time_desc'] = "Time for a single dry cycle (minutes)"
+        self.params['dry_time_type'] = "process"
         
         self.params['transfer0_time'] = 60
-        self.params['transfer0_time_desc'] = "Time for single transfer by transporter (seconds)"
+        self.params['transfer0_time_desc'] = "Time for single transfer by transporter 0 (seconds)"
+        self.params['transfer0_time_type'] = "automation"
         
         self.params['transfer1_time'] = 60
-        self.params['transfer1_time_desc'] = "Time for single transfer by transporter (seconds)"
+        self.params['transfer1_time_desc'] = "Time for single transfer by transporter 1 (seconds)"
+        self.params['transfer1_time_type'] = "automation"
 
         self.params['transfer2_time'] = 60
-        self.params['transfer2_time_desc'] = "Time for single transfer by transporter (seconds)"
+        self.params['transfer2_time_desc'] = "Time for single transfer by transporter 2 (seconds)"
+        self.params['transfer2_time_type'] = "automation"
 
         self.params['transfer3_time'] = 60
-        self.params['transfer3_time_desc'] = "Time for single transfer by transporter (seconds)"
+        self.params['transfer3_time_desc'] = "Time for single transfer by transporter 3 (seconds)"
+        self.params['transfer3_time_type'] = "automation"
         
         self.params.update(_params)
         
@@ -106,7 +126,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "h" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['oxetch0_time']
+            process_params['process_time'] = 60*self.params['oxetch0_time']
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         first_rinse0 = self.params['oxetch0_baths']              
@@ -114,7 +134,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['rinse0_time']       
+            process_params['process_time'] = 60*self.params['rinse0_time']       
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_chemox = first_rinse0 + self.params['rinse0_baths']
@@ -122,7 +142,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "o" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['chemox_time']         
+            process_params['process_time'] = 60*self.params['chemox_time']         
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_rinse1 = first_chemox + self.params['chemox_baths']
@@ -130,7 +150,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['rinse1_time']          
+            process_params['process_time'] = 60*self.params['rinse1_time']          
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_oxetch1 = first_rinse1 + self.params['rinse1_baths']
@@ -138,7 +158,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "h" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['oxetch1_time']            
+            process_params['process_time'] = 60*self.params['oxetch1_time']            
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_rinse2 = first_oxetch1 + self.params['oxetch1_baths']            
@@ -146,7 +166,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['rinse2_time']          
+            process_params['process_time'] = 60*self.params['rinse2_time']          
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_dryer = first_rinse2 + self.params['rinse2_baths'] 
@@ -154,7 +174,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "d" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['dry_time']
+            process_params['process_time'] = 60*self.params['dry_time']
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         ### Add output ###
@@ -249,11 +269,11 @@ TO BE ADDED\n
             
     def nominal_throughput(self):
         throughputs = []        
-        throughputs.append(self.params['batch_size']*self.params['oxetch0_baths']*3600/self.params['oxetch0_time'])
-        throughputs.append(self.params['batch_size']*self.params['rinse0_baths']*3600/self.params['rinse0_time'])
-        throughputs.append(self.params['batch_size']*self.params['chemox_baths']*3600/self.params['chemox_time'])
-        throughputs.append(self.params['batch_size']*self.params['rinse1_baths']*3600/self.params['rinse1_time'])
-        throughputs.append(self.params['batch_size']*self.params['oxetch1_baths']*3600/self.params['oxetch1_time'])
-        throughputs.append(self.params['batch_size']*self.params['rinse2_baths']*3600/self.params['rinse2_time'])
-        throughputs.append(self.params['batch_size']*self.params['dryer_count']*3600/self.params['dry_time'])        
+        throughputs.append(self.params['batch_size']*self.params['oxetch0_baths']*3600/(60*self.params['oxetch0_time']))
+        throughputs.append(self.params['batch_size']*self.params['rinse0_baths']*3600/(60*self.params['rinse0_time']))
+        throughputs.append(self.params['batch_size']*self.params['chemox_baths']*3600/(60*self.params['chemox_time']))
+        throughputs.append(self.params['batch_size']*self.params['rinse1_baths']*3600/(60*self.params['rinse1_time']))
+        throughputs.append(self.params['batch_size']*self.params['oxetch1_baths']*3600/(60*self.params['oxetch1_time']))
+        throughputs.append(self.params['batch_size']*self.params['rinse2_baths']*3600/(60*self.params['rinse2_time']))
+        throughputs.append(self.params['batch_size']*self.params['dryer_count']*3600/(60*self.params['dry_time']))
         return min(throughputs)            

@@ -64,34 +64,45 @@ TO BE ADDED\n
         """
 
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual tool"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"       
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 5
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
+        self.params['max_cassette_no_type'] = "configuration"
         self.params['batch_size'] = 200
-        self.params['batch_size_desc'] = "Number of units in a single process batch"         
+        self.params['batch_size_desc'] = "Number of units in a single process batch"
+        self.params['batch_size_type'] = "configuration"
         self.params['transfer0_time'] = 30
-        self.params['transfer0_time_desc'] = "Time for single batch transfer from input to loadlock (seconds)"        
+        self.params['transfer0_time_desc'] = "Time for single batch transfer from input to loadlock (seconds)"
+        self.params['transfer0_time_type'] = "automation"
         self.params['transfer1_time'] = 30
         self.params['transfer1_time_desc'] = "Time for single batch transfer from loadlock to output (seconds)"
+        self.params['transfer1_time_type'] = "automation"
 
         self.params['evacuation_time'] = 240
         self.params['evacuation_time_desc'] = "Time for single loadlock evacuation (seconds)"
+        self.params['evacuation_time_type'] = "process"
         self.params['repressurization_time'] = 90
         self.params['repressurization_time_desc'] = "Time for single loadlock repressurization (seconds)"
+        self.params['repressurization_time_type'] = "process"
 
-        self.params['implant_belt_speed'] = 6
-        self.params['implant_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"        
-        self.params['implant_belt_length'] = 2
+        self.params['implant_belt_speed'] = 6.0
+        self.params['implant_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
+        self.params['implant_belt_speed_type'] = "process"
+        self.params['implant_belt_length'] = 2.0
         self.params['implant_belt_length_desc'] = "Distance between loadlock and buffer cassette (meters)"
+        self.params['implant_belt_length_type'] = "configuration"
         self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
+        self.params['unit_distance_type'] = "configuration"
         
         self.params['downtime_interval'] = 100
         self.params['downtime_interval_desc'] = "Interval between downtime cycles (hours)"
-        self.params['downtime_duration'] = 3600
-        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
+        self.params['downtime_interval_type'] = "downtime"
+        self.params['downtime_duration'] = 60
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
+        self.params['downtime_duration_type'] = "downtime"
         
         self.params.update(_params)
         
@@ -257,7 +268,7 @@ class loadlock(QtCore.QObject):
         with self.resource.request() as request:
             yield request
             self.status = 0                   
-            yield self.env.timeout(self.params['downtime_duration'])
+            yield self.env.timeout(60*self.params['downtime_duration'])
             self.status = 1
             self.last_downtime = self.env.now
 

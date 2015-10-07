@@ -53,43 +53,57 @@ TO BE ADDED\n
         """
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['cassette_size'] = 100
         self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and output"
+        self.params['max_cassette_no_type'] = "configuration"
         self.params['time_new_cassette'] = 10
         self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
+        self.params['time_new_cassette_type'] = "automation"
 
         self.params['no_trays'] = 8
         self.params['no_trays_desc'] = "Number of trays that cycle through the system"
+        self.params['no_trays_type'] = "configuration"
         self.params['no_tray_rows'] = 6
         self.params['no_tray_rows_desc'] = "Number of rows in the tray (equal to number of units on conveyors)"
+        self.params['no_tray_rows_type'] = "configuration"
         self.params['no_tray_columns'] = 4
         self.params['no_tray_columns_desc'] = "Number of columns in the tray"
+        self.params['no_tray_columns_type'] = "configuration"
         self.params['tray_load_unload_time'] = 5
         self.params['tray_load_unload_time_desc'] = "Time for loading/unloading one tray row (seconds)"
+        self.params['tray_load_unload_time_type'] = "automation"
         
         self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one unit distance on input/output conveyor (seconds)"
+        self.params['time_step_type'] = "automation"
   
         self.params['process_chamber_length'] = 6.0
         self.params['process_chamber_length_desc'] = "Tray transport distance in the process chamber (meters)" 
+        self.params['process_chamber_length_type'] = "configuration"
         self.params['process_chamber_speed'] = 5.0
         self.params['process_chamber_speed_desc'] = "Tray speed in process chamber (meters per minute)" 
+        self.params['process_chamber_speed_type'] = "process"
         
         self.params['time_loadlock'] = 30
-        self.params['time_loadlock_desc'] = "Time for load-in/out and evacuation/venting procedures in both load-locks (seconds)"           
+        self.params['time_loadlock_desc'] = "Time for load-in/out and evacuation/venting procedures in both load-locks (seconds)"
+        self.params['time_loadlock_type'] = "process"
 
         self.params['tray_return_speed'] = 10.0
         self.params['tray_return_speed_desc'] = "Tray speed during transport back to load-in position (meters per minute)"
+        self.params['tray_return_speed_type'] = "automation"
         self.params['tray_return_distance'] = 8.0
         self.params['tray_return_distance_desc'] = "Tray transport distance for return to load-in position (meters)"
+        self.params['tray_return_distance_type'] = "automation"
 
         self.params['downtime_interval'] = 160
-        self.params['downtime_interval_desc'] = "Number of hours before downtime"
+        self.params['downtime_interval_desc'] = "Time interval for tool downtime (hours)"
+        self.params['downtime_interval_type'] = "downtime"
         self.params['downtime_duration'] = 8
-        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (hours)"                
+        self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (hours)"
+        self.params['downtime_duration_type'] = "downtime"
         
         self.params.update(_params)
         

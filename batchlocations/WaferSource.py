@@ -29,13 +29,15 @@ TO BE ADDED\n
         """        
         
         self.params['name'] = ""
-        self.params['name_desc'] = "Name of the individual batch location"
         self.params['batch_size'] = 400
-        self.params['batch_size_desc'] = "Number of units in a single batch"
+        self.params['batch_size_desc'] = "Number of units in a single stack"
+        self.params['batch_size_type'] = "configuration"
         self.params['time_limit'] = 0
         self.params['time_limit_desc'] = "Time limit for sourcing batches (seconds)"
+        self.params['time_limit_type'] = "automation"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between wafer sourcing attempts (seconds)"
+        self.params['wait_time_type'] = "automation"
         self.params.update(_params)
         
         self.batch_size = self.params['batch_size']

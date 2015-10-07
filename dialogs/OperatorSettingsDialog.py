@@ -54,24 +54,22 @@ class OperatorSettingsDialog(QtGui.QDialog):
         vbox = QtGui.QVBoxLayout() # vbox for all settings  
         
         self.strings = []
-        for i in curr_params:
-            if ("_desc" in i) | ('specification' in i):
-                continue
-            elif isinstance(curr_params[i], str):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])
-                self.strings.append(QtGui.QLineEdit(curr_params[i]))
-                self.strings[-1].setObjectName(i)
-                if i + "_desc" in curr_params:
-                    self.strings[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(self.strings[-1]) 
-                hbox.addWidget(description)
-                hbox.addStretch(1)                 
-                vbox.addLayout(hbox)
+        
+        # Make QLineEdit for name
+        hbox = QtGui.QHBoxLayout()
+        self.strings.append(QtGui.QLineEdit(curr_params['name']))
+        self.strings[-1].setObjectName(curr_params['name'])
+        self.strings[-1].setMaxLength(5)
+        description = QtGui.QLabel('Name of the individual operator')
+        self.strings[-1].setToolTip('Name of the individual operator')
+        hbox.addWidget(self.strings[-1]) 
+        hbox.addWidget(description)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
         
         self.integers = []
         for i in curr_params:
-            if isinstance(curr_params[i], int) & (not i == 'verbose'):
+            if isinstance(curr_params[i], int):
                 hbox = QtGui.QHBoxLayout()
                 description = QtGui.QLabel(curr_params[i + "_desc"])
                 self.integers.append(QtGui.QSpinBox())
