@@ -83,18 +83,11 @@ TO BE ADDED\n
         self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers on firing furnace (meters)"        
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)    
         
         self.time_dry = self.params['time_dry']        
         self.no_print_steps = self.params['no_print_steps'] 
         self.time_fire = int(60*self.params['firing_tool_length']//self.params['firing_belt_speed'])
-#        self.verbose = self.params['verbose'] #DEBUG
-        
-#        if (self.params['verbose']): #DEBUG     
-#            string = str(self.env.now) + " - [PrintLine][" + self.params['name'] + "] Added a print line" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
 
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -111,7 +104,7 @@ TO BE ADDED\n
         time_out = []
         time_out.append(self.params['time_step'])
         time_out.append(self.params['time_print'])
-        if (max(time_out) < (60*self.params['unit_distance']/self.params['firing_belt_speed'])):
+        if (not (self.output_text == None)) and (max(time_out) < (60*self.params['unit_distance']/self.params['firing_belt_speed'])):
             string = "[PrintLine][" + self.params['name'] + "] <span style=\"color: red\">WARNING: Wafer distance in firing furnace below set minimum</span>"
             self.output_text.sig.emit(string)
 
@@ -160,7 +153,6 @@ TO BE ADDED\n
         time_new_cassette = self.params['time_new_cassette']
         cassette_size = self.params['cassette_size']
         wafer_available = False
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             yield self.next_step
@@ -179,9 +171,8 @@ TO BE ADDED\n
                 wafer_available = False
                 wafer_counter += 1
                 
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+#                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
                     
             if (wafer_counter == cassette_size):
                 # if current cassette is empty and there are more cassettes available, delay to load a new cassette                                   
@@ -190,7 +181,6 @@ TO BE ADDED\n
            
     def run_printer(self, num):
         time_step = self.params['time_step']
-#        verbose = self.params['verbose'] #DEBUG
         time_outs = []
         time_outs.append(time_step)
         time_outs.append(self.params['time_print'])
@@ -216,9 +206,8 @@ TO BE ADDED\n
                     
                 yield self.env.timeout(time_out) # belt movement time determined by the slowest: print time or by belt speed
               
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num) #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+#                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num) #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
 
                 # place wafer in dryer or firing furnace after printing
                 if (num < (self.no_print_steps-1)):
@@ -244,18 +233,16 @@ TO BE ADDED\n
         yield self.env.timeout(self.time_dry)
         self.belts[num+1][0] = True
             
-#        if (self.verbose): #DEBUG
-#            string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num) #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
+#        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num) #DEBUG
+#        self.output_text.sig.emit(string) #DEBUG
 
     def fire_wafer(self): # inline process is continuous so it requires a timeout       
             
         yield self.env.timeout(self.time_fire)
         yield self.output.container.put(1)
         
-#        if (self.verbose): #DEBUG
-#            string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
+#        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer" #DEBUG
+#        self.output_text.sig.emit(string) #DEBUG
     
     def nominal_throughput(self):
         throughputs = []        

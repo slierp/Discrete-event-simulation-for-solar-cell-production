@@ -130,7 +130,7 @@ class RunSimulationThread(QtCore.QObject):
             if (i == self.params['time_limit']):                
                 string = "<b>Finished at "  + str(int(self.env.now // 3600)) + " hours</b>"
                 self.output.sig.emit(string)                            
-            elif i in percentage_updates: #% (self.params['time_limit'] // 10) == 0):
+            elif i in percentage_updates:
                 
                 l_loc = len(self.locationgroups)
                 percentage_production_volume_update = 0
@@ -172,7 +172,7 @@ class RunSimulationThread(QtCore.QObject):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
 
         self.output.sig.emit("<b>Production volume: " + str(prod_vol) + "</b>")
-        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.params['time_limit'])) + "</b>")        
+        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)) + "</b>")        
         
         self.signal.sig.emit('Simulation finished')
     
@@ -199,11 +199,36 @@ class RunSimulationThread(QtCore.QObject):
             prev_prod_volumes.append(0)
         
         ### Run simulation ###
-        self.output.sig.emit("<b>Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration</b>")
+        self.output.sig.emit("<b>Simulation started in profiling mode with " + str(self.params['time_limit'] // (60*60)) + " hour duration</b>")
+
+        prev_production_volume_update = 0
+        prev_time = self.env.now
 
         while True:
+            if(self.stop_simulation):
+                string = "<b>Stopped at "  + str(int(self.env.now // 3600)) + " hours</b>"
+                self.output.sig.emit(string) 
+                break                
+            
             curr_time += 3600            
             self.env.run(curr_time)
+
+            if ((curr_time % 36000) == 0):                
+                l_loc = len(self.locationgroups)
+                production_volume_update = 0
+                for j in range(len(self.locationgroups[l_loc-1])):
+                    production_volume_update += self.locationgroups[l_loc-1][j].output.container.level
+                    
+                wph_update = (production_volume_update - prev_production_volume_update)
+                wph_update = 3600 * wph_update / (self.env.now - prev_time)                
+                
+                # float needed for very large integer division                
+                string = "<span style=\"color: red\">" + str(int(self.env.now // 3600)) + " hours progress</span> - "
+                string += str(production_volume_update) + " produced (" + str(int(wph_update)) + " wph)"
+                self.output.sig.emit(string)
+
+                prev_time = self.env.now
+                prev_production_volume_update = production_volume_update                
                         
             prod_volumes = []
             for i in range(len(self.batchlocations)):
@@ -223,6 +248,23 @@ class RunSimulationThread(QtCore.QObject):
         self.prod_rates_df.index += 1
         self.prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
 
+        ### Generate summary output in log tab ###
+        string = "<br><b>Production result summary</>"
+        self.output.sig.emit(string)
+
+        for i, value in enumerate(self.batchlocations):
+            self.batchlocations[i].report()
+
+        for i, value in enumerate(self.operators):
+            self.operators[i].report()
+
+        ### Generate utilization output for special tab ###
+        utilization_list = []
+        for i, value in enumerate(self.batchlocations):
+            if len(self.batchlocations[i].utilization):
+                utilization_list.append(self.batchlocations[i].utilization)
+        self.util.sig.emit(utilization_list)
+
         ### Calculate sum of all produced cells ###
         prod_vol = 0
         l_loc = len(self.locationgroups)
@@ -230,6 +272,6 @@ class RunSimulationThread(QtCore.QObject):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
         
         self.output.sig.emit("<b>Production volume: " + str(prod_vol) + "</b>")
-        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.params['time_limit'])) + "</b>")        
+        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)) + "</b>")        
         
         self.signal.sig.emit('Simulation finished')        

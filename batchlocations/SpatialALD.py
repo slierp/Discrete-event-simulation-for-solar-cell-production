@@ -77,20 +77,14 @@ TO BE ADDED\n
         self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers on belts (meters)"        
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
         
         self.time_step = self.params['time_step']
-        
-#        if (self.params['verbose']): #DEBUG     
-#            string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "] Added a spatial ALD tool" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
 
         ### Give warning for collisons ###
-#        if (self.params['time_step'] > self.params['time_process']):
-#            string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "]  <span style=\"color: red\">WARNING: Wafer collisions are likely with present settings</span>"
-#            self.output_text.sig.emit(string)
+#        if (not (self.output_text == None)) and (self.params['time_step'] > self.params['time_process']):
+#           string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "]  <span style=\"color: red\">WARNING: Wafer collisions are likely with present settings</span>"
+#           self.output_text.sig.emit(string)
 
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])

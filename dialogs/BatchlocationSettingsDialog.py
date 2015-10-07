@@ -118,13 +118,13 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1)
         vbox_description.addLayout(hbox)
 
-        ### Add specification text ###
-        hbox = QtGui.QHBoxLayout()         
-        spec = QtGui.QLabel(curr_params['specification'])
-        spec.setWordWrap(True)
-        hbox.addWidget(spec)
+        ### Add specification text ###   
+        hbox = QtGui.QHBoxLayout()           
+        browser = QtGui.QTextBrowser()
+        browser.insertHtml(curr_params['specification'])
+        browser.moveCursor(QtGui.QTextCursor.Start)        
+        hbox.addWidget(browser)
         vbox_description.addLayout(hbox)
-        vbox_description.addStretch(1)
         
         generic_widget_description = QtGui.QWidget()
         generic_widget_description.setLayout(vbox_description)

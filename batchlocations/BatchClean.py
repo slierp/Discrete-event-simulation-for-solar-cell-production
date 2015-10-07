@@ -95,13 +95,7 @@ TO BE ADDED\n
         self.params['transfer3_time'] = 60
         self.params['transfer3_time_desc'] = "Time for single transfer by transporter (seconds)"
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
-        
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " - [BatchClean][" + self.params['name'] + "] Added a batch cleaning machine" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
         
         ### Add input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])        
@@ -113,7 +107,6 @@ TO BE ADDED\n
             process_params['name'] = "h" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['oxetch0_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         first_rinse0 = self.params['oxetch0_baths']              
@@ -121,8 +114,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['rinse0_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG         
+            process_params['process_time'] = self.params['rinse0_time']       
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_chemox = first_rinse0 + self.params['rinse0_baths']
@@ -130,8 +122,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "o" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['chemox_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG            
+            process_params['process_time'] = self.params['chemox_time']         
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_rinse1 = first_chemox + self.params['chemox_baths']
@@ -139,8 +130,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['rinse1_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG            
+            process_params['process_time'] = self.params['rinse1_time']          
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_oxetch1 = first_rinse1 + self.params['rinse1_baths']
@@ -148,8 +138,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "h" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['oxetch1_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG            
+            process_params['process_time'] = self.params['oxetch1_time']            
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_rinse2 = first_oxetch1 + self.params['oxetch1_baths']            
@@ -157,8 +146,7 @@ TO BE ADDED\n
             process_params = {}
             process_params['name'] = "r" + str(i)
             process_params['batch_size'] = self.params['batch_size']
-            process_params['process_time'] = self.params['rinse2_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG           
+            process_params['process_time'] = self.params['rinse2_time']          
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         first_dryer = first_rinse2 + self.params['rinse2_baths'] 
@@ -167,7 +155,6 @@ TO BE ADDED\n
             process_params['name'] = "d" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['dry_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         ### Add output ###
@@ -186,8 +173,7 @@ TO BE ADDED\n
 
         transport_params = {}
         transport_params['name'] = "cl0"
-        transport_params['batch_size'] = self.params['batch_size']
-#        transport_params['verbose'] = self.params['verbose'] #DEBUG      
+        transport_params['batch_size'] = self.params['batch_size']      
         self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between first rinse, chemical oxidation and second rinse ###
@@ -204,8 +190,7 @@ TO BE ADDED\n
 
         transport_params = {}
         transport_params['name'] = "cl1"
-        transport_params['batch_size'] = self.params['batch_size']
-#        transport_params['verbose'] = self.params['verbose'] #DEBUG        
+        transport_params['batch_size'] = self.params['batch_size']        
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between second rinse, second oxide etch, third rinse and dryers ###
@@ -226,8 +211,7 @@ TO BE ADDED\n
 
         transport_params = {}
         transport_params['name'] = "cl2"
-        transport_params['batch_size'] = self.params['batch_size']
-#        transport_params['verbose'] = self.params['verbose'] #DEBUG        
+        transport_params['batch_size'] = self.params['batch_size']        
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
         ### Batch transporter between dryers and output ###
@@ -240,7 +224,6 @@ TO BE ADDED\n
         transport_params = {}
         transport_params['name'] = "cl3"
         transport_params['batch_size'] = self.params['batch_size']
-#        transport_params['verbose'] = self.params['verbose'] #DEBUG
         self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
     def report(self):

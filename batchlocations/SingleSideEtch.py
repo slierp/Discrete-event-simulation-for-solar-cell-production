@@ -53,18 +53,12 @@ TO BE ADDED\n
         self.params['downtime_duration'] = 60*60
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)         
         
         self.transport_counter = 0
         self.start_time = self.env.now
         self.first_run = True
         self.process_counter = 0      
-        
-#        if (self.params['verbose']): #DEBUG
-#            string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "] Added a single side etch" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
         
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -119,7 +113,6 @@ TO BE ADDED\n
         downtime_duration = self.params['downtime_duration']
         no_of_lanes = self.params['no_of_lanes']
         time_step = 60*self.params['unit_distance']/self.params['belt_speed']
-#        verbose = self.params['verbose'] #DEBUG
     
         while True:
             if (downtime_volume > 0) & (self.process_counter >= downtime_volume):
@@ -128,9 +121,8 @@ TO BE ADDED\n
                     self.idle_times_internal[i] += downtime_duration
                 self.process_counter = 0
                 
-#                if self.params['verbose']: #DEBUG
-#                    string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "][" + str(lane_number) + "] End downtime" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+#                string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "][" + str(lane_number) + "] End downtime" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
 
             if (self.input.container.level > lane_number):
                 # all lanes are started simultaneously, so only continue if there are enough wafers for this particular lane
@@ -143,11 +135,10 @@ TO BE ADDED\n
                 self.lanes[lane_number][0] = True
                 self.process_counter += 1               
                 
-#                #if (verbose): #DEBUG
-#                #    if ((self.process_counter % self.params['cassette_size']) == 0): #DEBUG      
-#                #        string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] " #DEBUG
-#                #        string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number) #DEBUG
-#                #        self.output_text.sig.emit(string) #DEBUG
+#                if ((self.process_counter % self.params['cassette_size']) == 0): #DEBUG      
+#                    string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] " #DEBUG
+#                    string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number) #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
                         
             elif not self.first_run:
                 # start counting down-time after first run

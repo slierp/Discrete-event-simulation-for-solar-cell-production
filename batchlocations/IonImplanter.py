@@ -93,13 +93,7 @@ TO BE ADDED\n
         self.params['downtime_duration'] = 3600
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (seconds)"
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
-        self.params.update(_params)           
-        
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " [IonImplanter][" + self.params['name'] + "] Added an ion implanter" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
+        self.params.update(_params)
         
         ### Input buffer ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -188,9 +182,8 @@ class loadlock(QtCore.QObject):
         self.start_time = 0
         self.last_downtime = 0
         
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " - [Loadlock][" + self.params['name'] + "] Added loadlock" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
+#        string = str(self.env.now) + " - [Loadlock][" + self.params['name'] + "] Added loadlock" #DEBUG
+#        self.output_text.sig.emit(string) #DEBUG
             
         self.env.process(self.run())        
 
@@ -198,7 +191,6 @@ class loadlock(QtCore.QObject):
         batch_size = self.params['batch_size']
         evacuation_time = self.params['evacuation_time']
         repressurization_time = self.params['repressurization_time']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             yield self.start            
@@ -240,9 +232,8 @@ class loadlock(QtCore.QObject):
                     yield self.env.timeout(repressurization_time)
                     self.process_finished = 1
                     
-#                    if (verbose): #DEBUG
-#                        string = str(self.env.now) + " [Loadlock][" + self.name + "] End process " #DEBUG
-#                        self.output_text.sig.emit(string) #DEBUG
+#                    string = str(self.env.now) + " [Loadlock][" + self.name + "] End process " #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
 
     def start_process(self):
         self.start.succeed()
@@ -289,9 +280,8 @@ class implant_lane(QtCore.QObject):
         self.idle_time = 0
         self.resource = simpy.Resource(self.env, 1)        
         
-#        if (self.params['verbose']): #DEBUG
-#            string = str(int(self.env.now)) + " [ImplantLane][" + self.params['name'] + "] Added an implant lane" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG        
+#        string = str(int(self.env.now)) + " [ImplantLane][" + self.params['name'] + "] Added an implant lane" #DEBUG
+#        self.output_text.sig.emit(string) #DEBUG        
 
         ### Array of zeroes represents lane ###          
         self.lane = collections.deque([False for rows in range(int(self.params['implant_belt_length']//self.params['unit_distance']))])            
@@ -347,9 +337,8 @@ class implant_lane(QtCore.QObject):
                 self.lane.rotate(-1)    
                 yield self.env.timeout(time_step)
     
-#            if (self.params['verbose']): #DEBUG
-#                string = str(self.env.now) + " - [ImplantLane][" + self.params['name'] + "] Processed one cassette" #DEBUG
-#                self.output_text.sig.emit(string) #DEBUG
+#            string = str(self.env.now) + " - [ImplantLane][" + self.params['name'] + "] Processed one cassette" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
             
             self.implant_process_finished.succeed()
             self.prev_time = self.env.now

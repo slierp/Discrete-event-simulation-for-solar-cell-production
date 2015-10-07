@@ -41,19 +41,22 @@ When the processes are finished the boats are transferred to a cooldown shelf an
 There is a downtime procedure in light of the required boat cleaning after using it for a defined number of depositions.
 The cleaning itself is done externally but the boats need to undergo a coating run before re-using them.
 <h3>Description of the algorithm</h3>
-The main loop is primarily concerned with the boat transport inside the tool, as described in the list below.
-If conditions are met it will ask for a load-in or load-out of wafers in a boat in the loadstation.
-<ul>
+The main loop is primarily concerned with the boat transport inside the tool, as described in the list below:
+<ol>
 <li>Go into downtime mode if a set number of processes has been run and all wafers were loaded out</li>
 <li>Try to move boat from furnace to cooldown; try full boats first</li>
 <li>Try to move boat from cooldown to loadstation; try full boats first</li>
 <li>Perform action on boat in loadstation depending on state of boat and wafers:</li>
-<ul>
+<ol>
 <li>Perform coating run on empty boat if boat has been used for a set number of times</li>
 <li>Start wafer load-in if boat is empty and wafers are available, except if downtime is required</li>
 <li>If boat is sitting idle and there are batches in the system that need to be loaded out, check idle time and move boat to furnace if it is too long</li>
 <li>If boat is full and not yet processed, try to move it to a furnace for processing</li>
-</ul></ul>
+</ol></ol>
+<p>The wafer loading and unloading actions are separate processes that are triggered by the main loop.
+The actions themselves consists of a simple series of load/unload steps.
+In each load/unload step the automation loadsize is transferred into or out of the boat in the loadstation with a set delay.
+The process batch size therefore needs to be a multiple of the automation loadsize.</p>
         """
 
         self.params['name'] = ""
@@ -113,6 +116,11 @@ If conditions are met it will ask for a load-in or load-out of wafers in a boat 
         self.load_in_start = self.env.event()
         self.load_out_start = self.env.event()
         self.process_counter = 0
+        
+        ### Check automation loadsize ###
+        if (not (self.output_text == None)) and (self.params['batch_size'] % self.params['automation_loadsize']):
+            string = "[TubePECVD][" + self.params['name'] + "] <span style=\"color: red\">WARNING: Automation loadsize is not a multiple of batch size. Automation will not work.</span>"
+            self.output_text.sig.emit(string)        
         
         ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])

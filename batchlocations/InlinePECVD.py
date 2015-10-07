@@ -91,17 +91,11 @@ TO BE ADDED\n
         self.params['downtime_duration'] = 8
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (hours)"                
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)
         
         self.start_time = 0
         self.first_run = True        
         self.transport_counter = 0
-        
-#        if (self.params['verbose']): #DEBUG     
-#            string = str(self.env.now) + " - [InlinePECVD][" + self.params['name'] + "] Added an inline PECVD tool" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
         
         ### Input ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -163,7 +157,6 @@ TO BE ADDED\n
         wafer_available = False
         downtime_interval = 3600*self.params['downtime_interval']
         downtime_duration = 3600*self.params['downtime_duration']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             
@@ -189,9 +182,8 @@ TO BE ADDED\n
                 if(not self.input_conveyor[-1]):
                     self.input_conveyor.rotate(1)                                
                 
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Put wafer from cassette on load-in conveyor" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Put wafer from cassette on load-in conveyor" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
                     
             if (wafer_counter == cassette_size):
                 # if current cassette is empty then delay to load a new cassette                                   
@@ -202,9 +194,8 @@ TO BE ADDED\n
                     yield self.env.timeout(downtime_duration)
                     last_downtime = self.env.now
 
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] End downtime" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG                    
+#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] End downtime" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG                    
                 
             yield self.env.timeout(time_step)                
 
@@ -236,9 +227,8 @@ TO BE ADDED\n
                         else:
                             yield self.env.timeout(1)
 
-#            if self.params['verbose']: #DEBUG
-#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully loaded with " + str(self.trays[current_tray].container.level) + " wafers" #DEBUG
-#                self.output_text.sig.emit(string) #DEBUG
+#            string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully loaded with " + str(self.trays[current_tray].container.level) + " wafers" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
 
             self.tray_state[current_tray] += 1
             
@@ -345,9 +335,8 @@ TO BE ADDED\n
                         else:
                             yield self.env.timeout(1)
 
-#            if self.params['verbose']: #DEBUG
-#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully unloaded" #DEBUG
-#                self.output_text.sig.emit(string) #DEBUG
+#            string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Tray " + str(current_tray) + " fully unloaded" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
 
             self.tray_state[current_tray] += 1        
                 
@@ -404,9 +393,8 @@ TO BE ADDED\n
                                 
                 wafer_counter += 1
 
-#                if self.params['verbose']: #DEBUG
-#                    string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Put wafer from load-out conveyor into cassette" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG                
+#                string = str(self.env.now) + " [InlinePECVD][" + self.params['name'] + "] Put wafer from load-out conveyor into cassette" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG                
                 
             else:               
                 self.output_conveyor.rotate(-1)                                              

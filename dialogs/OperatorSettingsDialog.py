@@ -41,10 +41,11 @@ class OperatorSettingsDialog(QtGui.QDialog):
         
         ### Add specification text ###
         hbox = QtGui.QHBoxLayout()           
-        spec = QtGui.QLabel(curr_params['specification'])           
-        spec.setWordWrap(True)
-        hbox.addWidget(spec)
-        vbox_description.addLayout(hbox)             
+        browser = QtGui.QTextBrowser()
+        browser.insertHtml(curr_params['specification'])
+        browser.moveCursor(QtGui.QTextCursor.Start)        
+        hbox.addWidget(browser)
+        vbox_description.addLayout(hbox)        
 
         generic_widget_description = QtGui.QWidget()
         generic_widget_description.setLayout(vbox_description)

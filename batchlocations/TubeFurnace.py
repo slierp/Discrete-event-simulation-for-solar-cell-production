@@ -79,8 +79,6 @@ TO BE ADDED. The number of batches in the system is limited by the no_of_boats v
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between boat transport attempts (seconds)"
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)        
 
         self.transport_counter = 0
@@ -89,10 +87,6 @@ TO BE ADDED. The number of batches in the system is limited by the no_of_boats v
         self.load_in_start = self.env.event()
         self.load_out_start = self.env.event()
         self.load_in_out_end = self.env.event()
-        
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " - [TubeFurnace][" + self.params['name'] + "] Added a tube furnace" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
         
         ### Add input and boat load/unload location ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
@@ -105,7 +99,6 @@ TO BE ADDED. The number of batches in the system is limited by the no_of_boats v
             process_params['name'] = "t" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['process_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
 
         ### Add cooldown processes ###
@@ -115,7 +108,6 @@ TO BE ADDED. The number of batches in the system is limited by the no_of_boats v
             process_params['name'] = "c" + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = self.params['cool_time']
-#            process_params['verbose'] = self.params['verbose'] #DEBUG
             self.coolprocesses.append(BatchProcess(self.env,self.output_text,process_params))            
             
         ### Add output ###
@@ -164,7 +156,6 @@ TO BE ADDED. The number of batches in the system is limited by the no_of_boats v
         transfer2_time = self.params['transfer2_time']
         no_of_boats = self.params['no_of_boats']
         wait_time = self.params['wait_time']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             if (downtime_runs > 0) & (self.process_counter >= downtime_runs) & \

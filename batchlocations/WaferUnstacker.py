@@ -53,13 +53,7 @@ TO BE ADDED\n
         self.params['time_pick_and_place'] = 1.0
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds)"
         
-#        self.params['verbose'] = False #DEBUG
-#        self.params['verbose_desc'] = "Enable to get updates on various functions within the tool" #DEBUG
         self.params.update(_params)    
-
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " - [WaferUnstacker][" + self.params['name'] + "] Added a wafer unstacker" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         #self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
@@ -83,7 +77,6 @@ TO BE ADDED\n
         time_pick_and_place = self.params['time_pick_and_place']
         stack_size = self.params['stack_size']
         time_step = self.params['time_step']
-#        verbose = self.params['verbose'] #DEBUG
         wafer_available = False
         
         while True:
@@ -102,10 +95,9 @@ TO BE ADDED\n
                 self.belt[0] = True
                 wafer_available = False
                 unit_counter += 1
-                
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from stack onto belt" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+                                
+#            string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from stack onto belt" #DEBUG
+#            self.output_text.sig.emit(string) #DEBUG
 
             if (unit_counter == stack_size):
                 # if current stack is empty and there are more stacks available, delay to load a new stack                
@@ -118,8 +110,7 @@ TO BE ADDED\n
         current_load = 0
         cassette_size = self.params['cassette_size']
         time_new_cassette = self.params['time_new_cassette']
-        time_step = self.params['time_step']
-#        verbose = self.params['verbose'] #DEBUG   
+        time_step = self.params['time_step'] 
         
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):
@@ -129,9 +120,8 @@ TO BE ADDED\n
                 yield self.env.timeout(time_step)                
                 current_load += 1              
                 
-#                if (verbose): #DEBUG
-#                    string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
+#                string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
+#                self.output_text.sig.emit(string) #DEBUG
             
             elif (not self.belt[-1]):
                 # move belt if no wafer available

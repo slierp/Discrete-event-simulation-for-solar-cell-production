@@ -17,7 +17,6 @@ class BatchProcess(QtCore.QObject):
         self.params['downtime_runs'] = 0
         self.params['downtime_time'] = 0
         self.params['downtime_duration'] = 0
-#        self.params['verbose'] = False #DEBUG
         self.params.update(_params)        
         
         self.name = self.params['name']
@@ -31,10 +30,6 @@ class BatchProcess(QtCore.QObject):
         self.last_downtime = 0
         self.status = 1 # up or down
         self.container = simpy.Container(self.env,capacity=self.params['batch_size'],init=0)
-        
-#        if (self.params['verbose']): #DEBUG
-#            string = str(self.env.now) + " - [BatchProcess][" + self.params['name'] + "] Added default batch process" #DEBUG
-#            self.output_text.sig.emit(string) #DEBUG
             
         self.env.process(self.run())
         
@@ -44,7 +39,6 @@ class BatchProcess(QtCore.QObject):
     def run(self):
         batch_size = self.params['batch_size']
         process_time = self.params['process_time']
-#        verbose = self.params['verbose'] #DEBUG
         
         while True:
             yield self.start
@@ -61,9 +55,8 @@ class BatchProcess(QtCore.QObject):
                     self.process_counter += 1
                     self.process_time_counter += process_time
                     
-#                    if (verbose): #DEBUG
-#                        string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process " #DEBUG
-#                        self.output_text.sig.emit(string) #DEBUG
+#                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process " #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
             
     def space_available(self,_batch_size):
         # see if space is available for the specified _batch_size
@@ -86,7 +79,6 @@ class BatchProcess(QtCore.QObject):
         # check repeatedly whether time limit has been reached
         downtime_time = self.params['downtime_time']
         downtime_duration = self.params['downtime_duration']
-#        verbose = self.params['verbose'] #DEBUG
     
         while True:
             yield self.env.timeout(1)
@@ -103,9 +95,8 @@ class BatchProcess(QtCore.QObject):
                     self.process_counter = 0
                     self.last_downtime = self.env.now
 
-#                    if (self.params['verbose']): #DEBUG
-#                        string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime " #DEBUG
-#                        self.output_text.sig.emit(string) #DEBUG
+#                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime " #DEBUG
+#                    self.output_text.sig.emit(string) #DEBUG
 
     def downtime_cycle(self):
         # perform downtime cycle
@@ -117,7 +108,6 @@ class BatchProcess(QtCore.QObject):
             self.process_counter = 0
             self.last_downtime = self.env.now
 
-#        if (self.params['verbose']): #DEBUG
 #            string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime " #DEBUG
 #            self.output_text.sig.emit(string) #DEBUG
         
