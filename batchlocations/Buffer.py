@@ -22,10 +22,11 @@ class Buffer(QtCore.QObject):
         
         self.params['specification'] = """
 <h3>General description</h3>
-A buffer is used to store wafers temporarily.\n
+A buffer is used to store cassettes temporarily.
+The space available in the buffer can be configured.\n
 <h3>Description of the algorithm</h3>
-TO BE ADDED\n
-        """        
+A buffer is not an active process.\n
+        """
         
         self.params['name'] = ""
         self.params['cassette_size'] = 100

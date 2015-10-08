@@ -27,8 +27,6 @@ class WaferUnstacker(QtCore.QObject):
 <h3>General description</h3>
 WaferUnstacker accepts a number of stacks of wafers. A pick and place machine puts wafers one by one on a belt.
 The belt then transfers the wafers into cassettes.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
         
         self.params['name'] = ""

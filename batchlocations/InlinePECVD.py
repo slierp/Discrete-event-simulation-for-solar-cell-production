@@ -48,8 +48,6 @@ Deposition trays are loaded one belt row at a time and they subsequently go thro
 Wafers are unloaded one row at a time onto the load-out conveyor and then placed back into cassettes.
 After the deposition the trays are returned to the original position.
 There is a downtime procedure defined for the whole tool, which is for the required deposition chamber cleaning procedure.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
         
         self.params['name'] = ""

@@ -29,8 +29,6 @@ Each lane runs independently and continuously, but can only accept a new unit af
 Each lane is fed separately with new wafers with no interruption for exchanging cassettes.
 There is a downtime procedure available where the whole tool goes down for a certain period after running a set number of wafers.
 Such downtimes are required for exchanging the etching solution.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
 
         self.params['name'] = ""

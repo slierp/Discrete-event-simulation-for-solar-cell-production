@@ -49,8 +49,6 @@ A spatial ALD is used to deposit dielectric layers for surface passivation.
 The machine accepts cassettes which are unloaded one wafer at a time
 Each wafer travels on the main conveyor to a number of depositions units.
 After the process the wafers are placed back on the conveyor and travel to the output.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
         
         self.params['name'] = ""

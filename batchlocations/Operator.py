@@ -18,8 +18,6 @@ class Operator(QtCore.QObject):
 An operator instance functions as a wafer transporter between tools.
 It will regularly check whether a transport action is possible, considering the input and output status of the various tools that it was assigned to.
 If no transport was possible then it will wait a set amount of time before trying again.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
         
         self.params['name'] = ""

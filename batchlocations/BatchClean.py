@@ -35,8 +35,6 @@ class BatchClean(QtCore.QObject):
         self.params['specification'] = """
 <h3>General description</h3>
 A batch clean is used for cleaning wafers whilst loaded into special cassettes that can withstand harsh chemicals.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
         
         self.params['name'] = ""

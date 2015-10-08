@@ -34,8 +34,6 @@ class BatchTex(QtCore.QObject):
 A batch texture is used for etching wafers to create a surface texture.
 The wafers are loaded into special cassettes that can withstand harsh chemicals.
 There is a downtime procedure defined for the texturing baths, during which the texturing solution is replaced.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
 
         self.params['name'] = ""

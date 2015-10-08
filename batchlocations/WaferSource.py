@@ -24,8 +24,6 @@ class WaferSource(QtCore.QObject):
         self.params['specification'] = """
 <h3>General description</h3>
 WaferSource is an imaginary machine that sources stacks of wafers.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """        
         
         self.params['name'] = ""

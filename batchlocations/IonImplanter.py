@@ -59,8 +59,6 @@ Subsequently, the wafers are processed on belts and enter into buffer cassettes.
 When the buffer cassette is full, the wafers return on the same belt to the loadlock.
 After repressurization the cassettes are placed in the output buffer.
 There is a downtime procedure available during which maintenance is performed.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED\n
         """
 
         self.params['name'] = ""
