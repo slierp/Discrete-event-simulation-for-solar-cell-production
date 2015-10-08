@@ -29,6 +29,17 @@ Each lane runs independently and continuously, but can only accept a new unit af
 Each lane is fed separately with new wafers with no interruption for exchanging cassettes.
 There is a downtime procedure available where the whole tool goes down for a certain period after running a set number of wafers.
 Such downtimes are required for exchanging the etching solution.\n
+<h3>Description of the algorithm</h3>
+There are three types of program loops to run the tool:
+<ol>
+<li>An independent loop for wafer load-in to each lane.
+There is currently no delay for exchanging empty cassettes for full ones.</li>
+<li>Wafer transport consists of single process that progresses wafers along all lanes with fixed time increments.
+The time increment is determined by the belt speed and unit distance.</li>
+<li>Wafer load-out is done with the same time increment and for all lanes at the same time.</li>
+</ol>
+<p>The downtime procedure pauses the wafer load-in process for a set duration.</p>
+\n
         """
 
         self.params['name'] = ""

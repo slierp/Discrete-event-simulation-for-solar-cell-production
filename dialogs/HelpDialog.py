@@ -121,7 +121,6 @@ There are scripts available in the cython-simpy_scripts directory in the source 
 
 <p><h2><a name="example">Simulation definition example</a></h2></p>
 <p>As an example we try to define a line that consists of a single tool, which is a tube furnace.</p>
-<p><img src="dialogs/example.png" alt="" height="120" width="640"></p>
 <ol>
 <li>Remove the default production line that is loaded at program start-up.
 Click on the 'remove' button underneath the 'Tools' window.</li>

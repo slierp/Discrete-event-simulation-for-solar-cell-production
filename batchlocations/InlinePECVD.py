@@ -6,13 +6,7 @@ from batchlocations.BatchContainer import BatchContainer
 import collections
 
 """
-
-No separate versions implemented for different applications
-Single ARC / double-sided nitride / AlOx plus double-sided nitride can be simulated using a longer process chamber length
-However, AlOx strictly speaking requires an additional loadlock for gas separation
-
 TODO
-Finish utilization implementation > how to define idle time?
 
 """
 
@@ -47,7 +41,24 @@ The machine accepts cassettes which are unloaded one wafer at a time onto a belt
 Deposition trays are loaded one belt row at a time and they subsequently go through the machine.
 Wafers are unloaded one row at a time onto the load-out conveyor and then placed back into cassettes.
 After the deposition the trays are returned to the original position.
-There is a downtime procedure defined for the whole tool, which is for the required deposition chamber cleaning procedure.\n
+<p>The tool implementation can be used for different applications (single ARC / double-side AR / AlOx) by using a longer process chamber length,
+although the addition AlOx strictly speaking requires an additional loadlock for gas separation.</p>
+<p>There is a downtime procedure defined where the whole tool goes down for maintenance, which simulates the required deposition chamber cleaning procedure.</p>\n
+<h3>Description of the algorithm</h3>
+There are 8 separate processes that perform actions in the tool:
+<ol>
+<li>Transport wafers from cassettes onto belt, one wafer at a time</li>
+<li>Place wafers from belt into tray, one tray row at a time</li>
+<li>Load tray into evacuation chamber and perform evacuation</li>
+<li>Transport tray inside process chamber</li>
+<li>Load tray into venting chamber and perform repressurization</li>
+<li>Place wafers from tray onto belt, one tray row at a time</li>
+<li>Transport wafers from belt into cassettes, one wafer at a time</li>
+<li>Transport empty trays back to the load-in position</li>
+</ol>
+The downtime procedure for tool maintenance pauses the wafer load-in process for a set duration.
+The downtime cycle interval countdown starts once the first wafers are loaded into the tool. 
+\n
         """
         
         self.params['name'] = ""
@@ -106,7 +117,9 @@ There is a downtime procedure defined for the whole tool, which is for the requi
         self.params.update(_params)
         
         self.start_time = 0
-        self.first_run = True        
+        self.first_run = True
+        self.trays_running = 0
+        self.idle_time = 0
         self.transport_counter = 0
         
         ### Input ###
@@ -132,7 +145,8 @@ There is a downtime procedure defined for the whole tool, which is for the requi
         self.env.process(self.run_tray_load_in())
         self.env.process(self.run_tray_load_out())        
         self.env.process(self.run_evacuate_chamber())
-        self.env.process(self.run_process_chamber())        
+        self.env.process(self.run_process_chamber())
+        self.env.process(self.idle_time_counter())
         self.env.process(self.run_venting_chamber())
         self.env.process(self.run_tray_return())
 
@@ -151,11 +165,11 @@ There is a downtime procedure defined for the whole tool, which is for the requi
         else:
             self.utilization.append(0)            
         
-        #if self.first_run:
-        #    idle_time = 100.0
-        #elif ((self.env.now-self.start_time) > 0):
-        #    idle_time = 100.0*self.idle_time_internal/(self.env.now-self.start_time[i])
-        #self.utilization.append(["p",round(idle_time,1)])           
+        if self.first_run:
+            idle_time = 0
+        elif ((self.env.now-self.start_time) > 0):
+            idle_time = 100-100.0*self.idle_time/(self.env.now-self.start_time)
+        self.utilization.append(["Lane 0",round(idle_time,1)])           
 
     def prod_volume(self):
         return self.transport_counter
@@ -291,11 +305,26 @@ There is a downtime procedure defined for the whole tool, which is for the requi
 
     def run_process(self,current_tray,time_process):
         
+        self.trays_running += 1
+        
         with self.tray[current_tray].oper_resource.request() as request:            
             yield request
             yield self.env.timeout(time_process)
         
+        self.trays_running -= 1
         self.tray_state[current_tray] += 1
+
+    def idle_time_counter(self):
+        
+        while True:
+            if self.first_run: # skip idle time count until first process
+                yield self.env.timeout(10)
+                continue
+            
+            if not self.trays_running: # if no tray in process chamber count as idle time
+                self.idle_time += 10
+            
+            yield self.env.timeout(10)              
         
     def run_venting_chamber(self):
         current_tray = 0

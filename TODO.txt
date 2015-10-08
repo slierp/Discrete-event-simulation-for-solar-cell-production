@@ -1,7 +1,6 @@
 PrintLine > implement screen change and screen clean
 Implement new default parameters
+Add algorithm descriptions
 Add laser opening process step
 Implement microstops; keep operator busy with it
-Add algorithm descriptions
-Add utilization for inlinePECVD
 Add maintenance engineer for addressing microstops?
