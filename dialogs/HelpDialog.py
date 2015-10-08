@@ -131,7 +131,7 @@ Click on the 'remove' button underneath the 'Tools' window.</li>
 <li>Automatically add one operator for each tool connection.
 Click on 'Import tools' underneath the operators window.</li>
 <li>Make sure that the batch sizes are equal for each tool connection.
-Double-click on the added WaferSource and go to Settings. Change 'Number of units in a single batch' to 100.</li>
+Double-click on the added WaferSource and go to Settings. Change 'Number of units in a single stack' to 100.</li>
 </ol>
 
 <p>Now you can click on 'Run simulation' in the top buttonbar to start the simulation.

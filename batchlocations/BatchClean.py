@@ -124,7 +124,7 @@ TO BE ADDED\n
         self.batchprocesses = []
         for i in range(0,self.params['oxetch0_baths']):
             process_params = {}
-            process_params['name'] = "h" + str(i)
+            process_params['name'] = "HF " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['oxetch0_time']
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -132,7 +132,7 @@ TO BE ADDED\n
         first_rinse0 = self.params['oxetch0_baths']              
         for i in range(0,self.params['rinse0_baths']):
             process_params = {}
-            process_params['name'] = "r" + str(i)
+            process_params['name'] = "Rinse " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['rinse0_time']       
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -140,7 +140,7 @@ TO BE ADDED\n
         first_chemox = first_rinse0 + self.params['rinse0_baths']
         for i in range(0,self.params['chemox_baths']):
             process_params = {}
-            process_params['name'] = "o" + str(i)
+            process_params['name'] = "Oxid " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['chemox_time']         
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -148,7 +148,7 @@ TO BE ADDED\n
         first_rinse1 = first_chemox + self.params['chemox_baths']
         for i in range(0,self.params['rinse1_baths']):
             process_params = {}
-            process_params['name'] = "r" + str(i)
+            process_params['name'] = "Rinse " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['rinse1_time']          
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -156,7 +156,7 @@ TO BE ADDED\n
         first_oxetch1 = first_rinse1 + self.params['rinse1_baths']
         for i in range(0,self.params['oxetch1_baths']):
             process_params = {}
-            process_params['name'] = "h" + str(i)
+            process_params['name'] = "HF " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['oxetch1_time']            
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -164,7 +164,7 @@ TO BE ADDED\n
         first_rinse2 = first_oxetch1 + self.params['oxetch1_baths']            
         for i in range(0,self.params['rinse2_baths']):
             process_params = {}
-            process_params['name'] = "r" + str(i)
+            process_params['name'] = "Rinse " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['rinse2_time']          
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -172,7 +172,7 @@ TO BE ADDED\n
         first_dryer = first_rinse2 + self.params['rinse2_baths'] 
         for i in range(0,self.params['dryer_count']):
             process_params = {}
-            process_params['name'] = "d" + str(i)
+            process_params['name'] = "Dry " + str(i)
             process_params['batch_size'] = self.params['batch_size']
             process_params['process_time'] = 60*self.params['dry_time']
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
@@ -262,7 +262,7 @@ TO BE ADDED\n
             self.utilization.append(0)
         
         for i in range(len(self.batchprocesses)):
-            self.utilization.append([self.batchprocesses[i].name,round(self.batchprocesses[i].idle_time(),1)])                 
+            self.utilization.append([self.batchprocesses[i].name,round(100-self.batchprocesses[i].idle_time(),1)])                 
 
     def prod_volume(self):
         return self.transport3.transport_counter

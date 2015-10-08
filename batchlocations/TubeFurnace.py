@@ -223,10 +223,10 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         for i in range(self.params['no_of_processes']):
             if ((self.env.now - self.furnace_start_time[0]) > 0):
-                util = 100-100*(self.furnace_runs[i]*60*self.params['process_time'])/(self.env.now - self.furnace_start_time[0])
+                util = 100*(self.furnace_runs[i]*60*self.params['process_time'])/(self.env.now - self.furnace_start_time[0])
             else:
-                util = 100
-            self.utilization.append(["p" + str(i),round(util,1)])
+                util = 0
+            self.utilization.append(["Tube " + str(i),round(util,1)])
 
     def prod_volume(self):
         return self.transport_counter

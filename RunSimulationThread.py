@@ -141,7 +141,7 @@ class RunSimulationThread(QtCore.QObject):
                 percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
                 
                 # float needed for very large integer division                
-                string = "<span style=\"color: red\">" + str(round(100*float(i)/self.params['time_limit'])) + "% progress</span> - " + str(round(i/3600,1)) + " hours / "
+                string = str(round(100*float(i)/self.params['time_limit'])) + "% progress - " + str(round(i/3600,1)) + " hours / "
                 string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
                 self.output.sig.emit(string)
 
@@ -223,7 +223,7 @@ class RunSimulationThread(QtCore.QObject):
                 wph_update = 3600 * wph_update / (self.env.now - prev_time)                
                 
                 # float needed for very large integer division                
-                string = "<span style=\"color: red\">" + str(int(self.env.now // 3600)) + " hours progress</span> - "
+                string = str(int(self.env.now // 3600)) + " hours progress - "
                 string += str(production_volume_update) + " produced (" + str(int(wph_update)) + " wph)"
                 self.output.sig.emit(string)
 

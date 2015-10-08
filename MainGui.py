@@ -376,7 +376,7 @@ class MainGui(QtGui.QMainWindow):
             # clear idle tab and reset headers
             self.table_widget.clear()
         
-            headerlabels = ['Tool type','Name','Nominal','Util rate']
+            headerlabels = ['Tool type','Name','Nominal','Utilization']
             for i in range(4,35):
                 headerlabels.append("Process " + str(i-4))
             self.table_widget.setHorizontalHeaderLabels(headerlabels)
@@ -454,27 +454,37 @@ class MainGui(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot(list)
     def utilization_output(self,utilization):
+      
+        self.table_widget.setRowCount(len(utilization))
+        
+        max_length = 0
+        for i in range(len(utilization)):
+            if len(utilization[i]) > max_length:
+                max_length = len(utilization[i])
+                
+        self.table_widget.setColumnCount(max_length)
+        self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
+
+        headerlabels = ['Tool type','Name','Nominal','Utilization']
+        for i in range(4,15):
+            headerlabels.append("Process " + str(i-4))
+        self.table_widget.setHorizontalHeaderLabels(headerlabels)
+        self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
         for i, value in enumerate(utilization):
-            item0 = QtGui.QTableWidgetItem(utilization[i][0])
-            item1 = QtGui.QTableWidgetItem(utilization[i][1])
-            item2 = QtGui.QTableWidgetItem(str(int(utilization[i][2])))
-            item3 = QtGui.QTableWidgetItem(str(int(utilization[i][3])) + "%")
+            item0 = QtGui.QTableWidgetItem(utilization[i][0]) # Tool type
+            item1 = QtGui.QTableWidgetItem(utilization[i][1]) # Tool name
+            item2 = QtGui.QTableWidgetItem(str(int(utilization[i][2]))) # Nominal throughput
+            item3 = QtGui.QTableWidgetItem(str(int(utilization[i][3])) + "%") # Overall utilization
             self.table_widget.setItem(i, 0, item0)
             self.table_widget.setItem(i, 1, item1)
             self.table_widget.setItem(i, 2, item2)
             self.table_widget.setItem(i, 3, item3)            
             
             for j in range(4,len(utilization[i])):
-                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + "-" + str(utilization[i][j][1]) + "%")
+                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + "\n" + str(utilization[i][j][1]) + "%")
                 self.table_widget.setItem(i, j, item)
-                
-                if (utilization[i][j][1] < 10): color_code = QtGui.QColor(255,255,255)
-                elif (utilization[i][j][1] < 25): color_code = QtGui.QColor(255,200,200)
-                elif (utilization[i][j][1] < 50): color_code = QtGui.QColor(255,150,150)
-                else: color_code = QtGui.QColor(255,100,100)
-                    
-                self.table_widget.item(i, j).setBackground(color_code)
 
     @QtCore.pyqtSlot(str)
     def simulation_end_signal(self):
@@ -656,18 +666,6 @@ class MainGui(QtGui.QMainWindow):
         
         bottom_tabwidget = QtGui.QTabWidget()
         bottom_tabwidget.addTab(self.edit, QtCore.QString("Activity"))
-
-        ##### Idle time tab #####       
-        self.table_widget.setRowCount(64)
-        self.table_widget.setColumnCount(35)
-        self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
-
-        headerlabels = ['Tool type','Name','Nominal','Util rate']
-        for i in range(4,35):
-            headerlabels.append("Process " + str(i-4))
-        self.table_widget.setHorizontalHeaderLabels(headerlabels)
-        self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
                 
         bottom_tabwidget.addTab(self.table_widget, QtCore.QString("Utilization"))
         

@@ -161,10 +161,10 @@ TO BE ADDED\n
 
         for i in range(0,2):
             if self.batchprocesses[0].first_run:
-                idle_time = 100.0
+                idle_time = 0
             else:
-                idle_time = 100.0*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
-            self.utilization.append(["l" + str(i),round(idle_time,1)])
+                idle_time = 100-100.0*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
+            self.utilization.append(["Lane " + str(i),round(idle_time,1)])
 
     def prod_volume(self):
         return self.transport1.transport_counter

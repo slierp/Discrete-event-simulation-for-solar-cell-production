@@ -149,10 +149,10 @@ TO BE ADDED\n
         
         for i in range(len(self.idle_times_internal)):
             if self.first_run[i]:
-                idle_time = 100.0
+                idle_time = 0
             elif ((self.env.now-self.start_time[i]) > 0):
-                idle_time = 100.0*self.idle_times_internal[i]/(self.env.now-self.start_time[i])
-            self.utilization.append(["p" + str(i),round(idle_time,1)])        
+                idle_time = 100-100.0*self.idle_times_internal[i]/(self.env.now-self.start_time[i])
+            self.utilization.append(["Print " + str(i),round(idle_time,1)])        
 
     def prod_volume(self):
         return self.output.container.level

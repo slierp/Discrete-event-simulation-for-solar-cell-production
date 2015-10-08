@@ -40,6 +40,13 @@ TO BE ADDED\n
         min_no_batches = self.params['min_no_batches']
         wait_time = self.params['wait_time']
         
+        for i in self.batchconnections:
+            if self.batchconnections[i][0].output.batch_size > self.batchconnections[i][1].input.batch_size:
+                string = "[Operator][" + self.params['name'] + "] <span style=\"color: red\">WARNING: "
+                string += "Tool connection has larger cassette or stack size at source than at destination."
+                string += "It may be impossible to fill the destination input, which then prevents the destination tool from starting.</span>"
+                self.output_text.sig.emit(string)
+        
         while True:
             for i in self.batchconnections:
                 units_needed = self.batchconnections[i][1].input.buffer_size - self.batchconnections[i][1].input.container.level
