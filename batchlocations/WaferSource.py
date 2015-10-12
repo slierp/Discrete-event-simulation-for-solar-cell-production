@@ -31,7 +31,7 @@ There is one simple loop that consists of three steps:
 <li>Check if a time limit has been set and whether it has been reached. Send message and exit loop if the latter is true.</li>
 <li>If the output container is empty insert a new wafer stack.</li>
 <li>Wait for a defined period of time.</li>
-<ol>
+</ol>
         """        
         
         self.params['name'] = ""
