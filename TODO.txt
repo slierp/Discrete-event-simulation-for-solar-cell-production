@@ -1,4 +1,5 @@
 PrintLine > implement screen change and screen clean
+Update TubePECVD/Furnace to start downtime count when all processes have finished; not when all batches are unloaded
 Implement new default parameters
 Add algorithm descriptions
 Add laser opening process step

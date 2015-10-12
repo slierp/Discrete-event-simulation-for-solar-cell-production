@@ -25,8 +25,27 @@ class WaferUnstacker(QtCore.QObject):
         self.params = {}
         self.params['specification'] = """
 <h3>General description</h3>
-WaferUnstacker accepts a number of stacks of wafers. A pick and place machine puts wafers one by one on a belt.
-The belt then transfers the wafers into cassettes.\n
+A WaferUnstacker is used to transfer wafer from stacks into cassettes.
+It accepts a number of stacks, one of which is placed in an unloading position.
+From that position the wafers are placed one by one onto a belt.
+The belt then transfers the wafers into cassettes at the output.
+When a cassette is full there is a time delay for loading a new cassette.\n
+<h3>Description of the algorithm</h3>
+There are two loops to simulate the tool, one for the wafer unstacking and one running the belt and the cassette loading.
+The loop that performs the wafer unstacking consists of the following steps:
+<ol>
+<li>Pick up a wafer if not already available</li>
+<li>If current wafer stack had been empty give a delay for loading a new stack</li>
+<li>If the first position on the belt is empty, load the wafer onto it</li>
+<li>Wait for a set time period, to simulate the pick and place action</li>
+</ol>
+The second loop consists of the following steps:
+<ol>
+<li>If wafer available at end of belt and there is space in the cassette transfer it to cassette</li>
+<li>If no wafer available at end of belt, move belt by one position</li>
+<li>If cassette is full, pause loop to simulate cassette replacement</li>
+</ol>
+\n
         """
         
         self.params['name'] = ""
@@ -47,22 +66,27 @@ The belt then transfers the wafers into cassettes.\n
         self.params['units_on_belt_type'] = "configuration"
         
         self.params['time_step'] = 1.0
-        self.params['time_step_desc'] = "Time for one wafer to progress one position on belt or into cassette (seconds)"
+        self.params['time_step_desc'] = "Time for one wafer to progress one position on belt or into cassette (seconds) (0.1 sec minimum)"
         self.params['time_step_type'] = "automation"
         self.params['time_new_cassette'] = 10
-        self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
+        self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a wafer loading position (seconds)"
         self.params['time_new_cassette_type'] = "automation"
         self.params['time_new_stack'] = 10
-        self.params['time_new_stack_desc'] = "Time for putting a new stack in unloading position (seconds)"
+        self.params['time_new_stack_desc'] = "Time for putting a new stack into the wafer unloading position (seconds)"
         self.params['time_new_stack_type'] = "automation"
         self.params['time_pick_and_place'] = 1.0
-        self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds)"
+        self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
         
         self.params.update(_params)    
 
+        if (self.params['time_step'] < 0.1): # enforce minimum time step
+            self.params['time_step'] = 0.1
+
+        if (self.params['time_pick_and_place'] < 0.1): # enforce minimum time step
+            self.params['time_pick_and_place'] = 0.1
+
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
-        #self.belt = BatchContainer(self.env,"belt",self.params['units_on_belt'],1)
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
