@@ -35,7 +35,7 @@ There are two loops to simulate the tool, one for the wafer unstacking and one r
 The loop that performs the wafer unstacking consists of the following steps:
 <ol>
 <li>Pick up a wafer if not already available</li>
-<li>If current wafer stack had been empty give a delay for loading a new stack</li>
+<li>If current wafer stack had been empty pause momentarily to simulate loading a new stack</li>
 <li>If the first position on the belt is empty, load the wafer onto it</li>
 <li>Wait for a set time period, to simulate the pick and place action</li>
 </ol>
@@ -43,7 +43,7 @@ The second loop consists of the following steps:
 <ol>
 <li>If wafer available at end of belt and there is space in the cassette transfer it to cassette</li>
 <li>If no wafer available at end of belt, move belt by one position</li>
-<li>If cassette is full, pause loop to simulate cassette replacement</li>
+<li>If cassette is full, pause momentarily to simulate cassette replacement</li>
 </ol>
 \n
         """

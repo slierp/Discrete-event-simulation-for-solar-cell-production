@@ -45,10 +45,41 @@ class SpatialALD(QtCore.QObject):
         
         self.params['specification'] = """
 <h3>General description</h3>
-A spatial ALD is used to deposit dielectric layers for surface passivation.
-The machine accepts cassettes which are unloaded one wafer at a time
+A spatial ALD is used to deposit dielectric layers on wafers in order to improve the surface passivation.
+The machine accepts cassettes which are unloaded one wafer at a time.
 Each wafer travels on the main conveyor to a number of depositions units.
-After the process the wafers are placed back on the conveyor and travel to the output.\n
+The deposition units consist of a pre-heating and a deposition chamber and each unit also has a small input and output conveyor next to it.
+After the process the wafers travel via the output conveyor onto the main conveyor and then move to the output.
+If there are not enough positions available at the output, the machine will pause the wafer to main conveyor automation.
+\n
+<h3>Description of the algorithm</h3>
+There are five types of loops that define the tool operation:
+<ol>
+<li>Transport of wafers from the input onto the main conveyor</li>
+<li>Movement of the main conveyor and tool load-out</li>
+<li>Loops that run input and output conveyor of deposition units</li>
+<li>Loops that run pre-heating chambers</li>
+<li>Loops that run deposition chambers</li>
+</ol>
+In loop 1 there are two steps:
+<ol>
+<li>Pick up a wafer from input if not already available</li>
+<li>If space available at the input of a deposition unit and at the tool output, place a wafer on the conveyor.
+The wafer is marked so that it will be picked up by the intended unit.
+To distribute wafers evenly, once a wafer has been placed and assigned to a unit, the next unit will receive priority to receive a wafer.</li>
+</ol>
+<p>Loop 2 contains only one step. The conveyor is moved forward one position and if the last position contains a wafer it is placed into the output.</p>
+Loop 3 is performed for each deposition unit and consists of four steps:
+<ol>
+<li>If last position on the input conveyor is empty, move the conveyor forward by one position</li>
+<li>If the input position on the main conveyor for this unit contains a wafer destined for this unit, place it on the input conveyor</li>
+<li>If last position on the output conveyor is empty, move the conveyor forward by one position</li>
+<li>If last position on the output conveyor is not empty, place the wafer onto the main conveyor</li>
+</ol>
+<p>Loop 4 consists of one step: If input conveyor contains a wafer and there is room available in the pre-heat chamber, take the wafer and keep it for a set time to simulate a pre-heating process.</p>
+<p>Loop 5 is similar to loop 4 in that it checks whether a wafer is available in the pre-heat chamber and if so, takes it for set period to simulate a deposition process.
+After the process the wafer is placed on the output conveyor of the deposition unit.</p>
+\n
         """
         
         self.params['name'] = ""

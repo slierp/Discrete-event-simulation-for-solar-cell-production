@@ -52,7 +52,7 @@ A batch clean is used for cleaning wafers whilst loaded into special cassettes t
         self.params['oxetch0_baths_desc'] = "Number of baths for first oxide etch"
         self.params['oxetch0_baths_type'] = "configuration"
         self.params['oxetch0_time'] = 2
-        self.params['oxetch0_time_desc'] = "Time for a single oxide etch process (minutes)"
+        self.params['oxetch0_time_desc'] = "Time for a single oxide etch process in the first bath (minutes)"
         self.params['oxetch0_time_type'] = "process"
         
         self.params['rinse0_baths'] = 1
@@ -80,7 +80,7 @@ A batch clean is used for cleaning wafers whilst loaded into special cassettes t
         self.params['oxetch1_baths_desc'] = "Number of baths for second oxide etch"
         self.params['oxetch1_baths_type'] = "configuration"
         self.params['oxetch1_time'] = 2
-        self.params['oxetch1_time_desc'] = "Time for a single oxide etch process (minutes)"
+        self.params['oxetch1_time_desc'] = "Time for a single oxide etch process in the second bath (minutes)"
         self.params['oxetch1_time_type'] = "process"
 
         self.params['rinse2_baths'] = 1

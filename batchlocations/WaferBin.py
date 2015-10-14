@@ -24,7 +24,16 @@ class WaferBin(QtCore.QObject):
 
         self.params['specification'] = """
 <h3>General description</h3>
-WaferBin is an imaginary machine that accepts cassettes and places them in an infinitely sized container.\n
+WaferBin is an imaginary machine that accepts wafer cassettes and places them in an infinitely sized container.
+The user can set a time period between attempts to place the cassettes into the container.\n
+\n
+<h3>Description of the algorithm</h3>
+There is one simple loop that consists of two steps:
+<ol>
+<li>Check if the number of wafers at the input is at least that of a cassette. If so, place one cassette in the container.</li>
+<li>Wait for a defined period of time</li>
+</ol>
+\n
         """         
         
         self.params['name'] = ""
@@ -34,7 +43,7 @@ WaferBin is an imaginary machine that accepts cassettes and places them in an in
         self.params['max_batch_no'] = 4
         self.params['max_batch_no_desc'] = "Number of input cassette positions"
         self.params['max_batch_no_type'] = "configuration"
-        self.params['wait_time'] = 60
+        self.params['wait_time'] = 10
         self.params['wait_time_desc'] = "Wait period between wafer removal attempts (seconds)"
         self.params['wait_time_type'] = "automation"
         self.params.update(_params)
