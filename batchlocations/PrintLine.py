@@ -46,9 +46,37 @@ class PrintLine(QtCore.QObject):
         self.params['specification'] = """
 <h3>General description</h3>
 A print line is used for screen-printing metallization pastes and for drying and firing the pastes afterwards.
-The machine accepts cassettes which are unloaded one unit at a time.
+The machine accepts cassettes which are unloaded one wafer at a time.
 Each wafer then travels to a number of printers and dryers, before entering a firing furnace.
 Lastly, all units are placed in an infinitely sized container.\n
+<h3>Description of the algorithm</h3>
+There are two types of loops to simulate the print line tool.
+The first one runs the wafer load-in process before the first printing step.
+The second loop runs the printers, so there is a separate instance for each printer.
+<p>The first loop for wafer load-in consists of the following steps:
+<ol>
+<li>Wait for signal from first printer</li>
+<li>Pick up a wafer if not already available</li>
+<li>If current cassette had been empty pause momentarily to simulate loading a new stack</li>
+<li>If the first position on the belt is empty, load the wafer onto it</li>
+</ol>
+The printer loop performs the following actions if there is a wafer available at the end of its input belt:
+<ol>
+<li>Remove wafer from input belt and move the belt forward by one position</li>
+<li>If the current printer is the first printer in the line, send a signal to the wafer load-in process to continue</li>
+<li>Wait for a certain amount of time to simulate the printing action.
+The waiting time can be the belt position movement time or the printing time, depending on which is higher.</li>
+<li>Start a separate process for drying or firing</li>
+</ol>
+The drying or firing processes hold the wafer for a set amount of time to simulate these processes.
+After a drying step the wafer is placed on the input belt of the next printer and after a firing step it is placed in an output container of infinite size.
+<p>If there is no wafer availalbe for printing then the second loop performs the following actions:</p>
+<ol>
+<li>Move the input belt forward by one position</li>
+<li>If the current printer is the first printer in the line, send a signal to the wafer load-in process to continue</li>
+<li>Wait for a set amount of time to simulate the belt movement action</li>
+</ol>
+\n
         """
         
         self.params['name'] = ""
