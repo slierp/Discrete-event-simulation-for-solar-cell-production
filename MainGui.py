@@ -28,7 +28,7 @@ class MainGui(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MainGui, self).__init__(parent)
         self.setWindowTitle(self.tr("Solar cell production simulation"))
-        self.setWindowIcon(QtGui.QIcon(":Logo_Tempress.png"))
+        self.setWindowIcon(QtGui.QIcon(":DescPro_icon.png"))
 
         ### Set initial geometry and center the window on the screen ###
         self.resize(1024, 576)
@@ -498,7 +498,7 @@ class MainGui(QtGui.QMainWindow):
         help_dialog.show() 
 
     def on_about(self):
-        msg = self.tr("Solar cell production simulation\nAuthor: Ronald Naber\nLicense: Public domain")
+        msg = self.tr("Solar cell production simulation\nAuthor: Ronald Naber\nContact: rnaber (AT) tempress.nl\nLicense: Public domain")
         QtGui.QMessageBox.about(self, self.tr("About the application"), msg)
     
     def create_main_frame(self):
