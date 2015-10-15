@@ -18,6 +18,18 @@ class Operator(QtCore.QObject):
 An operator instance functions as a wafer transporter between tools.
 It will regularly check whether a transport action is possible, considering the input and output status of the various tools that it was assigned to.
 If no transport was possible then it will wait a set amount of time before trying again.\n
+<h3>Description of the algorithm</h3>
+There is one loop that describes the functionality of the operator.
+The first step in this loop is to go over all the tool connections assigned to this operator and do the following:
+<ol>
+<li>For each connection check if wafers are available at the source and space available at destination</li>
+<li>Continue if it is possible to transport more than one cassette, or the user defined minimum of wafers</li>
+<li>Request a lock on the intended input and output to prevent other operators from performing actions on them</li>
+<li>If the lock was not provided immediately then another operator may have done something, so discontinue the transport</li>
+<li>Transport the wafers with a certain time delay according to the settings for this connection</li>
+</ol>
+If none of the tool connections allowed for a transport event, then the operator will wait for a set amount of time before restarting the loop.
+\n
         """
         
         self.params['name'] = ""
@@ -37,13 +49,18 @@ If no transport was possible then it will wait a set amount of time before tryin
         continue_loop = False
         min_no_batches = self.params['min_no_batches']
         wait_time = self.params['wait_time']
-        
+
+        # Generate warning for batch size mismatch
+        faulty_connections = 0        
         for i in self.batchconnections:
-            if self.batchconnections[i][0].output.batch_size > self.batchconnections[i][1].input.batch_size:
-                string = "[Operator][" + self.params['name'] + "] <span style=\"color: red\">WARNING: "
-                string += "Tool connection has larger cassette or stack size at source than at destination."
-                string += "It may be impossible to fill the destination input, which then prevents the destination tool from starting.</span>"
-                self.output_text.sig.emit(string)
+            if not (self.batchconnections[i][0].output.batch_size == self.batchconnections[i][1].input.batch_size):
+                faulty_connections += 1
+                
+        if faulty_connections:
+            string = "[Operator][" + self.params['name'] + "] <span style=\"color: red\">WARNING: "
+            string += str(faulty_connections) + " tool connections have dissimilar cassette or stack size at source and destination."
+            string += "It may be impossible to fill the destination input, which could then prevent the destination tool from starting.</span>"
+            self.output_text.sig.emit(string)
         
         while True:
             for i in self.batchconnections:
