@@ -27,6 +27,7 @@ class BatchTransport(QtCore.QObject):
     def run(self):
         batch_size = self.params['batch_size']
         wait_time = self.params['wait_time']
+        continue_loop = False        
         
         while True:
             for i in range(len(self.batchconnections)):
@@ -44,6 +45,7 @@ class BatchTransport(QtCore.QObject):
                             self.transport_counter += batch_size
                             yield self.batchconnections[i][1].container.put(batch_size)
                             self.batchconnections[i][1].start_process()
+                            continue_loop = True
                             
 #                            string =  str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
 #                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
@@ -65,6 +67,7 @@ class BatchTransport(QtCore.QObject):
                             yield self.batchconnections[i][1].container.put(batch_size)
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
+                            continue_loop = True
                             
 #                            string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
 #                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
@@ -93,10 +96,15 @@ class BatchTransport(QtCore.QObject):
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
                             self.batchconnections[i][1].start_process()
+                            continue_loop = True
                             
 #                            string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
 #                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
 #                            self.output_text.sig.emit(string) #DEBUG                                   
+
+            if (continue_loop): # restart loop without waiting if a transport action was performed
+                continue_loop = False
+                continue
                     
             yield self.env.timeout(wait_time)
             

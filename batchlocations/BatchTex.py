@@ -32,8 +32,40 @@ class BatchTex(QtCore.QObject):
         self.params['specification'] = """
 <h3>General description</h3>
 A batch texture is used for etching wafers to create a surface texture.
-The wafers are loaded into special cassettes that can withstand harsh chemicals.
-There is a downtime procedure defined for the texturing baths, during which the texturing solution is replaced.\n
+After the texturing step there is a neutralization and a drying step.
+The user can configure the tool by setting the number of baths for each process step and for the rinsing steps in between.
+It is also possible to configure the transportation time for each of the three transport machines inside the machine.
+There are three fixed transport machines inside the machine:
+<ul>
+<li>Transporter between input, texture baths and first rinse</li>
+<li>Transporter between first rinse, neutralization, second rinse  and dryers</li>
+<li>Transporter between dryers and output</li>
+</ul>
+There is a downtime procedure available for the texturing baths, to simulate the texturing solution replacement after a set number of process runs.
+\n
+<h3>Description of the algorithm</h3>
+The programming code that is specific to the texturing machine only defines the process baths and the transport connections between them.
+The actual processes and transport actions are then performed by generic algorithms.
+The main functions inside the process algorithm are:
+<ul>
+<li>Simulate processes by holding the wafers for a set amount of time.
+It places a resource lock onto itself during that time, to prevent any transporter from accessing the process bath.</li>
+<li>Checking for the need for downtime procedures</li>
+<li>Starting downtime procedures including a resource lock onto itself</li>
+</ul>
+All these functions in the process algorithm are triggered by the transport algorithm.
+This algorithm consists of a single loop that looks at the list of tool connections and checks if any of three actions are possible.
+The three possible actions depend on the type of toolconnection:
+<ol>
+<li>Toolconnection is from container to process chamber: Try to perform transport and start process</li>
+<li>Toolconnection is from process chamber to container: Try to perform transport and check if chamber requires downtime</li>
+<li>Toolconnection is process chamber to process chamber: Try to perform transport, check downtime and start new process</li>
+</ol>
+All transport actions include a set delay to simulate the time needed for the transport.
+If any action was possible while going over toolconnections list then the loop will restart with going over the list to search for possible actions.
+If no action was possible it will wait for a set amount of time (60 seconds by default) before trying again.
+
+\n
         """
 
         self.params['name'] = ""
