@@ -34,7 +34,41 @@ class BatchClean(QtCore.QObject):
 
         self.params['specification'] = """
 <h3>General description</h3>
-A batch clean is used for cleaning wafers whilst loaded into special cassettes that can withstand harsh chemicals.\n
+<p>A batch clean tool is used for cleaning wafers by creating a chemical oxide and then removing it.
+The first step is an HF dip to remove any existing oxide layer and it is followed by chemical oxidation, a second HF dip and a drying step.
+The user can configure the tool by setting the number of baths for each process step and for the rinsing steps in between.
+It is also possible to configure the transportation time for each of the four transport machines inside the machine.</p>
+There are four fixed transport machines inside the machine:
+<ul>
+<li>Transporter between input, first HF dip and first rinse</li>
+<li>Transporter between first rinse, chemical oxidation and second rinse</li>
+<li>Transporter between second rinse, second HF dip, third rinse and dryers</li>
+<li>Transporter between dryers and output</li>
+</ul>
+There is currently no downtime procedure available for this tool.
+\n
+<h3>Description of the algorithm</h3>
+The programming code that is specific to the cleaning machine only defines the process baths and the transport connections between them.
+The actual processes and transport actions are then performed by generic algorithms.
+The main functions inside the process algorithm are:
+<ul>
+<li>Simulate processes by holding the wafers for a set amount of time.
+It places a resource lock onto itself during that time, to prevent any transporter from accessing the process bath.</li>
+<li>Checking for the need for downtime procedures</li>
+<li>Starting downtime procedures including a resource lock onto itself</li>
+</ul>
+All these functions in the process algorithm are triggered by the transport algorithm.
+This algorithm consists of a single loop that looks at the list of tool connections and checks if any of three actions are possible.
+The three possible actions depend on the type of toolconnection:
+<ol>
+<li>Toolconnection is from container to process chamber: Try to perform transport and start process</li>
+<li>Toolconnection is from process chamber to container: Try to perform transport and check if chamber requires downtime</li>
+<li>Toolconnection is process chamber to process chamber: Try to perform transport, check downtime and start new process</li>
+</ol>
+All transport actions include a set delay to simulate the time needed for the transport.
+If any action was possible while going over toolconnections list then the loop will restart with going over the list to search for possible actions.
+If no action was possible it will wait for a set amount of time (60 seconds by default) before trying again.
+\n
         """
         
         self.params['name'] = ""

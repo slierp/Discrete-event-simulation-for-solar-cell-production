@@ -31,10 +31,10 @@ class BatchTex(QtCore.QObject):
         
         self.params['specification'] = """
 <h3>General description</h3>
-A batch texture is used for etching wafers to create a surface texture.
+<p>A batch texture is used for etching wafers to create a surface texture.
 After the texturing step there is a neutralization and a drying step.
 The user can configure the tool by setting the number of baths for each process step and for the rinsing steps in between.
-It is also possible to configure the transportation time for each of the three transport machines inside the machine.
+It is also possible to configure the transportation time for each of the three transport machines inside the machine.</p>
 There are three fixed transport machines inside the machine:
 <ul>
 <li>Transporter between input, texture baths and first rinse</li>
