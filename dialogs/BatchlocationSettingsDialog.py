@@ -152,23 +152,23 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
             vbox.addWidget(QtGui.QLabel(setting_type_titles[j]))
 
             if (j == "configuration"):
-                # Make QLineEdit for name
+                # Make QLineEdit for name in configuration tab
                 hbox = QtGui.QHBoxLayout()
                 self.strings.append(QtGui.QLineEdit(curr_params['name']))
-                self.strings[-1].setObjectName(curr_params['name'])
+                self.strings[-1].setObjectName('name')
                 self.strings[-1].setMaxLength(5)
                 description = QtGui.QLabel('Name of the individual tool')
                 self.strings[-1].setToolTip('Name of the individual tool')
-                hbox.addWidget(self.strings[-1]) 
+                hbox.addWidget(self.strings[-1])
                 hbox.addWidget(description)
                 hbox.addStretch(1)
-                vbox.addLayout(hbox) 
+                vbox.addLayout(hbox)
             
             for i in sorted(curr_params.keys()):
             # Make QSpinBox or QDoubleSpinbox for integers and doubles
                 if isinstance(curr_params[i], int) and (curr_params[i + "_type"] == j):
                     hbox = QtGui.QHBoxLayout()
-                    description = QtGui.QLabel(curr_params[i + "_desc"])                
+                    description = QtGui.QLabel(curr_params[i + "_desc"])              
                     self.integers.append(QtGui.QSpinBox())
                     self.integers[-1].setAccelerated(True)
                     self.integers[-1].setMaximum(999999999)
@@ -177,16 +177,16 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
                     if (curr_params[i] >= 100):
                         self.integers[-1].setSingleStep(100)
                     elif (curr_params[i] >= 10):
-                        self.integers[-1].setSingleStep(10)                     
+                        self.integers[-1].setSingleStep(10)      
                     if i + "_desc" in curr_params:
-                        self.integers[-1].setToolTip(curr_params[i + "_desc"])                  
-                    hbox.addWidget(self.integers[-1])  
+                        self.integers[-1].setToolTip(curr_params[i + "_desc"])
+                    hbox.addWidget(self.integers[-1])
                     hbox.addWidget(description)
-                    hbox.addStretch(1)                
+                    hbox.addStretch(1)
                     vbox.addLayout(hbox)
                 elif isinstance(curr_params[i], float) and (curr_params[i + "_type"] == j):
                     hbox = QtGui.QHBoxLayout()
-                    description = QtGui.QLabel(curr_params[i + "_desc"])                
+                    description = QtGui.QLabel(curr_params[i + "_desc"])
                     self.doubles.append(QtGui.QDoubleSpinBox())
                     self.doubles[-1].setAccelerated(True)
                     self.doubles[-1].setMaximum(999999999)

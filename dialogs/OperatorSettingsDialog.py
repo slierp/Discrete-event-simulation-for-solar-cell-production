@@ -58,7 +58,7 @@ class OperatorSettingsDialog(QtGui.QDialog):
         # Make QLineEdit for name
         hbox = QtGui.QHBoxLayout()
         self.strings.append(QtGui.QLineEdit(curr_params['name']))
-        self.strings[-1].setObjectName(curr_params['name'])
+        self.strings[-1].setObjectName('name')
         self.strings[-1].setMaxLength(5)
         description = QtGui.QLabel('Name of the individual operator')
         self.strings[-1].setToolTip('Name of the individual operator')
