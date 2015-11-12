@@ -6,7 +6,7 @@ help_text = """
 <html>
 <head><head/>
 <body>
-<h1>DescPro</h1>
+<h1>DESC Pro</h1>
 
 <ul>
 <li><a href="#general">Introduction</a></li>
@@ -16,7 +16,7 @@ help_text = """
 </ul>
 
 <p><h2><a name="general">Introduction</a></h2></p>
-<p>The aim of the DescPro program is to try to capture the dynamics of modern solar cell production lines using discrete event simulation techniques.
+<p>The aim of the DESC Pro program is to try to capture the dynamics of modern solar cell production lines using discrete event simulation techniques.
 All process and transportation events within the whole line can in principle be included in the simulations, which gives the advantage
 that dynamic aspects such as planned maintenance and random micro-stops can easily be taken into account.
 Some of the potential uses of the technique are as follows:</p>
@@ -109,13 +109,13 @@ In the chart window there is a buttonbar for selecting or deselecting data to sh
 <p><b>Speeding up simulations</b></p>
 <p>
 Discrete event simulations in principle cannot run across multiple CPU threads, so it not possible to speed up a simulation in this way.
-However, it is possible to run multiple simulations at the same time by running multiple instances of the DescPro program.
+However, it is possible to run multiple simulations at the same time by running multiple instances of the DESC Pro program.
 Depending on the system configuration and the number of simulations the calculation time can be the same as when running a single simulation.
 </p>
 <p>
-If one is familiar with Python and is using the DescPro program from source code then the recommendation for speeding up simulations is by using Cython on the SimPy library or by using PyPy.
+If one is familiar with Python and is using the DESC Pro program from source code then the recommendation for speeding up simulations is by using Cython on the SimPy library or by using PyPy.
 Both techniques can give rather significant speed-ups of 25-50%.
-SimPy is the Python package used by DescPro to facilitate the discrete event simulation functionality.
+SimPy is the Python package used by DESC Pro to facilitate the discrete event simulation functionality.
 There are scripts available in the cython-simpy_scripts directory in the source code for transforming the SimPy library using Cython.
 </p>
 
@@ -123,19 +123,18 @@ There are scripts available in the cython-simpy_scripts directory in the source 
 <p>As an example we try to define a line that consists of a single tool, which is a tube furnace.</p>
 <ol>
 <li>Remove the default production line that is loaded at program start-up.
-Click on the 'remove' button underneath the 'Tools' window.</li>
+Click on the 'Remove all' button underneath the 'Tools' window.</li>
 <li>Add wafer source. Click on 'Add' and select 'WaferSource'.</li>
+<li>Add wafer unstacker. Click on 'Add' and select 'WaferUnstacker'.</li>
 <li>Add tube furnace. Click on 'Add' and select 'TubeFurnace'.</li>
 <li>Add wafer bin. Click on 'Add' and select 'WaferBin'.</li>
 <li>Automatically add one operator for each tool connection.
 Click on 'Import tools' underneath the operators window.</li>
-<li>Make sure that the batch sizes are equal for each tool connection.
-Double-click on the added WaferSource and go to Settings. Change 'Number of units in a single stack' to 100.</li>
 </ol>
 
 <p>Now you can click on 'Run simulation' in the top buttonbar to start the simulation.
-The simulation progress and some of the results are shown in the 'Activity' tab.
-Utilization results will be shown in the corresponding tab.</p>
+The simulation progress messages will appear in the 'Activity' tab and the utilization results will be copied to the corresponding tab at the end of the simulation.
+</p>
 
 <p><h2><a name="commandline">Running simulations on the commandline</a></h2></p>
 <p>

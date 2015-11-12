@@ -7,13 +7,8 @@ import simpy
 import collections
 
 """
+TODO
 
-    Input buffer - tuneable size but default 8 cassettes
-    A loadlock with two chambers for two cassettes each
-    Two processing belts
-    Output buffer - the same size as the input buffer
-    One set of automation moves cassettes between the buffers and the loadlocks.
-    Another set of automation puts and removes wafers from the belt (this probably doesn't exist in the real tool)
 
 """
 
@@ -53,12 +48,16 @@ class IonImplanter(QtCore.QObject):
 
         self.params['specification'] = """
 <h3>General description</h3>
-An ion implanter is used for applying dopant into wafers in a single-sided fashion.
+An ion implanter is used for applying dopant into wafers using an ion beam.
 Cassettes are loaded into the loadlocks, which are then held for a set time for evacuation.
-Subsequently, the wafers are processed on belts and enter into buffer cassettes.
+Subsequently, the wafers are transported on belts to be exposed to beam and then enter into buffer cassettes.
 When the buffer cassette is full, the wafers return on the same belt to the loadlock.
 After repressurization the cassettes are placed in the output buffer.
-There is a downtime procedure available during which maintenance is performed.\n
+There is a downtime procedure available during to simulate a maintenance procedure.
+During this time the wafer load-in is paused.\n
+<h3>Description of the algorithm</h3>
+TO BE ADDED
+\n
         """
 
         self.params['name'] = ""
