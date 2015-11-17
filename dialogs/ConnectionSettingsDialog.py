@@ -48,6 +48,20 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         vbox.addLayout(hbox)
 
         hbox = QtGui.QHBoxLayout()
+        label = QtGui.QLabel("Minimum number of batches needed to start transport")
+        self.spinbox2 = QtGui.QSpinBox()
+        self.spinbox2.setAccelerated(True)
+        self.spinbox2.setMaximum(999)
+        self.spinbox2.setMinimum(1)
+        self.spinbox2.setValue(self.batchconnection[4])
+        label.setToolTip("Minimum number of batches needed to start transport")
+        self.spinbox2.setToolTip("Minimum number of batches needed to start transport")
+        hbox.addWidget(self.spinbox2)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
+
+        hbox = QtGui.QHBoxLayout()
         label = QtGui.QLabel("Apply current settings to all connections")
         self.boolean = QtGui.QCheckBox()
         self.boolean.setChecked(False)
@@ -80,11 +94,13 @@ class ConnectionSettingsDialog(QtGui.QDialog):
             for i in range(len(self.parent.batchconnections)):
                 self.parent.batchconnections[i][2] = int(self.spinbox0.text())
                 self.parent.batchconnections[i][3] = int(self.spinbox1.text())
+                self.parent.batchconnections[i][4] = int(self.spinbox2.text())
             
             self.parent.statusBar().showMessage(self.tr("All connection settings updated"))
         else:
             self.batchconnection[2] = int(self.spinbox0.text())
             self.batchconnection[3] = int(self.spinbox1.text())
+            self.batchconnection[4] = int(self.spinbox2.text())
             self.parent.statusBar().showMessage(self.tr("Connection settings updated"))
         
         

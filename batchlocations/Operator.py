@@ -23,7 +23,7 @@ There is one loop that describes the functionality of the operator.
 The first step in this loop is to go over all the tool connections assigned to this operator and do the following:
 <ol>
 <li>For each connection check if wafers are available at the source and space available at destination</li>
-<li>Continue if it is possible to transport more than one cassette, or the user defined minimum of wafers</li>
+<li>Continue if it is possible to transport more than one cassette, or the user defined minimum of wafers for that connection</li>
 <li>Request a lock on the intended input and output to prevent other operators from performing actions on them</li>
 <li>If the lock was not provided immediately then another operator may have done something, so discontinue the transport</li>
 <li>Transport the wafers with a certain time delay according to the settings for this connection</li>
@@ -33,8 +33,6 @@ If none of the tool connections allowed for a transport event, then the operator
         """
         
         self.params['name'] = ""
-        self.params['min_no_batches'] = 1
-        self.params['min_no_batches_desc'] = "Minimum number of batches needed for transport action"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between transport attempts (seconds)"
         self.params.update(_params)
@@ -47,7 +45,6 @@ If none of the tool connections allowed for a transport event, then the operator
 
     def run(self):
         continue_loop = False
-        min_no_batches = self.params['min_no_batches']
         wait_time = self.params['wait_time']
 
         # Generate warning for batch size mismatch
@@ -75,7 +72,7 @@ If none of the tool connections allowed for a transport event, then the operator
                 if (units_for_transport >= self.batchconnections[i][0].output.batch_size):
                     no_batches_for_transport = units_for_transport // self.batchconnections[i][0].output.batch_size
 
-                    if (no_batches_for_transport < min_no_batches):
+                    if (no_batches_for_transport < self.batchconnections[i][4]):
                         # abort transport if not enough batches available
                         continue
                     
