@@ -483,7 +483,7 @@ class MainGui(QtGui.QMainWindow):
             self.table_widget.setItem(i, 3, item3)            
             
             for j in range(4,len(utilization[i])):
-                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + "\n" + str(utilization[i][j][1]) + "%")
+                item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + ": " + str(utilization[i][j][1]) + "%")
                 self.table_widget.setItem(i, j, item)
 
     @QtCore.pyqtSlot(str)

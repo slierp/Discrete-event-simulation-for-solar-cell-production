@@ -294,7 +294,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
             self.utilization.append(0)
         
         for i in range(len(self.batchprocesses)):
-            self.utilization.append([self.batchprocesses[i].name,round(100-self.batchprocesses[i].idle_time(),1)])                 
+            self.utilization.append([self.batchprocesses[i].name,round(100-self.batchprocesses[i].idle_time(),1)])
 
     def prod_volume(self):
         return self.transport3.transport_counter
