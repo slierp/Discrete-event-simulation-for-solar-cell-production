@@ -213,7 +213,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         self.utilization.append("TubePECVD")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
         production_hours = (self.env.now - self.furnace_start_time[0])/3600
         
@@ -424,4 +424,4 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         throughputs = []        
         throughputs.append(self.params['batch_size']*self.params['no_of_processes']*3600/(60*self.params['process_time']))
         throughputs.append(self.params['batch_size']*self.params['no_of_cooldowns']*3600/(60*self.params['cool_time']))
-        return min(throughputs)                
+        return min(throughputs)

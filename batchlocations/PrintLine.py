@@ -164,7 +164,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         
         self.utilization.append("PrintLine")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.output.container.level
         production_hours = (self.env.now - self.start_time[0])/3600
         

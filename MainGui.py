@@ -377,7 +377,7 @@ class MainGui(QtGui.QMainWindow):
             # clear idle tab and reset headers
             self.table_widget.clear()
         
-            headerlabels = ['Tool type','Name','Nominal','Utilization']
+            headerlabels = ['Type','Name','Nominal','Utilization']
             for i in range(4,35):
                 headerlabels.append("Process " + str(i-4))
             self.table_widget.setHorizontalHeaderLabels(headerlabels)
@@ -466,7 +466,7 @@ class MainGui(QtGui.QMainWindow):
         self.table_widget.setColumnCount(max_length)
         self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
 
-        headerlabels = ['Tool type','Name','Nominal','Utilization']
+        headerlabels = ['Type','Name','Nominal','Utilization']
         for i in range(4,15):
             headerlabels.append("Process " + str(i-4))
         self.table_widget.setHorizontalHeaderLabels(headerlabels)
@@ -474,10 +474,10 @@ class MainGui(QtGui.QMainWindow):
         self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
         for i, value in enumerate(utilization):
-            item0 = QtGui.QTableWidgetItem(utilization[i][0]) # Tool type
+            item0 = QtGui.QTableWidgetItem(utilization[i][0]) # Type
             item1 = QtGui.QTableWidgetItem(utilization[i][1]) # Tool name
-            item2 = QtGui.QTableWidgetItem(str(int(utilization[i][2]))) # Nominal throughput
-            item3 = QtGui.QTableWidgetItem(str(int(utilization[i][3])) + "%") # Overall utilization
+            item2 = QtGui.QTableWidgetItem(str(utilization[i][2])) # Nominal throughput
+            item3 = QtGui.QTableWidgetItem(str(utilization[i][3]) + "%") # Overall utilization
             self.table_widget.setItem(i, 0, item0)
             self.table_widget.setItem(i, 1, item1)
             self.table_widget.setItem(i, 2, item2)

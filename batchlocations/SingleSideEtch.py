@@ -102,12 +102,13 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.utilization.append("SingleSideEtch")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
         production_hours = (self.env.now - self.start_time)/3600
         
         if (self.nominal_throughput() > 0) & (production_hours > 0):
-            self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())               
+            util = 100*(production_volume/production_hours)/self.nominal_throughput()
+            self.utilization.append(round(util,1))
         else:
             self.utilization.append(0)            
 

@@ -243,7 +243,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
 
         self.utilization.append("BatchTex")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport2.transport_counter
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
         
@@ -265,6 +265,6 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         throughputs.append(self.params['batch_size']*self.params['neutr_baths']*3600/(60*self.params['neutr_time']))
         throughputs.append(self.params['batch_size']*self.params['rinse1_baths']*3600/(60*self.params['rinse1_time']))
         throughputs.append(self.params['batch_size']*self.params['dryer_count']*3600/(60*self.params['dry_time']))
-        return min(throughputs)        
+        return min(throughputs)
         
         

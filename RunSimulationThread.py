@@ -163,6 +163,11 @@ class RunSimulationThread(QtCore.QObject):
         for i, value in enumerate(self.batchlocations):
             if len(self.batchlocations[i].utilization):
                 utilization_list.append(self.batchlocations[i].utilization)
+                
+        for i, value in enumerate(self.operators):
+            if len(self.operators[i].utilization):
+                utilization_list.append(self.operators[i].utilization)
+                
         self.util.sig.emit(utilization_list)
 
         ### Calculate sum of all produced cells ###
@@ -263,6 +268,11 @@ class RunSimulationThread(QtCore.QObject):
         for i, value in enumerate(self.batchlocations):
             if len(self.batchlocations[i].utilization):
                 utilization_list.append(self.batchlocations[i].utilization)
+                
+        for i, value in enumerate(self.operators):
+            if len(self.operators[i].utilization):
+                utilization_list.append(self.operators[i].utilization)
+                
         self.util.sig.emit(utilization_list)
 
         ### Calculate sum of all produced cells ###

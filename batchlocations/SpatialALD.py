@@ -195,7 +195,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
         ### Report utilization ###        
         self.utilization.append("SpatialALD")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
         production_hours = (self.env.now - self.start_time[0])/3600
         

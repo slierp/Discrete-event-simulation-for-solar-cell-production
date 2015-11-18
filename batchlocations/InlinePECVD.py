@@ -156,7 +156,7 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
 
         self.utilization.append("InlinePECVD")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
         production_hours = (self.env.now - self.start_time)/3600
         
@@ -455,4 +455,4 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         throughputs = []        
         throughputs.append(tray_content*3600/process_time)
         throughputs.append(tray_content*3600/self.params['time_loadlock'])
-        return min(throughputs)        
+        return min(throughputs)

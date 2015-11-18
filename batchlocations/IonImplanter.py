@@ -151,7 +151,7 @@ TO BE ADDED
 
         self.utilization.append("IonImplanter")
         self.utilization.append(self.params['name'])
-        self.utilization.append(self.nominal_throughput())
+        self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport1.transport_counter
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
         self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())

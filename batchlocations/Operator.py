@@ -10,6 +10,7 @@ class Operator(QtCore.QObject):
         self.env = _env
         self.output_text = _output
         self.batchconnections = _batchconnections
+        self.utilization = []
 
         self.params = {}
 
@@ -38,7 +39,7 @@ If none of the tool connections allowed for a transport event, then the operator
         self.params.update(_params)
         
         self.transport_counter = 0
-        self.start_time = self.env.now
+        self.start_time = -1
         self.idle_time = 0
             
         self.env.process(self.run())        
@@ -46,6 +47,7 @@ If none of the tool connections allowed for a transport event, then the operator
     def run(self):
         continue_loop = False
         wait_time = self.params['wait_time']
+        start_time = self.start_time # local copy to reduce access events to global variable
 
         # Generate warning for batch size mismatch
         faulty_connections = 0        
@@ -76,6 +78,10 @@ If none of the tool connections allowed for a transport event, then the operator
                         # abort transport if not enough batches available
                         continue
                     
+                    if start_time < 0:
+                        self.start_time = self.env.now
+                        start_time = self.start_time
+                    
                     request_time  = self.env.now
                     with self.batchconnections[i][0].output.oper_resource.request() as request_input, \
                         self.batchconnections[i][1].input.oper_resource.request() as request_output:
@@ -102,13 +108,22 @@ If none of the tool connections allowed for a transport event, then the operator
             if (continue_loop):
                 continue_loop = False
                 continue
-            
+
+            if start_time >= 0:
+                self.idle_time += wait_time            
+                
             yield self.env.timeout(wait_time)
-            self.idle_time += wait_time
 
     def report(self):        
         string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
         self.output_text.sig.emit(string)
         
-#        string = "[Operator][" + self.params['name'] + "] Transport time: " + str(round(100-100*self.idle_time/(self.env.now-self.start_time),1)) + " %" #DEBUG
-#        self.output_text.sig.emit(string) #DEBUG
+        self.utilization.append("Operator")
+        self.utilization.append(self.params['name'])
+        self.utilization.append("n/a")
+        
+        if self.start_time >= 0:
+            util = 100-(100*self.idle_time/(self.env.now-self.start_time))
+            self.utilization.append(round(util,1))
+        else:
+            self.utilization.append(0)
