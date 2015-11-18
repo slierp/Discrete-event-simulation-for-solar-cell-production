@@ -146,15 +146,13 @@ TO BE ADDED
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
     def report(self):
-        string = "[IonImplanter][" + self.params['name'] + "] Units processed: " + str(self.transport1.transport_counter)
-        self.output_text.sig.emit(string)
-
         self.utilization.append("IonImplanter")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport1.transport_counter
         production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
         self.utilization.append(100*(production_volume/production_hours)/self.nominal_throughput())
+        self.utilization.append(self.transport1.transport_counter)
 
         for i in range(0,2):
             if self.batchprocesses[0].first_run:

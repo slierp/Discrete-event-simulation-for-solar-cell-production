@@ -158,10 +158,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.next_step = self.env.event() # triggers load-in from cassette
         self.env.process(self.run_belt())      
 
-    def report(self):
-        string = "[PrintLine][" + self.params['name'] + "] Units processed: " + str(self.output.container.level)
-        self.output_text.sig.emit(string)
-        
+    def report(self):        
         self.utilization.append("PrintLine")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -172,6 +169,8 @@ After a drying step the wafer is placed on the input belt of the next printer an
             self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
         else:
             self.utilization.append(0)            
+
+        self.utilization.append(self.output.container.level)
         
         for i in range(len(self.idle_times_internal)):
             if self.first_run[i]:

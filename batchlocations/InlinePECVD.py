@@ -151,9 +151,6 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         self.env.process(self.run_tray_return())
 
     def report(self):
-        string = "[InlinePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)
-
         self.utilization.append("InlinePECVD")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -164,6 +161,8 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
             self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
         else:
             self.utilization.append(0)            
+
+        self.utilization.append(self.transport_counter)
         
         if self.first_run:
             idle_time = 0

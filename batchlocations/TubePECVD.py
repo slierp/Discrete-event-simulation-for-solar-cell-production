@@ -207,10 +207,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())
 
-    def report(self):
-        string = "[TubePECVD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)
-        
+    def report(self):        
         self.utilization.append("TubePECVD")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -221,6 +218,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
             self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
         else:
             self.utilization.append(0)            
+
+        self.utilization.append(self.transport_counter)
         
         for i in range(self.params['no_of_processes']):
             if ((self.env.now - self.furnace_start_time[0]) > 0):

@@ -377,9 +377,9 @@ class MainGui(QtGui.QMainWindow):
             # clear idle tab and reset headers
             self.table_widget.clear()
         
-            headerlabels = ['Type','Name','Nominal','Utilization']
-            for i in range(4,35):
-                headerlabels.append("Process " + str(i-4))
+            headerlabels = ['Type','Name','Nominal','Utilization','Volume']
+            for i in range(5,35):
+                headerlabels.append("Process " + str(i-5))
             self.table_widget.setHorizontalHeaderLabels(headerlabels)
             self.table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
             self.table_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
@@ -466,7 +466,7 @@ class MainGui(QtGui.QMainWindow):
         self.table_widget.setColumnCount(max_length)
         self.table_widget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)        
 
-        headerlabels = ['Type','Name','Nominal','Utilization']
+        headerlabels = ['Type','Name','Nominal','Utilization','Volume']
         for i in range(4,15):
             headerlabels.append("Process " + str(i-4))
         self.table_widget.setHorizontalHeaderLabels(headerlabels)
@@ -478,12 +478,14 @@ class MainGui(QtGui.QMainWindow):
             item1 = QtGui.QTableWidgetItem(utilization[i][1]) # Tool name
             item2 = QtGui.QTableWidgetItem(str(utilization[i][2])) # Nominal throughput
             item3 = QtGui.QTableWidgetItem(str(utilization[i][3]) + "%") # Overall utilization
+            item4 = QtGui.QTableWidgetItem(str(utilization[i][4])) # Total volume
             self.table_widget.setItem(i, 0, item0)
             self.table_widget.setItem(i, 1, item1)
             self.table_widget.setItem(i, 2, item2)
-            self.table_widget.setItem(i, 3, item3)            
+            self.table_widget.setItem(i, 3, item3)
+            self.table_widget.setItem(i, 4, item4) 
             
-            for j in range(4,len(utilization[i])):
+            for j in range(5,len(utilization[i])):
                 item = QtGui.QTableWidgetItem(str(utilization[i][j][0]) + ": " + str(utilization[i][j][1]) + "%")
                 self.table_widget.setItem(i, j, item)
 

@@ -97,9 +97,6 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.env.process(self.run_lane_load_out())
 
     def report(self):
-        string = "[SingleSideEtch][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)
-
         self.utilization.append("SingleSideEtch")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -111,6 +108,8 @@ The time increment is determined by the belt speed and unit distance.</li>
             self.utilization.append(round(util,1))
         else:
             self.utilization.append(0)            
+
+        self.utilization.append(self.transport_counter)
 
         for i in range(len(self.idle_times_internal)):
             if self.first_run:

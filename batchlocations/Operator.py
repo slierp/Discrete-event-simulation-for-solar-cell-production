@@ -115,9 +115,6 @@ If none of the tool connections allowed for a transport event, then the operator
             yield self.env.timeout(wait_time)
 
     def report(self):        
-        string = "[Operator][" + self.params['name'] + "] Units transported: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)
-        
         self.utilization.append("Operator")
         self.utilization.append(self.params['name'])
         self.utilization.append("n/a")
@@ -127,3 +124,5 @@ If none of the tool connections allowed for a transport event, then the operator
             self.utilization.append(round(util,1))
         else:
             self.utilization.append(0)
+            
+        self.utilization.append(self.transport_counter)            

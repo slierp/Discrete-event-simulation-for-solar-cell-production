@@ -238,9 +238,6 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)          
 
     def report(self):
-        string = "[BatchTex][" + self.params['name'] + "] Units processed: " + str(self.transport2.transport_counter)
-        self.output_text.sig.emit(string)        
-
         self.utilization.append("BatchTex")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -251,6 +248,8 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
             self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
         else:
             self.utilization.append(0)
+
+        self.utilization.append(self.transport2.transport_counter)
         
         for i in range(len(self.batchprocesses)):
             self.utilization.append([self.batchprocesses[i].name,round(100-self.batchprocesses[i].idle_time(),1)])

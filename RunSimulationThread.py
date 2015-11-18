@@ -149,9 +149,6 @@ class RunSimulationThread(QtCore.QObject):
                 prev_production_volume_update = percentage_production_volume_update
 
         ### Generate summary output in log tab ###
-        string = "<br><b>Production result summary</>"
-        self.output.sig.emit(string)
-
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 
@@ -254,9 +251,6 @@ class RunSimulationThread(QtCore.QObject):
         self.prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
 
         ### Generate summary output in log tab ###
-        string = "<br><b>Production result summary</>"
-        self.output.sig.emit(string)
-
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 

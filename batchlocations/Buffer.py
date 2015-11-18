@@ -41,8 +41,7 @@ A buffer is not an active process.\n
         self.output = self.input
 
     def report(self):
-        string = "[Buffer][" + self.params['name'] + "] Currently buffered: " + str(self.output.container.level)
-        self.output_text.sig.emit(string)
+        return
         
     def prod_volume(self):
         return self.output.container.level

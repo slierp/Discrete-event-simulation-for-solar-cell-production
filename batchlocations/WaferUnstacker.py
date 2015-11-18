@@ -94,8 +94,7 @@ The second loop consists of the following steps:
         self.env.process(self.run_cassette_loader())
 
     def report(self):
-        string = "[WaferUnstacker][" + self.params['name'] + "] Units processed: " + str(self.output.process_counter)
-        self.output_text.sig.emit(string)
+        return
 
     def prod_volume(self):
         return self.output.process_counter

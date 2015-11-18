@@ -57,8 +57,7 @@ There is one simple loop that consists of three steps:
         self.env.process(self.run())        
 
     def report(self):
-        string = "[WaferSource][" + self.params['name'] + "] Units sourced: " + str(self.output.process_counter)
-        self.output_text.sig.emit(string)
+        return
 
     def prod_volume(self):
         return self.output.process_counter

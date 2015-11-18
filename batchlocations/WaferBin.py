@@ -57,8 +57,7 @@ There is one simple loop that consists of two steps:
         self.env.process(self.run())
 
     def report(self):
-        string = "[WaferBin][" + self.params['name'] + "] Current level: " + str(self.output.container.level)
-        self.output_text.sig.emit(string)
+        return
 
     def prod_volume(self):
         return self.output.container.level

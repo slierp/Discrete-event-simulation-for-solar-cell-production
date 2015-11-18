@@ -188,11 +188,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
             self.env.process(self.run_preheater(i))
             self.env.process(self.run_deposition_unit(i))
 
-    def report(self):
-        string = "[SpatialALD][" + self.params['name'] + "] Units processed: " + str(self.transport_counter)
-        self.output_text.sig.emit(string)
-
-        ### Report utilization ###        
+    def report(self):     
         self.utilization.append("SpatialALD")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -203,6 +199,8 @@ After the process the wafer is placed on the output conveyor of the deposition u
             self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
         else:
             self.utilization.append(0)            
+
+        self.utilization.append(self.transport_counter)
         
         for i in range(len(self.idle_times_internal)):
             if self.first_run[i]:
