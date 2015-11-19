@@ -260,12 +260,13 @@ class MainGui(QtGui.QMainWindow):
         transport_time = 60 # default duration for transport action
         time_per_unit = 10 # default additional duration for each unit
         min_units = 1 # default minimum number of units for transport
+        max_units = 99 # default maximum number of units for transport
                            
         #num = 0
         for i in range(len(self.locationgroups)-1):
             for j, value in enumerate(self.locationgroups[i]):
                 for k, value in enumerate(self.locationgroups[i+1]):
-                    self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit,min_units])                           
+                    self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit,min_units,max_units])                           
 
     def import_batchlocations(self):
         self.exec_locationgroups() # reload connections again just to be sure
