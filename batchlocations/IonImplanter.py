@@ -55,9 +55,6 @@ When the buffer cassette is full, the wafers return on the same belt to the load
 After repressurization the cassettes are placed in the output buffer.
 There is a downtime procedure available during to simulate a maintenance procedure.
 During this time the wafer load-in is paused.\n
-<h3>Description of the algorithm</h3>
-TO BE ADDED
-\n
         """
 
         self.params['name'] = ""

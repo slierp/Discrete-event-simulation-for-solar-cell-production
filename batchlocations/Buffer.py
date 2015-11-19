@@ -24,8 +24,6 @@ class Buffer(QtCore.QObject):
 <h3>General description</h3>
 A buffer is used to store cassettes temporarily.
 The space available in the buffer can be configured.\n
-<h3>Description of the algorithm</h3>
-A buffer is not an active process.\n
         """
         
         self.params['name'] = ""

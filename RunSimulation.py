@@ -15,6 +15,7 @@ from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
+from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
 import pickle
 import pandas as pd
@@ -115,7 +116,9 @@ class RunSimulation(object):
                 self.batchlocations[i] = SpatialALD(self.env,self.output,self.batchlocations[i][1])                
             elif (self.batchlocations[i][0] == "InlinePECVD"):
                 self.batchlocations[i] = InlinePECVD(self.env,self.output,self.batchlocations[i][1])
-
+            elif (self.batchlocations[i][0] == "PlasmaEtcher"):
+                self.batchlocations[i] = PlasmaEtcher(self.env,self.output,self.batchlocations[i][1])
+                
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances
             for j in range(len(self.locationgroups[i])):

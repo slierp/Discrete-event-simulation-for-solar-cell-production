@@ -16,6 +16,7 @@ from batchlocations.Buffer import Buffer
 from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
+from batchlocations.PlasmaEtcher import PlasmaEtcher
 from sys import platform as _platform
 
 from blockdiag.imagedraw import svg # needed for pyinstaller
@@ -94,6 +95,9 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         elif (batchlocation[0] == "InlinePECVD"):
             curr_params = InlinePECVD(env).params 
             curr_diagram  = InlinePECVD(env).diagram            
+        elif (batchlocation[0] == "PlasmaEtcher"):
+            curr_params = PlasmaEtcher(env).params 
+            curr_diagram  = PlasmaEtcher(env).diagram
         else:
             return                            
         
