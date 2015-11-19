@@ -3,6 +3,7 @@ from __future__ import division
 from blockdiag import parser, builder, drawer
 from PyQt4 import QtGui, QtCore, QtSvg
 from batchlocations.WaferSource import WaferSource
+from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
 from batchlocations.WaferBin import WaferBin
 from batchlocations.BatchTex import BatchTex
@@ -54,6 +55,9 @@ class BatchlocationSettingsDialog(QtGui.QDialog):
         if (batchlocation[0] == "WaferSource"):
             curr_params = WaferSource(env).params
             curr_diagram  = WaferSource(env).diagram
+        elif (batchlocation[0] == "WaferStacker"):
+            curr_params = WaferStacker(env).params
+            curr_diagram  = WaferStacker(env).diagram             
         elif (batchlocation[0] == "WaferUnstacker"):
             curr_params = WaferUnstacker(env).params
             curr_diagram  = WaferUnstacker(env).diagram            

@@ -37,6 +37,7 @@ class AddBatchlocationDialog(QtGui.QDialog):
 
         batchlocation_types = []
         batchlocation_types.append("WaferSource")
+        batchlocation_types.append("WaferStacker")        
         batchlocation_types.append("WaferUnstacker")
         batchlocation_types.append("Buffer")        
         batchlocation_types.append("WaferBin")

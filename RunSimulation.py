@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from batchlocations.WaferSource import WaferSource
+from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
 from batchlocations.Operator import Operator
 from batchlocations.WaferBin import WaferBin
@@ -88,6 +89,8 @@ class RunSimulation(object):
             # replace class names for real class instances in the same list
             if (self.batchlocations[i][0] == "WaferSource"):
                 self.batchlocations[i] = WaferSource(self.env,self.output,self.batchlocations[i][1])
+            elif (self.batchlocations[i][0] == "WaferStacker"):
+                self.batchlocations[i] = WaferStacker(self.env,self.output,self.batchlocations[i][1])                
             elif (self.batchlocations[i][0] == "WaferUnstacker"):
                 self.batchlocations[i] = WaferUnstacker(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "BatchTex"):
