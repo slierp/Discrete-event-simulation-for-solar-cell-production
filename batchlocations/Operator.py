@@ -80,7 +80,11 @@ If none of the tool connections allowed for a transport event, then the operator
                     elif (no_batches_for_transport > self.batchconnections[i][5]):
                         # limit transport to size if higher than user set maximum
                         no_batches_for_transport = self.batchconnections[i][5]
-                        
+                    
+                    if self.batchconnections[i][0].output.oper_resource.count or self.batchconnections[i][1].input.oper_resource.count:
+                        # if one or both resources are in use then abort
+                        continue
+                    
                     if start_time < 0:
                         self.start_time = self.env.now
                         start_time = self.start_time
