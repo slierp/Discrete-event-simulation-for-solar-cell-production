@@ -138,7 +138,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         ### Check automation loadsize ###
         if (not (self.output_text == None)) and (self.params['batch_size'] % self.params['automation_loadsize']):
-            string = "[TubePECVD][" + self.params['name'] + "] <span style=\"color: red\">WARNING: Automation loadsize is not a multiple of batch size. Automation will not work.</span>"
+            string = "[TubePECVD][" + self.params['name'] + "] WARNING: Automation loadsize is not a multiple of batch size. Automation will not work."
             self.output_text.sig.emit(string)        
         
         ### Add input and boat load/unload location ###

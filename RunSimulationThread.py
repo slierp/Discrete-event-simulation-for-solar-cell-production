@@ -19,6 +19,7 @@ from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
 from PyQt4 import QtCore
 import pandas as pd
+import time
 
 class StringSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
@@ -103,6 +104,8 @@ class RunSimulationThread(QtCore.QObject):
 
     @QtCore.pyqtSlot()
     def run(self):
+        start_time = time.clock()        
+        
         self.env = simpy.Environment()
         self.replace_for_real_instances() 
 
@@ -119,7 +122,7 @@ class RunSimulationThread(QtCore.QObject):
         updates_list = hourly_updates + percentage_updates
         updates_list = self.make_unique(updates_list)
 
-        self.output.sig.emit("<b>Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration</b>")
+        self.output.sig.emit("Simulation started with " + str(self.params['time_limit'] // (60*60)) + " hour duration")
 
         ### Run simulation ###
         prev_production_volume_update = 0
@@ -127,14 +130,14 @@ class RunSimulationThread(QtCore.QObject):
         
         for i in updates_list:
             if(self.stop_simulation):
-                string = "<b>Stopped at "  + str(int(self.env.now // 3600)) + " hours</b>"
+                string = "Stopped at "  + str(int(self.env.now // 3600)) + " hours"
                 self.output.sig.emit(string) 
                 break
 
             self.env.run(until=i)
             
             if (i == self.params['time_limit']):                
-                string = "<b>Finished at "  + str(int(self.env.now // 3600)) + " hours</b>"
+                string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
                 self.output.sig.emit(string)                            
             elif i in percentage_updates:
                 
@@ -153,6 +156,8 @@ class RunSimulationThread(QtCore.QObject):
 
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
+
+        end_time = time.clock()
 
         ### Generate summary output in log tab ###
         for i, value in enumerate(self.batchlocations):
@@ -179,8 +184,16 @@ class RunSimulationThread(QtCore.QObject):
         for i in range(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
 
-        self.output.sig.emit("<b>Production volume: " + str(prod_vol) + "</b>")
-        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)) + "</b>")        
+        self.output.sig.emit("Production volume: " + str(prod_vol))
+        self.output.sig.emit("Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)))
+        
+        sim_time = end_time-start_time
+        if sim_time < 60:            
+            self.output.sig.emit("Simulation time: " + str(round(sim_time,1)) + " seconds")
+        elif sim_time < 3600:
+            self.output.sig.emit("Simulation time: " + str(int(sim_time//60)) + " minutes " + str(int(sim_time%60)) + " seconds")
+        else:
+            self.output.sig.emit("Simulation time: " + str(int(sim_time//3600)) + " hours "+ str(int(sim_time%3600//60)) + " minutes " + str(int(sim_time%3600%60)) + " seconds")
         
         self.signal.sig.emit('Simulation finished')
     
@@ -191,6 +204,8 @@ class RunSimulationThread(QtCore.QObject):
             self.output.sig.emit("Profiling mode requires longer simulation duration.")
             self.signal.sig.emit('Simulation aborted')
             return
+
+        start_time = time.clock()
         
         self.env = simpy.Environment()        
         self.replace_for_real_instances()
@@ -207,14 +222,14 @@ class RunSimulationThread(QtCore.QObject):
             prev_prod_volumes.append(0)
         
         ### Run simulation ###
-        self.output.sig.emit("<b>Simulation started in profiling mode with " + str(self.params['time_limit'] // (60*60)) + " hour duration</b>")
+        self.output.sig.emit("Simulation started in profiling mode with " + str(self.params['time_limit'] // (60*60)) + " hour duration")
 
         prev_production_volume_update = 0
         prev_time = self.env.now
 
         while True:
             if(self.stop_simulation):
-                string = "<b>Stopped at "  + str(int(self.env.now // 3600)) + " hours</b>"
+                string = "Stopped at "  + str(int(self.env.now // 3600)) + " hours"
                 self.output.sig.emit(string) 
                 break                
             
@@ -253,6 +268,8 @@ class RunSimulationThread(QtCore.QObject):
             if (self.env.now >= self.params['time_limit']):
                 break
 
+        end_time = time.clock()
+
         self.prod_rates_df.index += 1
         self.prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
 
@@ -281,7 +298,15 @@ class RunSimulationThread(QtCore.QObject):
         for i in range(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
         
-        self.output.sig.emit("<b>Production volume: " + str(prod_vol) + "</b>")
-        self.output.sig.emit("<b>Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)) + "</b>")        
+        self.output.sig.emit("Production volume: " + str(prod_vol))
+        self.output.sig.emit("Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)))        
+
+        sim_time = end_time-start_time
+        if sim_time < 60:            
+            self.output.sig.emit("Simulation time: " + str(round(sim_time,1)) + " seconds")
+        elif sim_time < 3600:
+            self.output.sig.emit("Simulation time: " + str(int(sim_time//60)) + " minutes " + str(int(sim_time%60)) + " seconds")
+        else:
+            self.output.sig.emit("Simulation time: " + str(int(sim_time//3600)) + " hours "+ str(int(sim_time%3600//60)) + " minutes " + str(int(sim_time%3600%60)) + " seconds")
         
         self.signal.sig.emit('Simulation finished')        

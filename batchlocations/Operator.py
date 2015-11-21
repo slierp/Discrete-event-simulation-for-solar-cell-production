@@ -56,9 +56,9 @@ If none of the tool connections allowed for a transport event, then the operator
                 faulty_connections += 1
                 
         if faulty_connections:
-            string = "[Operator][" + self.params['name'] + "] <span style=\"color: red\">WARNING: "
+            string = "[Operator][" + self.params['name'] + "] WARNING: "
             string += str(faulty_connections) + " tool connections have dissimilar cassette or stack size at source and destination."
-            string += "It may be impossible to fill the destination input, which could then prevent the destination tool from starting.</span>"
+            string += "It may be impossible to fill the destination input, which could then prevent the destination tool from starting."
             self.output_text.sig.emit(string)
         
         while True:

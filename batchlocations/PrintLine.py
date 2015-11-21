@@ -141,7 +141,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         time_out.append(self.params['time_step'])
         time_out.append(self.params['time_print'])
         if (not (self.output_text == None)) and (max(time_out) < (60*self.params['unit_distance']/self.params['firing_belt_speed'])):
-            string = "[PrintLine][" + self.params['name'] + "] <span style=\"color: red\">WARNING: Wafer distance in firing furnace below set minimum</span>"
+            string = "[PrintLine][" + self.params['name'] + "] WARNING: Wafer distance in firing furnace below set minimum"
             self.output_text.sig.emit(string)
 
         self.start_time = []
