@@ -326,7 +326,10 @@ class MainGui(QtGui.QMainWindow):
 
     def run_simulation(self):
         self.output_signal_counter = 0
-        self.plot_selection = [] # reset selection in case definition changed
+
+        # reset selection in case definition changed
+        # only include last locationgroup in plot       
+        self.plot_selection = self.locationgroups[len(self.locationgroups)-1] 
 
         if (len(self.batchlocations) < 2) | (len(self.locationgroups) < 2):
             self.statusBar().showMessage(self.tr("Not enough batch locations found"))

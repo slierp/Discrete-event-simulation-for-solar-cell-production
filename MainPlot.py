@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from PyQt4 import QtGui
+from dialogs.PlotSettingsDialog import PlotSettingsDialog
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
@@ -55,23 +56,15 @@ class MultiPlot(QtGui.QMainWindow):
  
         # Create the navigation toolbar, tied to the canvas
         self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
-                
-        self.dataset_cb = []
-        for i in range(len(self.prod_rates_df.columns)):
-            self.dataset_cb.append(QtGui.QCheckBox(str(i)))
-            self.dataset_cb[i].setChecked(True)         
 
         show_button = QtGui.QPushButton()
-        show_button.clicked.connect(self.on_redraw)
-        show_button.setIcon(QtGui.QIcon(":eye.png"))
-        show_button.setToolTip("Show")
-        show_button.setStatusTip("Show")
+        show_button.clicked.connect(self.plot_settings_view)
+        show_button.setIcon(QtGui.QIcon(":gear.png"))
+        show_button.setToolTip("Edit settings")
+        show_button.setStatusTip("Edit settings")
 
         buttonbox0 = QtGui.QDialogButtonBox()
         buttonbox0.addButton(show_button, QtGui.QDialogButtonBox.ActionRole)               
-
-        for i in range(len(self.prod_rates_df.columns)):
-            self.mpl_toolbar.addWidget(self.dataset_cb[i])
 
         self.mpl_toolbar.addWidget(show_button)                      
                                 
@@ -84,19 +77,15 @@ class MultiPlot(QtGui.QMainWindow):
         
         self.status_text = QtGui.QLabel("")        
         self.statusBar().addWidget(self.status_text,1)
+
+    def plot_settings_view(self):
+        settings_dialog = PlotSettingsDialog(self)
+        settings_dialog.setModal(True)
+        settings_dialog.show()
         
     def on_draw(self):
 
         cl = ['#4F81BD', '#C0504D', '#9BBB59','#F79646','#8064A2','#4BACC6','0','0.5'] # colour
-
-        if (len(self.parent.plot_selection) == 0): # select all data sets if selection is empty
-            self.parent.plot_selection = range(0,len(self.prod_rates_df.columns))
-        else:
-            for i in range(len(self.dataset_cb)): # set checkboxes to values set in selection
-                if i in self.parent.plot_selection:
-                    self.dataset_cb[i].setChecked(True)
-                else:
-                    self.dataset_cb[i].setChecked(False)
 
         # add subplot purely for the axis labels
         axes = self.fig.add_subplot(111)  
@@ -132,12 +121,6 @@ class MultiPlot(QtGui.QMainWindow):
         self.canvas.draw()    
         
     def on_redraw(self):
-        
-        self.parent.plot_selection = []
-        
-        for i in range(len(self.dataset_cb)):
-            if self.dataset_cb[i].isChecked():
-                self.parent.plot_selection.append(i)
         
         self.parent.plot_production_rates()
         self.close()    
