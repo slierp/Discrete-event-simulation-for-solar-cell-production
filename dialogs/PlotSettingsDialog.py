@@ -15,12 +15,21 @@ class PlotSettingsDialog(QtGui.QDialog):
 
         self.dataset_cb = []
         for i in range(len(self.parent.prod_rates_df.columns)):
-            self.dataset_cb.append(QtGui.QCheckBox(str(i)))
+            self.dataset_cb.append(QtGui.QCheckBox(self.parent.prod_rates_df.iloc[:,i].name))
             if i in self.parent.parent.plot_selection:
                 self.dataset_cb[i].setChecked(True)
 
+        scroll_area = QtGui.QScrollArea()
+        checkbox_widget = QtGui.QWidget()
+        checkbox_vbox = QtGui.QVBoxLayout()
+
         for i in range(len(self.dataset_cb)):
-            vbox.addWidget(self.dataset_cb[i])
+            self.dataset_cb[i].setMinimumWidth(200) # prevent obscured text
+            checkbox_vbox.addWidget(self.dataset_cb[i])
+
+        checkbox_widget.setLayout(checkbox_vbox)
+        scroll_area.setWidget(checkbox_widget)
+        vbox.addWidget(scroll_area)
 
         ### Buttonbox for ok ###
         hbox = QtGui.QHBoxLayout()
@@ -30,10 +39,11 @@ class PlotSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1) 
         hbox.addWidget(buttonbox)
         hbox.addStretch(1)
-        hbox.setContentsMargins(0,0,0,4)                
+        hbox.setContentsMargins(0,0,0,4)
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
+        self.setMinimumWidth(800)        
         
     def read(self):
         for i in range(len(self.dataset_cb)):
