@@ -20,11 +20,23 @@ class AddOperatorConnectionDialog(QtGui.QDialog):
         title_label = QtGui.QLabel(self.tr("Available connections:"))
         vbox.addWidget(title_label)
 
-        self.available_connections_combo = QtGui.QComboBox(self)
+        self.dataset_cb = []
         for i, value in enumerate(self.parent.batchconnections):
-            self.available_connections_combo.addItem(self.parent.print_batchconnection(i))
+            self.dataset_cb.append(QtGui.QCheckBox(self.parent.print_batchconnection(i)))
+            if i in self.parent.operators[self.row][0]:
+                self.dataset_cb[i].setChecked(True)
 
-        vbox.addWidget(self.available_connections_combo)
+        scroll_area = QtGui.QScrollArea()
+        checkbox_widget = QtGui.QWidget()
+        checkbox_vbox = QtGui.QVBoxLayout()
+
+        for i in range(len(self.dataset_cb)):
+            self.dataset_cb[i].setMinimumWidth(400) # prevent obscured text
+            checkbox_vbox.addWidget(self.dataset_cb[i])
+
+        checkbox_widget.setLayout(checkbox_vbox)
+        scroll_area.setWidget(checkbox_widget)
+        vbox.addWidget(scroll_area)
 
         ### Buttonbox for ok or cancel ###
         hbox = QtGui.QHBoxLayout()
@@ -40,10 +52,15 @@ class AddOperatorConnectionDialog(QtGui.QDialog):
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
+        self.setMinimumWidth(800)
 
     def read(self):
-        # Add connection to operator
-        self.parent.operators[self.row][0].append(self.available_connections_combo.currentIndex())
+        # Add connections to operator
+        self.parent.operators[self.row][0] = []
+        for i in range(len(self.dataset_cb)):
+            if self.dataset_cb[i].isChecked():
+                self.parent.operators[self.row][0].append(i)
+        
         self.parent.operators[self.row][0].sort()
         
         self.parent.load_definition_operators(False)
@@ -52,6 +69,6 @@ class AddOperatorConnectionDialog(QtGui.QDialog):
         index = self.parent.operators_model.index(self.row, 0)
         self.parent.operators_view.setExpanded(index, True)              
             
-        self.parent.statusBar().showMessage("Operator connection added") 
+        self.parent.statusBar().showMessage("Operator connections updated") 
         
         self.accept()
