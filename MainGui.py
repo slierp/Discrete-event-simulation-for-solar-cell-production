@@ -24,6 +24,34 @@ class DeselectableTreeView(QtGui.QTreeView):
             self.clearSelection()            
             QtGui.QTreeView.mousePressEvent(self, event)    
 
+class BatchlocationsViewKeyFilter(QtCore.QObject):
+    signal = QtCore.pyqtSignal(str)
+    
+    def eventFilter(self,  obj,  event):
+
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() == QtCore.Qt.Key_Delete:
+                self.signal.emit("del_batch_view")
+                return True
+            elif event.key() == QtCore.Qt.Key_A:
+                self.signal.emit("add_batch_view")
+                return True
+        return False
+
+class OperatorsViewKeyFilter(QtCore.QObject):
+    signal = QtCore.pyqtSignal(str)
+    
+    def eventFilter(self,  obj,  event):
+
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() == QtCore.Qt.Key_Delete:
+                self.signal.emit("del_operator_view")
+                return True
+            elif event.key() == QtCore.Qt.Key_A:
+                self.signal.emit("add_operator_view")
+                return True
+        return False
+
 class MainGui(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MainGui, self).__init__(parent)
@@ -38,8 +66,8 @@ class MainGui(QtGui.QMainWindow):
         self.move(frameGm.topLeft())        
         
         ### Set default font size ###
-        self.setStyleSheet('font-size: 12pt;')        
-        
+        self.setStyleSheet('font-size: 12pt;')
+
         self.edit = QtGui.QTextBrowser()
         self.edit.verticalScrollBar().setValue(self.edit.verticalScrollBar().maximum())
         
@@ -68,10 +96,18 @@ class MainGui(QtGui.QMainWindow):
         self.batchlocations_view = DeselectableTreeView()
         self.batchlocations_view.doubleClicked.connect(self.edit_batchlocation_view)
         self.batchlocations_view.setAlternatingRowColors(True)
+        self.batch_filter = BatchlocationsViewKeyFilter()
+        self.batchlocations_view.installEventFilter(self.batch_filter)
+        self.batch_filter.signal.connect(self.treeview_signals)        
+
         self.operators_model = QtGui.QStandardItemModel()
         self.operators_view = DeselectableTreeView()
         self.operators_view.doubleClicked.connect(self.edit_operator_view)
         self.operators_view.setAlternatingRowColors(True)
+        self.oper_filter = OperatorsViewKeyFilter()
+        self.operators_view.installEventFilter(self.oper_filter)
+        self.oper_filter.signal.connect(self.treeview_signals)
+
         self.batchlocation_dialog = None
 
         self.batchlocations = [] #tool class name, no of tools, dict with settings
@@ -101,6 +137,17 @@ class MainGui(QtGui.QMainWindow):
         self.create_main_frame()
         self.load_definition_batchlocations()
         self.load_definition_operators()
+
+    @QtCore.pyqtSlot(str)
+    def treeview_signals(self,signal):
+        if signal == "del_batch_view":
+            self.del_batchlocation_view()
+        elif signal == "add_batch_view":
+            self.add_batchlocation_view()
+        elif signal == "del_operator_view":
+            self.del_operator_view()
+        elif signal == "add_operator_view":
+            self.add_operator_view()          
 
     def open_file(self):
 
@@ -442,6 +489,21 @@ class MainGui(QtGui.QMainWindow):
                             s += "\t"
                     s = s[:-1] + "\n" #eliminate last '\t'
                 self.clip.setText(s)
+        """
+        elif e.key() == QtCore.Qt.Key_Delete:
+            # delete item from either view if del is pressed
+            if self.batchlocations_view.hasFocus():
+                self.del_batchlocation_view()
+            elif self.operators_view.hasFocus():
+                self.del_operator_view()
+        elif (e.modifiers() == QtCore.Qt.ShiftModifier) and (e.key() == QtCore.Qt.Key_A):
+            # add item into either view if enter key is pressed
+            print "bla"
+            if self.batchlocations_view.hasFocus():
+                self.add_batchlocation_view()
+            elif self.operators_view.hasFocus():
+                self.add_operator_view()
+        """
 
     @QtCore.pyqtSlot(str)
     def simulation_output(self,string):        
@@ -529,14 +591,14 @@ class MainGui(QtGui.QMainWindow):
         add_batchlocation_button = QtGui.QPushButton()
         add_batchlocation_button.clicked.connect(self.add_batchlocation_view)
         add_batchlocation_button.setIcon(QtGui.QIcon(":plus.png"))
-        add_batchlocation_button.setToolTip(self.tr("Add"))
-        add_batchlocation_button.setStatusTip(self.tr("Add"))
+        add_batchlocation_button.setToolTip(self.tr("Add [A]"))
+        add_batchlocation_button.setStatusTip(self.tr("Add [A]"))
         
         del_batchlocation_button = QtGui.QPushButton()
         del_batchlocation_button.clicked.connect(self.del_batchlocation_view)
         del_batchlocation_button.setIcon(QtGui.QIcon(":minus.png"))
-        del_batchlocation_button.setToolTip(self.tr("Remove"))
-        del_batchlocation_button.setStatusTip(self.tr("Remove"))
+        del_batchlocation_button.setToolTip(self.tr("Remove [Del]"))
+        del_batchlocation_button.setStatusTip(self.tr("Remove [Del]"))
         
         edit_batchlocation_button = QtGui.QPushButton()
         edit_batchlocation_button.clicked.connect(self.edit_batchlocation_view)        
@@ -579,14 +641,14 @@ class MainGui(QtGui.QMainWindow):
         add_operator_button = QtGui.QPushButton()
         add_operator_button.clicked.connect(self.add_operator_view)           
         add_operator_button.setIcon(QtGui.QIcon(":plus.png"))
-        add_operator_button.setToolTip(self.tr("Add"))
-        add_operator_button.setStatusTip(self.tr("Add"))
+        add_operator_button.setToolTip(self.tr("Add [A]"))
+        add_operator_button.setStatusTip(self.tr("Add [A]"))
         
         del_operator_button = QtGui.QPushButton()
         del_operator_button.clicked.connect(self.del_operator_view)          
         del_operator_button.setIcon(QtGui.QIcon(":minus.png"))
-        del_operator_button.setToolTip(self.tr("Remove"))
-        del_operator_button.setStatusTip(self.tr("Remove"))
+        del_operator_button.setToolTip(self.tr("Remove [Del]"))
+        del_operator_button.setStatusTip(self.tr("Remove [Del]"))
 
         edit_operator_button = QtGui.QPushButton()
         edit_operator_button.clicked.connect(self.edit_operator_view)        
@@ -617,7 +679,7 @@ class MainGui(QtGui.QMainWindow):
         open_file_button.clicked.connect(self.open_file)        
         open_file_button.setIcon(QtGui.QIcon(":open.png"))
         open_file_button.setToolTip(tip)
-        open_file_button.setStatusTip(tip)
+        open_file_button.setStatusTip(tip)     
 
         save_file_button = QtGui.QPushButton()
         tip = self.tr("Save to file")
@@ -702,7 +764,6 @@ class MainGui(QtGui.QMainWindow):
         load_action = QtGui.QAction(self.tr("Open..."), self)
         load_action.setIcon(QtGui.QIcon(":open.png"))
         load_action.triggered.connect(self.open_file)
-        load_action.setToolTip(tip)
         load_action.setStatusTip(tip)
         load_action.setShortcut('Ctrl+O')
 
@@ -710,21 +771,18 @@ class MainGui(QtGui.QMainWindow):
         save_action = QtGui.QAction(self.tr("Save"), self)
         save_action.setIcon(QtGui.QIcon(":save.png"))
         save_action.triggered.connect(self.save_to_file)        
-        save_action.setToolTip(tip)
         save_action.setStatusTip(tip)
         save_action.setShortcut('Ctrl+S')
 
         tip = self.tr("Save to file as...")        
         saveas_action = QtGui.QAction(self.tr("Save as..."), self)
         saveas_action.triggered.connect(self.save_to_file_as)         
-        saveas_action.setToolTip(tip)
         saveas_action.setStatusTip(tip)        
 
         tip = self.tr("Quit")        
         quit_action = QtGui.QAction(self.tr("Quit"), self)
         quit_action.setIcon(QtGui.QIcon(":quit.png"))
         quit_action.triggered.connect(self.close)        
-        quit_action.setToolTip(tip)
         quit_action.setStatusTip(tip)
         quit_action.setShortcut('Ctrl+Q')
 
@@ -739,15 +797,13 @@ class MainGui(QtGui.QMainWindow):
         help_action = QtGui.QAction(self.tr("Help..."), self)
         help_action.setIcon(QtGui.QIcon(":help.png"))
         help_action.triggered.connect(self.open_help_dialog)         
-        help_action.setToolTip(tip)
         help_action.setStatusTip(tip)
         help_action.setShortcut('H')
 
         tip = self.tr("About the application")        
         about_action = QtGui.QAction(self.tr("About..."), self)
         about_action.setIcon(QtGui.QIcon(":info.png"))
-        about_action.triggered.connect(self.on_about)         
-        about_action.setToolTip(tip)
+        about_action.triggered.connect(self.on_about)
         about_action.setStatusTip(tip)
         about_action.setShortcut('F1')
 
