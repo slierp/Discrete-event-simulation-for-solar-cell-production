@@ -4,7 +4,7 @@ from PyQt4 import QtGui
 from dialogs.PlotSettingsDialog import PlotSettingsDialog
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.gridspec as gridspec
 from matplotlib.figure import Figure
 from matplotlib import rcParams
@@ -103,6 +103,9 @@ class MultiPlot(QtGui.QMainWindow):
 
         num0 = 0 # for all data sets
         num1 = 0 # for selected data sets
+        
+        self.parent.plot_selection.sort() # sort to be sure we make axes for only the last element
+        
         for i in self.prod_rates_df.columns:
 
             if num0 in self.parent.plot_selection:
