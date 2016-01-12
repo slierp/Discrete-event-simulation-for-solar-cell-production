@@ -4,8 +4,6 @@ from setuptools import Extension
 from Cython.Distutils import build_ext
 
 ext_modules=[
-    Extension("RunSimulation", ["RunSimulation.py"]),
-	Extension("RunSimulationThread", ["RunSimulationThread.py"]),
     Extension("batchlocations.BatchClean", ["batchlocations/BatchClean.py"]),
     Extension("batchlocations.BatchContainer", ["batchlocations/BatchContainer.py"]),
     Extension("batchlocations.BatchProcess", ["batchlocations/BatchProcess.py"]),
