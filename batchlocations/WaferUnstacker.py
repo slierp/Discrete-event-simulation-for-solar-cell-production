@@ -65,7 +65,7 @@ The second loop consists of the following steps:
         self.params['units_on_belt_desc'] = "Number of wafers that fit on the belt"
         self.params['units_on_belt_type'] = "configuration"
         
-        self.params['time_step'] = 1.0
+        self.params['time_step'] = 1/1
         self.params['time_step_desc'] = "Time for one wafer to progress one position on belt or into cassette (seconds) (0.1 sec minimum)"
         self.params['time_step_type'] = "automation"
         self.params['time_new_cassette'] = 10
@@ -74,17 +74,17 @@ The second loop consists of the following steps:
         self.params['time_new_stack'] = 10
         self.params['time_new_stack_desc'] = "Time for putting a new stack into the wafer unloading position (seconds)"
         self.params['time_new_stack_type'] = "automation"
-        self.params['time_pick_and_place'] = 1.0
+        self.params['time_pick_and_place'] = 1/1
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
-        
-        self.params.update(_params)    
 
-        if (self.params['time_step'] < 0.1): # enforce minimum time step
-            self.params['time_step'] = 0.1
+        self.params.update(_params)
 
-        if (self.params['time_pick_and_place'] < 0.1): # enforce minimum time step
-            self.params['time_pick_and_place'] = 0.1
+        if (self.params['time_step'] < 1/10): # enforce minimum time step
+            self.params['time_step'] = 1/10
+
+        if (self.params['time_pick_and_place'] < 1/10): # enforce minimum time step
+            self.params['time_pick_and_place'] = 1/10
 
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))

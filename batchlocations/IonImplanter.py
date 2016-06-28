@@ -81,13 +81,13 @@ During this time the wafer load-in is paused.\n
         self.params['repressurization_time_desc'] = "Time for single loadlock repressurization (seconds)"
         self.params['repressurization_time_type'] = "process"
 
-        self.params['implant_belt_speed'] = 6.0
+        self.params['implant_belt_speed'] = 6/1
         self.params['implant_belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
         self.params['implant_belt_speed_type'] = "process"
-        self.params['implant_belt_length'] = 2.0
+        self.params['implant_belt_length'] = 2/1
         self.params['implant_belt_length_desc'] = "Distance between loadlock and buffer cassette (meters)"
         self.params['implant_belt_length_type'] = "configuration"
-        self.params['unit_distance'] = 0.2
+        self.params['unit_distance'] = 2/10
         self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
         self.params['unit_distance_type'] = "configuration"
         
@@ -155,7 +155,7 @@ During this time the wafer load-in is paused.\n
             if self.batchprocesses[0].first_run:
                 idle_time = 0
             else:
-                idle_time = 100-100.0*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
+                idle_time = 100-100*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
             self.utilization.append(["Lane " + str(i),round(idle_time,1)])
 
     def prod_volume(self):

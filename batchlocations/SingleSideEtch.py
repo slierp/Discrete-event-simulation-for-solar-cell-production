@@ -49,10 +49,10 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.params['tool_length'] = 10
         self.params['tool_length_desc'] = "Travel distance for wafers between input and output (meters)"
         self.params['tool_length_type'] = "configuration"
-        self.params['belt_speed'] = 1.8
+        self.params['belt_speed'] = 18/10
         self.params['belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
         self.params['belt_speed_type'] = "process"
-        self.params['unit_distance'] = 0.2
+        self.params['unit_distance'] = 2/10
         self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
         self.params['unit_distance_type'] = "configuration"
         self.params['cassette_size'] = 100
@@ -115,7 +115,7 @@ The time increment is determined by the belt speed and unit distance.</li>
             if self.first_run:
                 idle_time = 0
             else:
-                idle_time = 100-100.0*self.idle_times_internal[i]/(self.env.now-self.start_time)
+                idle_time = 100-100*self.idle_times_internal[i]/(self.env.now-self.start_time)
             self.utilization.append(["Lane " + str(i),round(idle_time,1)])
 
     def prod_volume(self):
