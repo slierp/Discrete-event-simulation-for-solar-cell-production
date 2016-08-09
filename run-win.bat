@@ -1,4 +1,4 @@
-::python -m cProfile -o output Main.py -i test.desc -d 24 -p
+::python -m cProfile -o output desc-pro\Main.py -i test.desc -d 24 -p
 ::snakeviz output
-python Main.py
+python desc-pro\Main.py
 pause

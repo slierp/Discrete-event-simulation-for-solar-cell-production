@@ -1,3 +1,4 @@
+cd desc-pro
 rm -f *.so
 rm -f *.c
 rm -f *.pyc
