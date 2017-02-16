@@ -1,4 +1,6 @@
 PrintLine microstops > implement screen change and screen clean
+Add boat changer for PECVD/Furnace
+Add cassette and cart locations and loops
 Update TubePECVD/Furnace to start downtime count when all processes have finished; not when all batches are unloaded
 Add laser opening process step
 Add cassette-to-cassette transfer

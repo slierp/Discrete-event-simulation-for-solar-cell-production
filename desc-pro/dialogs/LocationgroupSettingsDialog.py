@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 from blockdiag import parser, builder, drawer
-from PyQt4 import QtGui, QtCore, QtSvg
+from PyQt5 import QtWidgets, QtCore, QtSvg, QtGui
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
@@ -32,9 +31,9 @@ class dummy_env(object):
     def event(dummy0=None):
         pass
 
-class LocationgroupSettingsDialog(QtGui.QDialog):
+class LocationgroupSettingsDialog(QtWidgets.QDialog):
     def __init__(self, _parent):
-        super(QtGui.QDialog, self).__init__(_parent)
+        super(QtWidgets.QDialog, self).__init__(_parent)
         # create dialog screen for each parameter in curr_params
         
         self.parent = _parent
@@ -103,9 +102,9 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         
         self.setWindowTitle(self.tr("Tool group settings"))
         
-        tabwidget = QtGui.QTabWidget()
+        tabwidget = QtWidgets.QTabWidget()
         
-        vbox_description = QtGui.QVBoxLayout() # vbox for description elements
+        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements
 
         ### Add diagram ###
         tree = parser.parse_string(curr_diagram)
@@ -115,26 +114,26 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
         svg_string = draw.save()
 
         svg_widget = QtSvg.QSvgWidget()
-        svg_widget.load(QtCore.QString(svg_string).toLocal8Bit())
+        svg_widget.load(str(svg_string).encode('latin-1'))
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(svg_widget)
         hbox.addStretch(1)
         vbox_description.addLayout(hbox)
 
         ### Add specification text ###
-        hbox = QtGui.QHBoxLayout()           
-        browser = QtGui.QTextBrowser()
+        hbox = QtWidgets.QHBoxLayout()           
+        browser = QtWidgets.QTextBrowser()
         browser.insertHtml(curr_params['specification'])
         browser.moveCursor(QtGui.QTextCursor.Start)        
         hbox.addWidget(browser)
 
         vbox_description.addLayout(hbox)
 
-        generic_widget_description = QtGui.QWidget()
+        generic_widget_description = QtWidgets.QWidget()
         generic_widget_description.setLayout(vbox_description)
-        tabwidget.addTab(generic_widget_description, QtCore.QString("Description"))
+        tabwidget.addTab(generic_widget_description, "Description")
 
         self.strings = []
         self.integers = []
@@ -154,15 +153,15 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
             if not (j in curr_params.values()):
                 continue
             
-            vbox = QtGui.QVBoxLayout()
-            vbox.addWidget(QtGui.QLabel(setting_type_titles[j]))
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel(setting_type_titles[j]))
             
             for i in sorted(curr_params.keys()):
             # Make QSpinBox or QDoubleSpinbox for integers and doubles
                 if isinstance(curr_params[i], int) and (curr_params[i + "_type"] == j):
-                    hbox = QtGui.QHBoxLayout()
-                    description = QtGui.QLabel(curr_params[i + "_desc"])                
-                    self.integers.append(QtGui.QSpinBox())
+                    hbox = QtWidgets.QHBoxLayout()
+                    description = QtWidgets.QLabel(curr_params[i + "_desc"])                
+                    self.integers.append(QtWidgets.QSpinBox())
                     self.integers[-1].setAccelerated(True)
                     self.integers[-1].setMaximum(999999999)
                     self.integers[-1].setValue(curr_params[i])
@@ -178,9 +177,9 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                     hbox.addStretch(1)                
                     vbox.addLayout(hbox)
                 elif isinstance(curr_params[i], float) and (curr_params[i + "_type"] == j):
-                    hbox = QtGui.QHBoxLayout()
-                    description = QtGui.QLabel(curr_params[i + "_desc"])                
-                    self.doubles.append(QtGui.QDoubleSpinBox())
+                    hbox = QtWidgets.QHBoxLayout()
+                    description = QtWidgets.QLabel(curr_params[i + "_desc"])                
+                    self.doubles.append(QtWidgets.QDoubleSpinBox())
                     self.doubles[-1].setAccelerated(True)
                     self.doubles[-1].setMaximum(999999999)
                     self.doubles[-1].setValue(curr_params[i])
@@ -194,22 +193,22 @@ class LocationgroupSettingsDialog(QtGui.QDialog):
                     vbox.addLayout(hbox)
 
             vbox.addStretch(1)
-            generic_widget = QtGui.QWidget()
+            generic_widget = QtWidgets.QWidget()
             generic_widget.setLayout(vbox)
-            tabwidget.addTab(generic_widget, QtCore.QString(setting_type_tabs[j]))
+            tabwidget.addTab(generic_widget, setting_type_tabs[j])#QtCore.QString(setting_type_tabs[j]))
         
-        layout = QtGui.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(tabwidget) 
 
         ### Avoid shrinking all the diagrams ###
         svg_widget.setMinimumHeight(svg_widget.height())
 
         ### Buttonbox for ok or cancel ###
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
+            buttonbox.layout().setDirection(QtWidgets.QBoxLayout.RightToLeft)
 
         layout.addWidget(buttonbox)
         self.setMinimumWidth(800)

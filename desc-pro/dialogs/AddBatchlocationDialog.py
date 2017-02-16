@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 from sys import platform as _platform
 
-class AddBatchlocationDialog(QtGui.QDialog):
+class AddBatchlocationDialog(QtWidgets.QDialog):
     def __init__(self, parent):
-        super(QtGui.QDialog, self).__init__(parent)
+        super(QtWidgets.QDialog, self).__init__(parent)
         # create dialog screen for each parameter in curr_params
         
         self.parent = parent
@@ -29,10 +28,10 @@ class AddBatchlocationDialog(QtGui.QDialog):
                 
         self.setWindowTitle(self.tr("Add batch location"))
 
-        vbox = QtGui.QVBoxLayout()
-        hbox0 = QtGui.QHBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
+        hbox0 = QtWidgets.QHBoxLayout()
 
-        label = QtGui.QLabel(self.tr("Select type:"))
+        label = QtWidgets.QLabel(self.tr("Select type:"))
         hbox0.addWidget(label)
 
         batchlocation_types = []
@@ -52,7 +51,7 @@ class AddBatchlocationDialog(QtGui.QDialog):
         batchlocation_types.append("WaferStacker")        
         batchlocation_types.append("WaferUnstacker")               
 
-        self.batchlocation_types_combo = QtGui.QComboBox(self)
+        self.batchlocation_types_combo = QtWidgets.QComboBox(self)
         for i in batchlocation_types:
             self.batchlocation_types_combo.addItem(i)
 
@@ -65,30 +64,30 @@ class AddBatchlocationDialog(QtGui.QDialog):
         hbox0.addWidget(self.batchlocation_types_combo)
         vbox.addLayout(hbox0)
 
-        hbox1 = QtGui.QHBoxLayout()
+        hbox1 = QtWidgets.QHBoxLayout()
         
-        label = QtGui.QLabel(self.tr("name"))
+        label = QtWidgets.QLabel(self.tr("name"))
         hbox1.addWidget(label)
 
-        self.name_edit = QtGui.QLineEdit("new")
+        self.name_edit = QtWidgets.QLineEdit("new")
         hbox1.addWidget(self.name_edit)        
 
         if (self.child_item):
-            hbox2 = QtGui.QHBoxLayout()
+            hbox2 = QtWidgets.QHBoxLayout()
         
-            label = QtGui.QLabel(self.tr("create_copy"))
+            label = QtWidgets.QLabel(self.tr("create_copy"))
             hbox2.addWidget(label)
 
-            self.copy_checkbox = QtGui.QCheckBox()
+            self.copy_checkbox = QtWidgets.QCheckBox()
             self.copy_checkbox.setChecked(True)
             hbox2.addWidget(self.copy_checkbox)    
 
         ### Buttonbox for ok or cancel ###
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft) 
+            buttonbox.layout().setDirection(QtWidgets.QBoxLayout.RightToLeft) 
         
         vbox.addLayout(hbox1)
         if (self.child_item): vbox.addLayout(hbox2)

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 from dialogs.LineDiagramDialog import LineDiagramDialog
 
 class LineDiagramView(QtCore.QObject):

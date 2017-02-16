@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui
 from batchlocations.Operator import Operator
 from sys import platform as _platform
 
@@ -15,9 +14,10 @@ class dummy_env(object):
     def event(dummy0=None):
         pass
 
-class OperatorSettingsDialog(QtGui.QDialog):
+class OperatorSettingsDialog(QtWidgets.QDialog):
     def __init__(self, _parent):
-        super(QtGui.QDialog, self).__init__(_parent)
+
+        super(QtWidgets.QDialog, self).__init__(_parent)
         # create dialog screen for each parameter in curr_params
         
         self.parent = _parent
@@ -35,44 +35,44 @@ class OperatorSettingsDialog(QtGui.QDialog):
 
         self.setWindowTitle(self.tr("Operator settings"))
 
-        tabwidget = QtGui.QTabWidget()
+        tabwidget = QtWidgets.QTabWidget()
         
-        vbox_description = QtGui.QVBoxLayout() # vbox for description elements        
-        
+        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements        
+       
         ### Add specification text ###
-        hbox = QtGui.QHBoxLayout()           
-        browser = QtGui.QTextBrowser()
+        hbox = QtWidgets.QHBoxLayout()           
+        browser = QtWidgets.QTextBrowser()
         browser.insertHtml(curr_params['specification'])
         browser.moveCursor(QtGui.QTextCursor.Start)        
         hbox.addWidget(browser)
-        vbox_description.addLayout(hbox)        
+        vbox_description.addLayout(hbox)
 
-        generic_widget_description = QtGui.QWidget()
+        generic_widget_description = QtWidgets.QWidget()
         generic_widget_description.setLayout(vbox_description)
-        tabwidget.addTab(generic_widget_description, QtCore.QString("Description"))
+        tabwidget.addTab(generic_widget_description, "Description")
 
-        vbox = QtGui.QVBoxLayout() # vbox for all settings  
-        
+        vbox = QtWidgets.QVBoxLayout() # vbox for all settings  
+         
         self.strings = []
         
         # Make QLineEdit for name
-        hbox = QtGui.QHBoxLayout()
-        self.strings.append(QtGui.QLineEdit(curr_params['name']))
+        hbox = QtWidgets.QHBoxLayout()
+        self.strings.append(QtWidgets.QLineEdit(curr_params['name']))
         self.strings[-1].setObjectName('name')
         self.strings[-1].setMaxLength(5)
-        description = QtGui.QLabel('Name of the individual operator')
+        description = QtWidgets.QLabel('Name of the individual operator')
         self.strings[-1].setToolTip('Name of the individual operator')
         hbox.addWidget(self.strings[-1]) 
         hbox.addWidget(description)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
-        
+
         self.integers = []
         for i in curr_params:
             if isinstance(curr_params[i], int):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])
-                self.integers.append(QtGui.QSpinBox())
+                hbox = QtWidgets.QHBoxLayout()
+                description = QtWidgets.QLabel(curr_params[i + "_desc"])
+                self.integers.append(QtWidgets.QSpinBox())
                 self.integers[-1].setAccelerated(True)
                 self.integers[-1].setMaximum(999999999)
                 self.integers[-1].setValue(curr_params[i])
@@ -91,9 +91,9 @@ class OperatorSettingsDialog(QtGui.QDialog):
         self.doubles = []
         for i in curr_params:
             if isinstance(curr_params[i], float):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])
-                self.doubles.append(QtGui.QDoubleSpinBox())
+                hbox = QtWidgets.QHBoxLayout()
+                description = QtWidgets.QLabel(curr_params[i + "_desc"])
+                self.doubles.append(QtWidgets.QDoubleSpinBox())
                 self.doubles[-1].setAccelerated(True)
                 self.doubles[-1].setMaximum(999999999)
                 self.doubles[-1].setValue(curr_params[i])
@@ -109,9 +109,9 @@ class OperatorSettingsDialog(QtGui.QDialog):
         self.booleans = []
         for i in curr_params:
             if isinstance(curr_params[i], bool):
-                hbox = QtGui.QHBoxLayout()
-                description = QtGui.QLabel(curr_params[i + "_desc"])
-                self.booleans.append(QtGui.QCheckBox())                
+                hbox = QtWidgets.QHBoxLayout()
+                description = QtWidgets.QLabel(curr_params[i + "_desc"])
+                self.booleans.append(QtWidgets.QCheckBox())                
                 self.booleans[-1].setChecked(curr_params[i])
                 self.booleans[-1].setObjectName(i)
                 if i + "_desc" in curr_params:
@@ -122,19 +122,19 @@ class OperatorSettingsDialog(QtGui.QDialog):
                 vbox.addLayout(hbox)
 
         vbox.addStretch(1)
-        generic_widget_settings = QtGui.QWidget()
+        generic_widget_settings = QtWidgets.QWidget()
         generic_widget_settings.setLayout(vbox)
-        tabwidget.addTab(generic_widget_settings, QtCore.QString("Settings"))
+        tabwidget.addTab(generic_widget_settings, "Settings")
 
-        layout = QtGui.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(tabwidget) 
 
         ### Buttonbox for ok or cancel ###
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
+            buttonbox.layout().setDirection(QtWidgets.QBoxLayout.RightToLeft)
 
         layout.addWidget(buttonbox)
         self.setMinimumWidth(800)

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtCore
-from OperatorSettingsDialog import OperatorSettingsDialog
-from ConnectionSettingsDialog import ConnectionSettingsDialog
+from PyQt5 import QtCore
+from dialogs.OperatorSettingsDialog import OperatorSettingsDialog
+from dialogs.ConnectionSettingsDialog import ConnectionSettingsDialog
 
 class EditOperatorView(QtCore.QObject):
     def __init__(self, _parent):
         super(QtCore.QObject, self).__init__(_parent)
-        
+
         self.parent = _parent
         
         if (not len(self.parent.operators_view.selectedIndexes())):
@@ -20,10 +19,10 @@ class EditOperatorView(QtCore.QObject):
             self.edit_batchconnection()
 
     def edit_operator(self):
-        # start dialog to enable user to change settings
-        batchlocation_dialog = OperatorSettingsDialog(self.parent)
+        # start dialog to enable user to change settings        
+        batchlocation_dialog = OperatorSettingsDialog(self.parent)  
         batchlocation_dialog.setModal(True)
-        batchlocation_dialog.show()
+        batchlocation_dialog.show()        
 
     def edit_batchconnection(self):
         # find out which connection was selected

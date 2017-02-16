@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 from sys import platform as _platform
 
-class AddOperatorConnectionDialog(QtGui.QDialog):
+class AddOperatorConnectionDialog(QtWidgets.QDialog):
     def __init__(self, parent):
-        super(QtGui.QDialog, self).__init__(parent)
+        super(QtWidgets.QDialog, self).__init__(parent)
         # create dialog screen for each parameter in curr_params
         
         self.parent = parent
@@ -15,20 +14,20 @@ class AddOperatorConnectionDialog(QtGui.QDialog):
         self.index = self.parent.operators_view.selectedIndexes()[0].row()        
         
         self.setWindowTitle(self.tr("Add operator connection"))
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
 
-        title_label = QtGui.QLabel(self.tr("Available connections:"))
+        title_label = QtWidgets.QLabel(self.tr("Available connections:"))
         vbox.addWidget(title_label)
 
         self.dataset_cb = []
         for i, value in enumerate(self.parent.batchconnections):
-            self.dataset_cb.append(QtGui.QCheckBox(self.parent.print_batchconnection(i)))
+            self.dataset_cb.append(QtWidgets.QCheckBox(self.parent.print_batchconnection(i)))
             if i in self.parent.operators[self.row][0]:
                 self.dataset_cb[i].setChecked(True)
 
-        scroll_area = QtGui.QScrollArea()
-        checkbox_widget = QtGui.QWidget()
-        checkbox_vbox = QtGui.QVBoxLayout()
+        scroll_area = QtWidgets.QScrollArea()
+        checkbox_widget = QtWidgets.QWidget()
+        checkbox_vbox = QtWidgets.QVBoxLayout()
 
         for i in range(len(self.dataset_cb)):
             self.dataset_cb[i].setMinimumWidth(400) # prevent obscured text
@@ -39,12 +38,12 @@ class AddOperatorConnectionDialog(QtGui.QDialog):
         vbox.addWidget(scroll_area)
 
         ### Buttonbox for ok or cancel ###
-        hbox = QtGui.QHBoxLayout()
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        hbox = QtWidgets.QHBoxLayout()
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft)
+            buttonbox.layout().setDirection(QtWidgets.QBoxLayout.RightToLeft)
         hbox.addStretch(1) 
         hbox.addWidget(buttonbox)
         hbox.addStretch(1)

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 from copy import deepcopy
-from AddOperatorConnectionDialog import AddOperatorConnectionDialog
+from dialogs.AddOperatorConnectionDialog import AddOperatorConnectionDialog
 
 class AddOperatorView(QtCore.QObject):
     def __init__(self, _parent):

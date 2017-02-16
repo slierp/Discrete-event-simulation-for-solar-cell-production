@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets, QtGui
 from dialogs.PlotSettingsDialog import PlotSettingsDialog
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.gridspec as gridspec
 from matplotlib.figure import Figure
 from matplotlib import rcParams
@@ -15,12 +14,12 @@ font = {'family' : 'sans-serif',
 
 plt.rc('font', **font)
 
-class MultiPlot(QtGui.QMainWindow):
+class MultiPlot(QtWidgets.QMainWindow):
     
     def __init__(self, _parent):
         
-        QtGui.QMainWindow.__init__(self, _parent)
-
+        QtWidgets.QMainWindow.__init__(self, _parent)
+        
         self.fig = None
         self.canvas = None
         self.parent = _parent
@@ -30,52 +29,50 @@ class MultiPlot(QtGui.QMainWindow):
         self.setWindowTitle("Production rates")       
         self.on_draw()        
 
-    def create_menu(self):
-
+    def create_menu(self):        
         self.file_menu = self.menuBar().addMenu("File")
-        quit_action = QtGui.QAction("Quit", self)
+        quit_action = QtWidgets.QAction("Quit", self)
         quit_action.setIcon(QtGui.QIcon(":quit.png"))
         quit_action.triggered.connect(self.close) 
         quit_action.setToolTip("Quit")
         quit_action.setStatusTip("Quit")
         quit_action.setShortcut('Ctrl+Q')
        
-        self.file_menu.addAction(quit_action) 
+        self.file_menu.addAction(quit_action)
 
     def create_main_frame(self):
-        
-        self.main_frame = QtGui.QWidget()
+        self.main_frame = QtWidgets.QWidget()
         
         # Create the mpl Figure and FigCanvas objects
         self.dpi = 100
         
         self.fig = Figure((10.0, 10.0), dpi=self.dpi, facecolor='White')        
-        
+
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self.main_frame)       
- 
+        
         # Create the navigation toolbar, tied to the canvas
         self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
-
-        show_button = QtGui.QPushButton()
+        
+        show_button = QtWidgets.QPushButton()
         show_button.clicked.connect(self.plot_settings_view)
         show_button.setIcon(QtGui.QIcon(":gear.png"))
         show_button.setToolTip("Edit settings")
         show_button.setStatusTip("Edit settings")
 
-        buttonbox0 = QtGui.QDialogButtonBox()
-        buttonbox0.addButton(show_button, QtGui.QDialogButtonBox.ActionRole)               
+        buttonbox0 = QtWidgets.QDialogButtonBox()
+        buttonbox0.addButton(show_button, QtWidgets.QDialogButtonBox.ActionRole)               
 
         self.mpl_toolbar.addWidget(show_button)                      
                                 
-        vbox = QtGui.QVBoxLayout()        
+        vbox = QtWidgets.QVBoxLayout()        
         vbox.addWidget(self.mpl_toolbar)
         vbox.addWidget(self.canvas)
         
         self.main_frame.setLayout(vbox)
         self.setCentralWidget(self.main_frame)
         
-        self.status_text = QtGui.QLabel("")        
+        self.status_text = QtWidgets.QLabel("")        
         self.statusBar().addWidget(self.status_text,1)
 
     def plot_settings_view(self):

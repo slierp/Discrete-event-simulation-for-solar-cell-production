@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 from sys import platform as _platform
 
-class ConnectionSettingsDialog(QtGui.QDialog):
+class ConnectionSettingsDialog(QtWidgets.QDialog):
     def __init__(self, _parent, _batchconnection):
-        super(QtGui.QDialog, self).__init__(_parent)
+        super(QtWidgets.QDialog, self).__init__(_parent)
         # create dialog screen for changing connection parameters
         
         self.parent = _parent
         self.batchconnection = _batchconnection
         self.setWindowTitle(self.tr("Connection settings"))
-        vbox = QtGui.QVBoxLayout()            
+        vbox = QtWidgets.QVBoxLayout()            
         
-        hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("Time needed for a single transport action")
-        self.spinbox0 = QtGui.QSpinBox()
+        hbox = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("Time needed for a single transport action")
+        self.spinbox0 = QtWidgets.QSpinBox()
         self.spinbox0.setAccelerated(True)
         self.spinbox0.setMaximum(999999999)
         self.spinbox0.setValue(self.batchconnection[2])
@@ -30,9 +29,9 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("Time added for each additional batch")
-        self.spinbox1 = QtGui.QSpinBox()
+        hbox = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("Time added for each additional batch")
+        self.spinbox1 = QtWidgets.QSpinBox()
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999999999)
         self.spinbox1.setValue(self.batchconnection[3])
@@ -47,9 +46,9 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("Minimum number of batches needed to start transport")
-        self.spinbox2 = QtGui.QSpinBox()
+        hbox = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("Minimum number of batches needed to start transport")
+        self.spinbox2 = QtWidgets.QSpinBox()
         self.spinbox2.setAccelerated(True)
         self.spinbox2.setMaximum(999)
         self.spinbox2.setMinimum(1)
@@ -61,9 +60,9 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("Maximum number of batches for one transport run")
-        self.spinbox3 = QtGui.QSpinBox()
+        hbox = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("Maximum number of batches for one transport run")
+        self.spinbox3 = QtWidgets.QSpinBox()
         self.spinbox3.setAccelerated(True)
         self.spinbox3.setMaximum(999)
         self.spinbox3.setMinimum(1)
@@ -75,9 +74,9 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        hbox = QtGui.QHBoxLayout()
-        label = QtGui.QLabel("Apply current settings to all connections")
-        self.boolean = QtGui.QCheckBox()
+        hbox = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("Apply current settings to all connections")
+        self.boolean = QtWidgets.QCheckBox()
         self.boolean.setChecked(False)
         label.setToolTip("Apply current settings to all connections")
         self.boolean.setToolTip("Apply current settings to all connections")        
@@ -88,11 +87,11 @@ class ConnectionSettingsDialog(QtGui.QDialog):
         vbox.addLayout(hbox)
 
         ### Buttonbox for ok or cancel ###
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         buttonbox.accepted.connect(self.read)
         buttonbox.rejected.connect(self.reject)
         if _platform == "linux" or _platform == "linux2":
-            buttonbox.layout().setDirection(QtGui.QBoxLayout.RightToLeft) 
+            buttonbox.layout().setDirection(QtWidgets.QBoxLayout.RightToLeft) 
         vbox.addWidget(buttonbox)
 
         self.setLayout(vbox)        

@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui, QtCore, QtSvg
+from PyQt5 import QtWidgets, QtSvg, QtGui
 from blockdiag import parser, builder, drawer
 from blockdiag.imagedraw import svg # needed for pyinstaller
 from blockdiag.noderenderer import roundedbox # needed for pyinstaller
 
-class LineDiagramDialog(QtGui.QDialog):
+class LineDiagramDialog(QtWidgets.QDialog):
     def __init__(self, parent):
-        super(QtGui.QDialog, self).__init__(parent)
+        super(QtWidgets.QDialog, self).__init__(parent)
         
         self.parent = parent
         
-        self.clip = QtGui.QApplication.clipboard()
+        self.clip = QtWidgets.QApplication.clipboard()
 
         svg.setup(svg) # needed for pyinstaller
         roundedbox.setup(roundedbox) # needed for pyinstaller
 
         self.setWindowTitle(self.tr("Production line diagram"))
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
 
         ### Generate diagram definition ###
         diagram = """blockdiag {
@@ -52,22 +51,22 @@ class LineDiagramDialog(QtGui.QDialog):
         svg_string = draw.save()
         
         ### Convert to PyQt supported format ###
-        QtGui.QImageReader.supportedImageFormats()
-        self.svg_widget = QtSvg.QSvgWidget()
-        self.svg_widget.load(QtCore.QString(svg_string).toLocal8Bit())
+        #QtGui.QImageReader.supportedImageFormats()        
+        self.svg_widget = QtSvg.QSvgWidget()            
+        self.svg_widget.load(str(svg_string).encode('latin-1'))               
 
         ### Add SVG widget ###
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
         hbox.addWidget(self.svg_widget)
         vbox.addLayout(hbox)
 
         ### Add ok button for closing the dialog ###
-        hbox = QtGui.QHBoxLayout()
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        hbox = QtWidgets.QHBoxLayout()
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
         buttonbox.accepted.connect(self.close)
 
-        copy_button = QtGui.QPushButton()
+        copy_button = QtWidgets.QPushButton()
         copy_button.setText('Copy to clipboard')
         copy_button.clicked.connect(self.copy_to_clipboard)
         copy_button.setShortcut('Ctrl-C')        

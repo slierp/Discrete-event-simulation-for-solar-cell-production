@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets,QtGui
 
 help_text = """
 <html>
@@ -150,26 +149,26 @@ On the commandline the profiling mode will generate a CSV file called output.csv
 </html>
 """
 
-class HelpDialog(QtGui.QDialog):
+class HelpDialog(QtWidgets.QDialog):
     # Generates help document browser    
     
     def __init__(self, parent):
-        super(QtGui.QDialog, self).__init__(parent)
-        
+        super(QtWidgets.QDialog, self).__init__(parent)
+       
         self.parent = parent       
         
         self.setWindowTitle(self.tr("Help"))
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
 
-        browser = QtGui.QTextBrowser()
+        browser = QtWidgets.QTextBrowser()
         browser.insertHtml(help_text)
         browser.moveCursor(QtGui.QTextCursor.Start)
 
         vbox.addWidget(browser)
 
         ### Buttonbox for ok ###
-        hbox = QtGui.QHBoxLayout()
-        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        hbox = QtWidgets.QHBoxLayout()
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
         buttonbox.accepted.connect(self.close)
         hbox.addStretch(1) 
         hbox.addWidget(buttonbox)

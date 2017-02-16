@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
@@ -19,26 +18,11 @@ from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
 import pickle
 import pandas as pd
-
-### Parse HTML to remove it from output ###
-from HTMLParser import HTMLParser
-
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
+import sys
 
 class SignalHandler(object):
-     # redirect code for pyqtSignal to normal print without HTML
-
     def emit(self, str):
-        s = MLStripper()
-        s.feed(str)
-        print s.get_data()
+        print(str)
         
 class StringSignal(object):
      # redirect code for pyqtSignal to normal print
@@ -52,11 +36,11 @@ class RunSimulation(object):
         self.signal = StringSignal()        
         
         try:
-            with open(filename) as f: # Pickle is in principle the only reason the program currently needs numpy
+            with open(filename,'rb') as f: # Pickle is in principle the only reason the program currently needs numpy
                 self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
         except:
-            print"Could not read file \"" + str(filename) + "\""
-            exit()
+            print("Could not read file \"" + str(filename) + "\"")
+            sys.exit()
 
         #self.batchlocations = [] #tool class name, no of tools, dict with settings         
         #self.locationgroups = []
@@ -154,7 +138,7 @@ class RunSimulation(object):
         self.updates_list = self.make_unique(self.updates_list)        
 
     def run(self):
-        print "Simulation started with " + str(round(self.params['time_limit'] / (60*60),1)) + " hour duration"
+        print("Simulation started with " + str(round(self.params['time_limit'] / (60*60),1)) + " hour duration")
                     
         ### Run simulation ###
         prev_production_volume_update = 0
@@ -164,7 +148,7 @@ class RunSimulation(object):
             self.env.run(until=i)
                         
             if (i == self.params['time_limit']):                
-                print "Finished at "  + str(round(self.env.now/3600,1)) + " hours"
+                print("Finished at "  + str(round(self.env.now/3600,1)) + " hours")
             elif i in self.percentage_updates: #% (self.params['time_limit'] // 10) == 0):
                 l_loc = len(self.locationgroups)
                 percentage_production_volume_update = 0
@@ -177,14 +161,10 @@ class RunSimulation(object):
                 # float needed for very large integer division                
                 string = str(round(100*float(i)/self.params['time_limit'])) + "% progress: " + str(round(i/3600,1)) + " hours / "
                 string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
-                print string
+                print(string)
             
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
-
-        ### Generate summary output in log tab ###
-        string = "<br><b>Production result summary</>"
-        self.output.sig.emit(string)
 
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
@@ -198,16 +178,16 @@ class RunSimulation(object):
         for i in range(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
             
-        print "Production volume: " + str(prod_vol)
-        print "Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit']))
-        print "Simulation finished"
+        print("Production volume: " + str(prod_vol))
+        print("Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit'])))
+        print("Simulation finished")
 
     def run_with_profiling(self):
         if (self.params['time_limit'] < 3601):
-            print "Profiling mode requires longer simulation duration."
+            print("Profiling mode requires longer simulation duration.")
             return
         
-        print "Simulation started with " + str(round(self.params['time_limit'] / (60*60),1)) + " hour duration"
+        print("Simulation started with " + str(round(self.params['time_limit'] / (60*60),1)) + " hour duration")
         curr_time = 0
 
         columns = []
@@ -244,10 +224,6 @@ class RunSimulation(object):
         prod_rates_df.index.name = "Time [hours]" # set index name to time in hours; has to be after changing index values
         prod_rates_df.to_csv("output.csv")
 
-        ### Generate summary output in log tab ###
-        string = "<br><b>Production result summary</>"
-        self.output.sig.emit(string)
-
         for i, value in enumerate(self.batchlocations):
             self.batchlocations[i].report()
 
@@ -260,9 +236,9 @@ class RunSimulation(object):
         for i in range(len(self.locationgroups[l_loc-1])):
             prod_vol += self.locationgroups[l_loc-1][i].output.container.level
             
-        print "Production volume: " + str(prod_vol)
-        print "Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit']))
-        print "Simulation finished"
+        print("Production volume: " + str(prod_vol))
+        print("Average throughput (WPH): " + str(round(3600*prod_vol/self.params['time_limit'])))
+        print("Simulation finished")
     
     """
     def define_simulation(self): # not used at the moment

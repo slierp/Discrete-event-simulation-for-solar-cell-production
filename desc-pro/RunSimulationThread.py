@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
@@ -17,7 +16,7 @@ from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
 from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 import pandas as pd
 import time
 
@@ -104,8 +103,9 @@ class RunSimulationThread(QtCore.QObject):
 
     @QtCore.pyqtSlot()
     def run(self):
-        start_time = time.clock()        
         
+        start_time = time.clock()
+                
         self.env = simpy.Environment()
         self.replace_for_real_instances() 
 

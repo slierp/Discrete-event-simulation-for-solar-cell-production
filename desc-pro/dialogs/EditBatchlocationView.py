@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from PyQt4 import QtCore
-from BatchlocationSettingsDialog import BatchlocationSettingsDialog
-from LocationgroupSettingsDialog import LocationgroupSettingsDialog
+from PyQt5 import QtCore
+from dialogs.BatchlocationSettingsDialog import BatchlocationSettingsDialog
+from dialogs.LocationgroupSettingsDialog import LocationgroupSettingsDialog
 
 class EditBatchlocationView(QtCore.QObject):
     def __init__(self, _parent):
