@@ -15,6 +15,7 @@ from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
 from batchlocations.PlasmaEtcher import PlasmaEtcher
+from batchlocations.BatchContainer import BatchContainer # NEW LOGIC
 import simpy
 from PyQt5 import QtCore
 import pandas as pd
@@ -85,6 +86,18 @@ class RunSimulationThread(QtCore.QObject):
             # replace batchlocation number indicators for references to real class instances
             for j in range(len(self.locationgroups[i])):
                 self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]
+
+        ### NEW LOGIC ###
+        ### GENERATE CASSETTES FROM self.cassette_loops ###
+        self.cassettes = [] # container for all cassettes
+        self.cassette_runs = [] # keep track of number of runs
+        self.cassette_status = [] # 0 is idle; 1 is in use
+        
+        for i in range(len(self.cassette_loops)):
+            for j in range(self.cassette_loops[i][2]):                
+                self.cassettes.append(BatchContainer(self.env,"cassette",self.cassette_loops[i][3],1))
+                self.cassette_runs.append(0)
+                self.cassette_status.append(0)
            
         for i, value in enumerate(self.batchconnections):
             # replace locationgroup number indicators for references to real class instances

@@ -99,6 +99,15 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations_view.installEventFilter(self.batch_filter)
         self.batch_filter.signal.connect(self.treeview_signals)        
 
+        ### NEW LOGIC ###
+        self.cassetteloops_model = QtGui.QStandardItemModel()
+        self.cassetteloops_view = DeselectableTreeView()
+        #self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloops_view)
+        self.cassetteloops_view.setAlternatingRowColors(True)
+        #self.batch_filter = BatchlocationsViewKeyFilter()
+        #self.batchlocations_view.installEventFilter(self.batch_filter)
+        #self.batch_filter.signal.connect(self.treeview_signals)
+
         self.operators_model = QtGui.QStandardItemModel()
         self.operators_view = DeselectableTreeView()
         self.operators_view.doubleClicked.connect(self.edit_operator_view)
@@ -109,7 +118,7 @@ class MainGui(QtWidgets.QMainWindow):
 
         self.batchlocation_dialog = None
 
-        self.batchlocations = [] #tool class name, no of tools, dict with settings
+        self.batchlocations = [] #tool class name, dict with settings
         self.batchlocations.append(["WaferSource", {'name' : '0'}])
         self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
         self.batchlocations.append(["WaferUnstacker",{'name' : '1'}])
@@ -122,8 +131,12 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations.append(["TubePECVD", {'name' : '1'}])
         self.batchlocations.append(["PrintLine", {'name' : '0'}])
         self.batchlocations.append(["PrintLine", {'name' : '1'}])
+        
+        ### NEW LOGIC ###        
+        self.cassette_loops = [] # define last locationgroup in loop and number of cassettes for each loop       
+        self.cassette_loops.append([1,7,100,100]) # begin, end, #cassettes, #wafers in cassettes
 
-        self.locationgroups = []
+        self.locationgroups = [] 
         self.batchconnections = []
         self.operators = []
 
@@ -135,6 +148,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.create_menu()
         self.create_main_frame()
         self.load_definition_batchlocations()
+        self.load_definition_cassetteloops()
         self.load_definition_operators()
 
     @QtCore.pyqtSlot(str)
@@ -165,13 +179,14 @@ class MainGui(QtWidgets.QMainWindow):
         
         try:
             with open(str(filename[0]),'rb') as f:
-                self.batchlocations,self.locationgroups,self.batchconnections,self.operators = pickle.load(f)
+                self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators = pickle.load(f)
         except:
             msg = self.tr("Could not read file \"" + ntpath.basename(str(filename[0])) + "\"")
             QtWidgets.QMessageBox.about(self, self.tr("Warning"), msg) 
             return
         
         self.load_definition_batchlocations(False)
+        self.load_definition_cassetteloops(False)
         self.load_definition_operators(False) 
             
         self.statusBar().showMessage(self.tr("New description loaded"))
@@ -183,7 +198,7 @@ class MainGui(QtWidgets.QMainWindow):
             return
         
         with open(self.prev_save_path, 'wb') as f:
-            pickle.dump([self.batchlocations,self.locationgroups,self.batchconnections,self.operators], f)
+            pickle.dump([self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators], f)
             
         self.statusBar().showMessage(self.tr("File saved"))
 
@@ -200,7 +215,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.prev_dir_path = ntpath.dirname(str(filename[0]))
         
         with open(str(filename[0]), 'wb') as f:        
-            pickle.dump([self.batchlocations,self.locationgroups,self.batchconnections,self.operators], f)
+            pickle.dump([self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators], f)
             
         self.statusBar().showMessage(self.tr("File saved"))            
 
@@ -314,8 +329,95 @@ class MainGui(QtWidgets.QMainWindow):
                 for k, value in enumerate(self.locationgroups[i+1]):
                     self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit,min_units,max_units])                           
 
+    def exec_cassetteloops(self): # NEW LOGIC
+        # generate a default cassette loop list from locationgroups
+        begin = end = 0
+        batchlocation_types = []
+        batchlocation_types.append("BatchClean")        
+        batchlocation_types.append("BatchTex")
+        batchlocation_types.append("Buffer")        
+        batchlocation_types.append("InlinePECVD")
+        batchlocation_types.append("IonImplanter")        
+        #batchlocation_types.append("PlasmaEtcher")
+        batchlocation_types.append("PrintLine")         
+        batchlocation_types.append("SingleSideEtch")    
+        batchlocation_types.append("SpatialALD")
+        batchlocation_types.append("TubeFurnace")
+        batchlocation_types.append("TubePECVD")
+        batchlocation_types.append("WaferBin")
+        #batchlocation_types.append("WaferSource")
+        batchlocation_types.append("WaferStacker")        
+        batchlocation_types.append("WaferUnstacker")        
+        
+        # find first locationgroup whose first tool requires cassettes
+        for i in range(len(self.locationgroups)-1):
+            if self.batchlocations[self.locationgroups[i][0]][0] in batchlocation_types:
+                begin = i
+                break
+
+        # find last locationgroup whose first tool requires cassettes
+        for i in range(len(self.locationgroups)-1,-1,-1):
+            if self.batchlocations[self.locationgroups[i][0]][0] in batchlocation_types:
+                end = i
+                break
+
+        self.cassette_loops = []
+        self.cassette_loops.append([begin,end,100,100])
+
+    def print_cassetteloop(self, num): # NEW LOGIC
+        if (num >= len(self.locationgroups)):
+            return "Error"
+        
+        tool = self.locationgroups[num][0]        
+        return self.batchlocations[tool][0]
+
+    def load_definition_cassetteloops(self, default=True): # NEW LOGIC
+
+        if (default):
+            self.exec_cassetteloops()
+
+        self.cassetteloops_model.clear()
+        self.cassetteloops_model.setHorizontalHeaderLabels(['Cassette loops'])                       
+
+        for i, value in enumerate(self.cassette_loops):
+            parent = QtGui.QStandardItem('Loop ' + str(i))
+
+            for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
+                child = QtGui.QStandardItem(self.print_cassetteloop(j))
+                parent.appendRow(child)
+                    
+            self.cassetteloops_model.appendRow(parent)
+            self.cassetteloops_view.setFirstColumnSpanned(i, self.cassetteloops_view.rootIndex(), True)
+
+    def import_locationgroups(self): # NEW LOGIC
+        self.load_definition_cassetteloops() # generate default loops and load it into interface
+        self.statusBar().showMessage(self.tr("Cassette loops generated"))
+    
+    def add_cassetteloop_view(self): # NEW LOGIC
+        pass
+    
+    def del_cassetteloop_view(self): # NEW LOGIC
+        pass
+    
+    def edit_cassetteloop_view(self): # NEW LOGIC
+        pass
+    
+    def trash_cassetteloops_view(self): # NEW LOGIC
+        msgBox = QtWidgets.QMessageBox(self)
+        msgBox.setWindowTitle(self.tr("Warning"))
+        msgBox.setIcon(QtWidgets.QMessageBox.Warning)
+        msgBox.setText(self.tr("This will remove all cassette loops. Continue?"))
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        ret = msgBox.exec_()
+        
+        if (ret == QtWidgets.QMessageBox.Ok):
+            self.cassette_loops = []
+            self.cassetteloops_model.clear()
+            self.cassetteloops_model.setHorizontalHeaderLabels(['Cassette loops']) 
+            self.statusBar().showMessage(self.tr("All cassette loops were removed"))
+
     def import_batchlocations(self):
-        self.exec_locationgroups() # reload connections again just to be sure
         self.load_definition_operators() # default operators list
         self.statusBar().showMessage(self.tr("Tools imported"))
 
@@ -416,6 +518,9 @@ class MainGui(QtWidgets.QMainWindow):
             self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
             self.simulation_thread.batchconnections = deepcopy(self.batchconnections)
             self.simulation_thread.operators = deepcopy(self.operators)
+            
+            ### NEW LOGIC ###
+            self.simulation_thread.cassette_loops = deepcopy(self.cassette_loops)
             
             self.simulation_thread.params = {}
             self.simulation_thread.params.update(self.params)
@@ -623,6 +728,56 @@ class MainGui(QtWidgets.QMainWindow):
         vbox0.addWidget(self.batchlocations_view)
         vbox0.addWidget(buttonbox0)
 
+        ##### Cassette loops #####
+        self.cassetteloops_view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.cassetteloops_view.setExpandsOnDoubleClick(False)
+        self.cassetteloops_model.setHorizontalHeaderLabels(['Cassette loops'])
+        self.cassetteloops_view.setModel(self.cassetteloops_model)
+        self.cassetteloops_view.setUniformRowHeights(True)
+        self.cassetteloops_view.setDragDropMode(QtWidgets.QAbstractItemView.NoDragDrop)
+        self.cassetteloops_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        import_locationgroups_button = QtWidgets.QPushButton()
+        import_locationgroups_button.clicked.connect(self.import_locationgroups)        
+        import_locationgroups_button.setIcon(QtGui.QIcon(":import.png"))
+        import_locationgroups_button.setToolTip(self.tr("Import tools"))
+        import_locationgroups_button.setStatusTip(self.tr("Import tools"))
+
+        add_cassetteloop_button = QtWidgets.QPushButton()
+        add_cassetteloop_button.clicked.connect(self.add_cassetteloop_view)           
+        add_cassetteloop_button.setIcon(QtGui.QIcon(":plus.png"))
+        add_cassetteloop_button.setToolTip(self.tr("Add [A]"))
+        add_cassetteloop_button.setStatusTip(self.tr("Add [A]"))
+        
+        del_cassetteloop_button = QtWidgets.QPushButton()
+        del_cassetteloop_button.clicked.connect(self.del_cassetteloop_view)          
+        del_cassetteloop_button.setIcon(QtGui.QIcon(":minus.png"))
+        del_cassetteloop_button.setToolTip(self.tr("Remove [Del]"))
+        del_cassetteloop_button.setStatusTip(self.tr("Remove [Del]"))
+
+        edit_cassetteloop_button = QtWidgets.QPushButton()
+        edit_cassetteloop_button.clicked.connect(self.edit_cassetteloop_view)        
+        edit_cassetteloop_button.setIcon(QtGui.QIcon(":gear.png"))
+        edit_cassetteloop_button.setToolTip(self.tr("Edit settings"))
+        edit_cassetteloop_button.setStatusTip(self.tr("Edit settings"))
+        
+        empty_cassetteloop_view_button = QtWidgets.QPushButton()
+        empty_cassetteloop_view_button.clicked.connect(self.trash_cassetteloops_view)        
+        empty_cassetteloop_view_button.setIcon(QtGui.QIcon(":trash.png"))
+        empty_cassetteloop_view_button.setToolTip(self.tr("Remove all"))
+        empty_cassetteloop_view_button.setStatusTip(self.tr("Remove all"))        
+
+        buttonbox1 = QtWidgets.QDialogButtonBox()
+        buttonbox1.addButton(import_locationgroups_button, QtWidgets.QDialogButtonBox.ActionRole)       
+        buttonbox1.addButton(add_cassetteloop_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox1.addButton(del_cassetteloop_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox1.addButton(edit_cassetteloop_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox1.addButton(empty_cassetteloop_view_button, QtWidgets.QDialogButtonBox.ActionRole)
+
+        vbox1 = QtWidgets.QVBoxLayout()
+        vbox1.addWidget(self.cassetteloops_view)
+        vbox1.addWidget(buttonbox1)
+
         ##### Operators #####
         self.operators_view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.operators_view.setExpandsOnDoubleClick(False)
@@ -662,16 +817,16 @@ class MainGui(QtWidgets.QMainWindow):
         empty_operator_view_button.setToolTip(self.tr("Remove all"))
         empty_operator_view_button.setStatusTip(self.tr("Remove all"))        
 
-        buttonbox1 = QtWidgets.QDialogButtonBox()
-        buttonbox1.addButton(import_batchlocations_button, QtWidgets.QDialogButtonBox.ActionRole)       
-        buttonbox1.addButton(add_operator_button, QtWidgets.QDialogButtonBox.ActionRole)
-        buttonbox1.addButton(del_operator_button, QtWidgets.QDialogButtonBox.ActionRole)
-        buttonbox1.addButton(edit_operator_button, QtWidgets.QDialogButtonBox.ActionRole)
-        buttonbox1.addButton(empty_operator_view_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox2 = QtWidgets.QDialogButtonBox()
+        buttonbox2.addButton(import_batchlocations_button, QtWidgets.QDialogButtonBox.ActionRole)       
+        buttonbox2.addButton(add_operator_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox2.addButton(del_operator_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox2.addButton(edit_operator_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox2.addButton(empty_operator_view_button, QtWidgets.QDialogButtonBox.ActionRole)
 
-        vbox1 = QtWidgets.QVBoxLayout()
-        vbox1.addWidget(self.operators_view)
-        vbox1.addWidget(buttonbox1)
+        vbox2 = QtWidgets.QVBoxLayout()
+        vbox2.addWidget(self.operators_view)
+        vbox2.addWidget(buttonbox2)
 
         ##### Top buttonbox #####
         open_file_button = QtWidgets.QPushButton()
@@ -743,6 +898,7 @@ class MainGui(QtWidgets.QMainWindow):
         top_hbox.setDirection(QtWidgets.QBoxLayout.LeftToRight)
         top_hbox.addLayout(vbox0)
         top_hbox.addLayout(vbox1)
+        top_hbox.addLayout(vbox2)
 
         vbox = QtWidgets.QVBoxLayout()       
         vbox.addLayout(toolbar_hbox)
