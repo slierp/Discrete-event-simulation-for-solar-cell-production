@@ -8,6 +8,7 @@ from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
 from dialogs.LineDiagramView import LineDiagramView
+from dialogs.EditCassetteLoopsView import EditCassetteLoopsView
 from dialogs.HelpDialog import HelpDialog
 from RunSimulationThread import RunSimulationThread
 from MainPlot import MultiPlot
@@ -102,10 +103,10 @@ class MainGui(QtWidgets.QMainWindow):
         ### NEW LOGIC ###
         self.cassetteloops_model = QtGui.QStandardItemModel()
         self.cassetteloops_view = DeselectableTreeView()
-        #self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloops_view)
+        self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloop_view)
         self.cassetteloops_view.setAlternatingRowColors(True)
         #self.batch_filter = BatchlocationsViewKeyFilter()
-        #self.batchlocations_view.installEventFilter(self.batch_filter)
+        #self.cassetteloops_view.installEventFilter(self.batch_filter)
         #self.batch_filter.signal.connect(self.treeview_signals)
 
         self.operators_model = QtGui.QStandardItemModel()
@@ -133,8 +134,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations.append(["PrintLine", {'name' : '1'}])
         
         ### NEW LOGIC ###        
-        self.cassette_loops = [] # define last locationgroup in loop and number of cassettes for each loop       
-        self.cassette_loops.append([1,7,100,100]) # begin, end, #cassettes, #wafers in cassettes
+        self.cassette_loops = [] # define last locationgroup in loop and number of cassettes for each loop
 
         self.locationgroups = [] 
         self.batchconnections = []
@@ -235,7 +235,7 @@ class MainGui(QtWidgets.QMainWindow):
                 child = QtGui.QStandardItem(self.batchlocations[j][1]['name'])
                 parent.appendRow(child)
             self.batchlocations_model.appendRow(parent)
-            self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)            
+            #self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)
 
     def load_definition_operators(self, default=True):
 
@@ -252,7 +252,7 @@ class MainGui(QtWidgets.QMainWindow):
                 child = QtGui.QStandardItem(self.print_batchconnection(self.operators[i][0][j]))
                 parent.appendRow(child)
             self.operators_model.appendRow(parent)
-            self.operators_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True) 
+            #self.operators_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True) 
 
     def reindex_locationgroups(self):
         # change it so that all indexes are consecutive, which should always be the case
@@ -387,7 +387,8 @@ class MainGui(QtWidgets.QMainWindow):
                 parent.appendRow(child)
                     
             self.cassetteloops_model.appendRow(parent)
-            self.cassetteloops_view.setFirstColumnSpanned(i, self.cassetteloops_view.rootIndex(), True)
+            index = self.cassetteloops_model.index(i, 0)
+            self.cassetteloops_view.setExpanded(index, True)
 
     def import_locationgroups(self): # NEW LOGIC
         self.load_definition_cassetteloops() # generate default loops and load it into interface
@@ -400,7 +401,7 @@ class MainGui(QtWidgets.QMainWindow):
         pass
     
     def edit_cassetteloop_view(self): # NEW LOGIC
-        pass
+        EditCassetteLoopsView(self)
     
     def trash_cassetteloops_view(self): # NEW LOGIC
         msgBox = QtWidgets.QMessageBox(self)
