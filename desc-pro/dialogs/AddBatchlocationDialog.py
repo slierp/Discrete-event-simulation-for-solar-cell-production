@@ -12,7 +12,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         parent_type = None
         self.child_item = False
         
-        if (not len(self.parent.batchlocations_view.selectedIndexes())):
+        if (not len(self.parent.cassetteloops_view.selectedIndexes())):
             # if nothing selected
             self.append_mode = True            
         elif (self.parent.batchlocations_view.selectedIndexes()[0].parent().row() == -1):

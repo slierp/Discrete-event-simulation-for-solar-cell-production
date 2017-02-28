@@ -8,7 +8,9 @@ from dialogs.AddOperatorView import AddOperatorView
 from dialogs.DelOperatorView import DelOperatorView
 from dialogs.EditOperatorView import EditOperatorView
 from dialogs.LineDiagramView import LineDiagramView
-from dialogs.EditCassetteLoopsView import EditCassetteLoopsView
+from dialogs.AddCassetteLoopView import AddCassetteLoopView
+from dialogs.DelCassetteLoopView import DelCassetteLoopView
+from dialogs.EditCassetteLoopView import EditCassetteLoopView
 from dialogs.HelpDialog import HelpDialog
 from RunSimulationThread import RunSimulationThread
 from MainPlot import MultiPlot
@@ -35,6 +37,20 @@ class BatchlocationsViewKeyFilter(QtCore.QObject):
                 return True
             elif event.key() == QtCore.Qt.Key_A:
                 self.signal.emit("add_batch_view")
+                return True
+        return False
+
+class CassetteLoopsKeyFilter(QtCore.QObject):
+    signal = QtCore.pyqtSignal(str)
+    
+    def eventFilter(self,  obj,  event):
+
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() == QtCore.Qt.Key_Delete:
+                self.signal.emit("del_cassetteloop_view")
+                return True
+            elif event.key() == QtCore.Qt.Key_A:
+                self.signal.emit("add_cassetteloop_view")
                 return True
         return False
 
@@ -105,9 +121,9 @@ class MainGui(QtWidgets.QMainWindow):
         self.cassetteloops_view = DeselectableTreeView()
         self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloop_view)
         self.cassetteloops_view.setAlternatingRowColors(True)
-        #self.batch_filter = BatchlocationsViewKeyFilter()
-        #self.cassetteloops_view.installEventFilter(self.batch_filter)
-        #self.batch_filter.signal.connect(self.treeview_signals)
+        self.cassetteloops_filter = CassetteLoopsKeyFilter()
+        self.cassetteloops_view.installEventFilter(self.cassetteloops_filter)
+        self.cassetteloops_filter.signal.connect(self.treeview_signals)
 
         self.operators_model = QtGui.QStandardItemModel()
         self.operators_view = DeselectableTreeView()
@@ -140,6 +156,23 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchconnections = []
         self.operators = []
 
+        self.group_names = {}
+        self.group_names['BatchClean'] = "Wet chemical clean"
+        self.group_names['BatchTex'] = "Alkaline texture"
+        self.group_names['Buffer'] = "Cassette buffer"
+        self.group_names['InlinePECVD'] = "PECVD"
+        self.group_names['IonImplanter'] = "Ion implantation"
+        self.group_names['PlasmaEtcher'] = "Plasma edge isolation"
+        self.group_names['PrintLine'] = "Printing/firing"
+        self.group_names['SingleSideEtch'] = "Inline wet etch/texture"
+        self.group_names['SpatialALD'] = "Atomic layer deposition"
+        self.group_names['TubeFurnace'] = "Diffusion"
+        self.group_names['TubePECVD'] = "PECVD"
+        self.group_names['WaferBin'] = "Bin"
+        self.group_names['WaferSource'] = "Source"
+        self.group_names['WaferStacker'] = "Wafer stacking"
+        self.group_names['WaferUnstacker'] = "Wafer unstacking"
+
         self.sim_time_selection_list = ['1 hour','1 day','1 week','1 month','1 year']
 
         self.params = {}
@@ -161,6 +194,10 @@ class MainGui(QtWidgets.QMainWindow):
             self.del_operator_view()
         elif signal == "add_operator_view":
             self.add_operator_view()          
+        elif signal == "add_cassetteloop_view":
+            self.add_cassetteloop_view()
+        elif signal == "del_cassetteloop_view":
+            self.del_cassetteloop_view()            
 
     def open_file(self):
 
@@ -226,13 +263,13 @@ class MainGui(QtWidgets.QMainWindow):
             self.exec_locationgroups()
             
         self.batchlocations_model.clear()
-        self.batchlocations_model.setHorizontalHeaderLabels(['Tools'])           
+        self.batchlocations_model.setHorizontalHeaderLabels(['Process flow'])           
 
         for i, value in enumerate(self.locationgroups):
-            parent = QtGui.QStandardItem(self.batchlocations[self.locationgroups[i][0]][0])
+            parent = QtGui.QStandardItem(self.group_names[self.batchlocations[self.locationgroups[i][0]][0]])
 
             for j in self.locationgroups[i]:
-                child = QtGui.QStandardItem(self.batchlocations[j][1]['name'])
+                child = QtGui.QStandardItem(self.batchlocations[j][0] + ' ' + self.batchlocations[j][1]['name'])
                 parent.appendRow(child)
             self.batchlocations_model.appendRow(parent)
             #self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)
@@ -288,7 +325,7 @@ class MainGui(QtWidgets.QMainWindow):
             self.locationgroups = []
             self.batchconnections = []
             self.batchlocations_model.clear()
-            self.batchlocations_model.setHorizontalHeaderLabels(['Tools']) 
+            self.batchlocations_model.setHorizontalHeaderLabels(['Process flow']) 
             self.statusBar().showMessage(self.tr("All tools were removed"))
 
     def print_batchlocation(self, num):
@@ -330,46 +367,38 @@ class MainGui(QtWidgets.QMainWindow):
                     self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit,min_units,max_units])                           
 
     def exec_cassetteloops(self): # NEW LOGIC
-        # generate a default cassette loop list from locationgroups
+        # generate a default cassette loop list from locationgroups       
+
+        non_cassette_tools = []
+        non_cassette_tools.append("PlasmaEtcher")        
+        non_cassette_tools.append("WaferSource")
+
         begin = end = 0
-        batchlocation_types = []
-        batchlocation_types.append("BatchClean")        
-        batchlocation_types.append("BatchTex")
-        batchlocation_types.append("Buffer")        
-        batchlocation_types.append("InlinePECVD")
-        batchlocation_types.append("IonImplanter")        
-        #batchlocation_types.append("PlasmaEtcher")
-        batchlocation_types.append("PrintLine")         
-        batchlocation_types.append("SingleSideEtch")    
-        batchlocation_types.append("SpatialALD")
-        batchlocation_types.append("TubeFurnace")
-        batchlocation_types.append("TubePECVD")
-        batchlocation_types.append("WaferBin")
-        #batchlocation_types.append("WaferSource")
-        batchlocation_types.append("WaferStacker")        
-        batchlocation_types.append("WaferUnstacker")        
         
         # find first locationgroup whose first tool requires cassettes
         for i in range(len(self.locationgroups)-1):
-            if self.batchlocations[self.locationgroups[i][0]][0] in batchlocation_types:
+            if not self.batchlocations[self.locationgroups[i][0]][0] in non_cassette_tools:
                 begin = i
                 break
 
         # find last locationgroup whose first tool requires cassettes
-        for i in range(len(self.locationgroups)-1,-1,-1):
-            if self.batchlocations[self.locationgroups[i][0]][0] in batchlocation_types:
+        for i in range(begin,len(self.locationgroups)):
+            if not self.batchlocations[self.locationgroups[i][0]][0] in non_cassette_tools:
                 end = i
+            else:
                 break
 
         self.cassette_loops = []
-        self.cassette_loops.append([begin,end,100,100])
+        
+        if not begin >= end:
+            self.cassette_loops.append([begin,end,100,100])
 
     def print_cassetteloop(self, num): # NEW LOGIC
         if (num >= len(self.locationgroups)):
             return "Error"
         
-        tool = self.locationgroups[num][0]        
-        return self.batchlocations[tool][0]
+        tool = self.locationgroups[num][0]
+        return self.group_names[self.batchlocations[tool][0]]
 
     def load_definition_cassetteloops(self, default=True): # NEW LOGIC
 
@@ -384,8 +413,9 @@ class MainGui(QtWidgets.QMainWindow):
 
             for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
                 child = QtGui.QStandardItem(self.print_cassetteloop(j))
+                child.setEnabled(False)
                 parent.appendRow(child)
-                    
+
             self.cassetteloops_model.appendRow(parent)
             index = self.cassetteloops_model.index(i, 0)
             self.cassetteloops_view.setExpanded(index, True)
@@ -395,13 +425,13 @@ class MainGui(QtWidgets.QMainWindow):
         self.statusBar().showMessage(self.tr("Cassette loops generated"))
     
     def add_cassetteloop_view(self): # NEW LOGIC
-        pass
+        AddCassetteLoopView(self)        
     
     def del_cassetteloop_view(self): # NEW LOGIC
-        pass
+        DelCassetteLoopView(self)
     
     def edit_cassetteloop_view(self): # NEW LOGIC
-        EditCassetteLoopsView(self)
+        EditCassetteLoopView(self)
     
     def trash_cassetteloops_view(self): # NEW LOGIC
         msgBox = QtWidgets.QMessageBox(self)
@@ -682,7 +712,7 @@ class MainGui(QtWidgets.QMainWindow):
         ##### Batch locations #####        
         self.batchlocations_view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.batchlocations_view.setExpandsOnDoubleClick(False)
-        self.batchlocations_model.setHorizontalHeaderLabels(['Tools'])
+        self.batchlocations_model.setHorizontalHeaderLabels(['Process flow'])
         self.batchlocations_view.setModel(self.batchlocations_model)
         self.batchlocations_view.setUniformRowHeights(True)
         self.batchlocations_view.setDragDropMode(QtWidgets.QAbstractItemView.NoDragDrop)

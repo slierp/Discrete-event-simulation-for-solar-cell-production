@@ -2,7 +2,7 @@
 from PyQt5 import QtCore
 from dialogs.CassetteLoopSettingsDialog import CassetteLoopSettingsDialog
 
-class EditCassetteLoopsView(QtCore.QObject):
+class EditCassetteLoopView(QtCore.QObject):
     def __init__(self, _parent):
         super(QtCore.QObject, self).__init__(_parent)
         
@@ -10,10 +10,10 @@ class EditCassetteLoopsView(QtCore.QObject):
 
         if (not len(self.parent.cassetteloops_view.selectedIndexes())):
             # if nothing selected
-            self.parent.statusBar().showMessage(self.tr("Please select position"))
+            self.parent.statusBar().showMessage(self.tr("Please select a cassette loop"))
             return
                 
-        row = self.parent.cassetteloops_view.selectedIndexes()[0].parent().row()
+        row = self.parent.cassetteloops_view.selectedIndexes()[0].row()
         
         cassetteloops_dialog = CassetteLoopSettingsDialog(self.parent,row)
         cassetteloops_dialog.setModal(True)

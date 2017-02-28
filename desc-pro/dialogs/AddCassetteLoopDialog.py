@@ -2,14 +2,13 @@
 from PyQt5 import QtWidgets
 from sys import platform as _platform
 
-class CassetteLoopSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, _parent, _row):
+class AddCassetteLoopDialog(QtWidgets.QDialog):
+    def __init__(self, _parent):
 
         super(QtWidgets.QDialog, self).__init__(_parent)
-        
+
         self.parent = _parent
-        self.row = _row
-        self.setWindowTitle(self.tr("Cassette loop settings"))
+        self.setWindowTitle(self.tr("Add cassette loop"))
         vbox = QtWidgets.QVBoxLayout()            
 
         hbox = QtWidgets.QHBoxLayout()
@@ -18,7 +17,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox0.setAccelerated(True)
         self.spinbox0.setMaximum(999)
         self.spinbox0.setMinimum(1)
-        self.spinbox0.setValue(self.parent.cassette_loops[self.row][2])
+        self.spinbox0.setValue(100)
         label.setToolTip("Number of cassettes")
         self.spinbox0.setToolTip("Number of cassettes")
         hbox.addWidget(self.spinbox0)  
@@ -32,7 +31,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999)
         self.spinbox1.setMinimum(1)
-        self.spinbox1.setValue(self.parent.cassette_loops[self.row][3])
+        self.spinbox1.setValue(100)
         label.setToolTip("Amount of wafers that fit in each cassette")
         self.spinbox1.setToolTip("Amount of wafers that fit in each cassette")
         hbox.addWidget(self.spinbox1)  
@@ -43,20 +42,17 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         non_cassette_groups = []
         non_cassette_groups.append("Source")        
         non_cassette_groups.append("Plasma edge isolation")
-
+        
         unavailable_groups = []
         for i in range(len(self.parent.cassette_loops)):
-            if not (i == self.row):
-                for j in range(self.parent.cassette_loops[i][0]+1,self.parent.cassette_loops[i][1]):
-                    unavailable_groups.append(j)
+            for j in range(self.parent.cassette_loops[i][0]+1,self.parent.cassette_loops[i][1]):
+                unavailable_groups.append(j)
 
         self.dataset_cb = []
         for i, value in enumerate(self.parent.locationgroups):
             name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
             self.dataset_cb.append(QtWidgets.QCheckBox(name))
-            if self.parent.cassette_loops[self.row][0] <= i <= self.parent.cassette_loops[self.row][1]:
-                self.dataset_cb[i].setChecked(True)
-
+                
             if (name in non_cassette_groups):
                 unavailable_groups.append(i)
 
@@ -92,29 +88,38 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
 
         self.setLayout(vbox)
 
-    def read(self):
+    def read(self):      
+        
         # read contents of each widget
-        self.parent.cassette_loops[self.row][2] = int(self.spinbox0.text())
-        self.parent.cassette_loops[self.row][3] = int(self.spinbox1.text())
+        no_cassettes = int(self.spinbox0.text())
+        no_wafers = int(self.spinbox1.text())
 
         begin = end = 0
 
-        for i in range(len(self.dataset_cb)-1):
+        for i in range(len(self.dataset_cb)):
             if self.dataset_cb[i].isChecked():
                 begin = i
                 break
-
+            
         for i in range(begin,len(self.dataset_cb)):
             if (self.dataset_cb[i].isChecked()):    
                 end = i
             elif (not self.dataset_cb[i].isChecked()):
                 break
             
-        if not begin >= end:
-            self.parent.cassette_loops[self.row][0] = begin
-            self.parent.cassette_loops[self.row][1] = end
+        if (begin >= end):
+            self.parent.statusBar().showMessage(self.tr("Cassette loop could not be added"))                
+            self.accept()
+            return
+        
+        if (not len(self.parent.cassetteloops_view.selectedIndexes())):
+            # if nothing selected
+            self.parent.cassette_loops.append([begin,end,no_cassettes,no_wafers])           
+        else:
+            row = self.parent.cassetteloops_view.selectedIndexes()[0].parent().row()
+            self.parent.cassette_loops.insert(row,[begin,end,no_cassettes,no_wafers])
 
         self.parent.load_definition_cassetteloops(False)
 
-        self.parent.statusBar().showMessage(self.tr("Cassette loop settings updated"))                
+        self.parent.statusBar().showMessage(self.tr("Cassette loop added"))                
         self.accept()
