@@ -12,7 +12,7 @@ class DelCassetteLoopView(QtCore.QObject):
             self.parent.statusBar().showMessage(self.tr("Please select a cassette loop"))
             return
                 
-        row = self.parent.cassetteloops_view.selectedIndexes()[0].parent().row()
+        row = self.parent.cassetteloops_view.selectedIndexes()[0].row()
         del self.parent.cassette_loops[row]
 
         self.parent.load_definition_cassetteloops(False)

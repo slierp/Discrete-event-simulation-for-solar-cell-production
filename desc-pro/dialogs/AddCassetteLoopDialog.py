@@ -39,27 +39,38 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        non_cassette_groups = []
-        non_cassette_groups.append("Source")        
-        non_cassette_groups.append("Plasma edge isolation")
-        
-        unavailable_groups = []
-        for i in range(len(self.parent.cassette_loops)):
-            for j in range(self.parent.cassette_loops[i][0]+1,self.parent.cassette_loops[i][1]):
-                unavailable_groups.append(j)
+        non_cassette_names = []
+        non_cassette_names.append("Source")        
+        non_cassette_names.append("Plasma edge isolation")
 
         self.dataset_cb = []
+        non_cassette_groups = [] 
         for i, value in enumerate(self.parent.locationgroups):
             name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
             self.dataset_cb.append(QtWidgets.QCheckBox(name))
                 
-            if (name in non_cassette_groups):
-                unavailable_groups.append(i)
+            if (name in non_cassette_names):
+               non_cassette_groups.append(i)
 
+        unavailable_groups = []
+        # remove groups already allocated in other cassette loops
+        for i in range(len(self.parent.cassette_loops)):
+            for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]+1):
+                unavailable_groups.append(j)
+
+        # re-insert possible connections
+        for i in range(len(self.parent.locationgroups)):
+            if (i in unavailable_groups) and (not (i+1) in unavailable_groups) and (not (i+1) in non_cassette_groups):
+                unavailable_groups = list(filter(lambda a: a != i, unavailable_groups))
+
+        # groups before and after are the list are also unavailable
         unavailable_groups.append(-1)
         unavailable_groups.append(len(self.parent.locationgroups))
 
+        unavailable_groups += non_cassette_groups
+        
         for i in range(len(self.parent.locationgroups)):
+            # remove any groups that cannot form a connection
             if ((i-1) in unavailable_groups) and ((i+1) in unavailable_groups):
                 unavailable_groups.append(i)
         
