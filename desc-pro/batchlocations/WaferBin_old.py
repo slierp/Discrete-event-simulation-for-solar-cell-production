@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
-#from batchlocations.BatchContainer import BatchContainer
-from batchlocations.CassetteContainer import CassetteContainer
+from batchlocations.BatchContainer import BatchContainer
 import simpy
 
 class WaferBin(QtCore.QObject):
@@ -46,19 +45,12 @@ There is one simple loop that consists of two steps:
         self.params['wait_time'] = 10
         self.params['wait_time_desc'] = "Wait period between wafer removal attempts (seconds)"
         self.params['wait_time_type'] = "automation"
-
-        self.params['input'] = 3
-        self.params['input_type'] = "immutable" # not changeable / do not show       
-                   
         self.params.update(_params)
         
 #        string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG
       
-#        self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
-        self.input_cass_in = CassetteContainer(self.env,"cass_in",self.params['max_cassette_no'])
-        self.input_cass_out = CassetteContainer(self.env,"cass_out",self.params['max_cassette_no'])        
-        
+        self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")
         
         self.env.process(self.run())

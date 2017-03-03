@@ -12,7 +12,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         parent_type = None
         self.child_item = False
         
-        if (not len(self.parent.cassetteloops_view.selectedIndexes())):
+        if (not len(self.parent.batchlocations_view.selectedIndexes())):
             # if nothing selected
             self.append_mode = True            
         elif (self.parent.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
@@ -25,7 +25,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
             self.index = self.parent.batchlocations_view.selectedIndexes()[0].row()
             parent_type = self.parent.batchlocations[self.parent.locationgroups[self.row][self.index]][0]
             self.child_item = True
-                
+        
         self.setWindowTitle(self.tr("Add batch location"))
 
         vbox = QtWidgets.QVBoxLayout()

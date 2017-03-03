@@ -116,7 +116,6 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations_view.installEventFilter(self.batch_filter)
         self.batch_filter.signal.connect(self.treeview_signals)        
 
-        ### NEW LOGIC ###
         self.cassetteloops_model = QtGui.QStandardItemModel()
         self.cassetteloops_view = DeselectableTreeView()
         self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloop_view)
@@ -148,8 +147,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations.append(["TubePECVD", {'name' : '1'}])
         self.batchlocations.append(["PrintLine", {'name' : '0'}])
         self.batchlocations.append(["PrintLine", {'name' : '1'}])
-        
-        ### NEW LOGIC ###        
+                
         self.cassette_loops = [] # define last locationgroup in loop and number of cassettes for each loop
 
         self.locationgroups = [] 
@@ -172,6 +170,41 @@ class MainGui(QtWidgets.QMainWindow):
         self.group_names['WaferSource'] = "Source"
         self.group_names['WaferStacker'] = "Wafer stacking"
         self.group_names['WaferUnstacker'] = "Wafer unstacking"
+
+        # 1 = stack buffer; 2 = single cassette buffer; 3 = dual cassette buffer
+        self.input_types = {}
+        self.input_types['WaferSource'] = []
+        self.input_types['WaferStacker'] = [2]
+        self.input_types['WaferUnstacker'] = [1]
+        self.input_types['BatchTex'] = [2]
+        self.input_types['BatchClean'] = [2]
+        self.input_types['TubeFurnace'] = [2,3]
+        self.input_types['SingleSideEtch'] = [3]
+        self.input_types['TubePECVD'] = [2,3]
+        self.input_types['PrintLine'] = [3]
+        self.input_types['WaferBin'] = [3]
+        self.input_types['Buffer'] = [2]
+        self.input_types['IonImplanter'] = [2]
+        self.input_types['SpatialALD'] = [3]
+        self.input_types['InlinePECVD'] = [2,3]
+        self.input_types['PlasmaEtcher'] = [1]
+
+        self.output_types = {}
+        self.output_types['WaferSource'] = [1]
+        self.output_types['WaferStacker'] = [1]
+        self.output_types['WaferUnstacker'] = [3]
+        self.output_types['BatchTex'] = [2]
+        self.output_types['BatchClean'] = [2]
+        self.output_types['TubeFurnace'] = [2,3]
+        self.output_types['SingleSideEtch'] = [3]
+        self.output_types['TubePECVD'] = [2,3]
+        self.output_types['PrintLine'] = []
+        self.output_types['WaferBin'] = []
+        self.output_types['Buffer'] = [2]
+        self.output_types['IonImplanter'] = [2]
+        self.output_types['SpatialALD'] = [3]
+        self.output_types['InlinePECVD'] = [2,3]
+        self.output_types['PlasmaEtcher'] = [1]
 
         self.sim_time_selection_list = ['1 hour','1 day','1 week','1 month','1 year']
 
@@ -359,48 +392,83 @@ class MainGui(QtWidgets.QMainWindow):
         time_per_unit = 10 # default additional duration for each unit
         min_units = 1 # default minimum number of units for transport
         max_units = 99 # default maximum number of units for transport
-                           
-        #num = 0
+
         for i in range(len(self.locationgroups)-1):
             for j, value in enumerate(self.locationgroups[i]):
                 for k, value in enumerate(self.locationgroups[i+1]):
-                    self.batchconnections.append([[i,j],[i+1,k],transport_time, time_per_unit,min_units,max_units])                           
+                    self.batchconnections.append([[i,j],[i+1,k],transport_time,time_per_unit,min_units,max_units])                           
 
-    def exec_cassetteloops(self): # NEW LOGIC
+    def exec_cassetteloops(self):
         # generate a default cassette loop list from locationgroups       
 
-        non_cassette_tools = []
-        non_cassette_tools.append("PlasmaEtcher")        
-        non_cassette_tools.append("WaferSource")
-
-        begin = end = 0
-        
-        # find first locationgroup whose first tool requires cassettes
-        for i in range(len(self.locationgroups)-1):
-            if not self.batchlocations[self.locationgroups[i][0]][0] in non_cassette_tools:
-                begin = i
-                break
-
-        # find last locationgroup whose first tool requires cassettes
-        for i in range(begin,len(self.locationgroups)):
-            if not self.batchlocations[self.locationgroups[i][0]][0] in non_cassette_tools:
-                end = i
-            else:
-                break
-
         self.cassette_loops = []
+        begin = end = -1
+
+        # find possible loops using every possible start position
+        for search_start_position in range(len(self.locationgroups)-1):
+
+            # find first locationgroup where all tools have a dual cassette output buffer
+            for i in range(search_start_position,len(self.locationgroups)-1):
+                suitable = True
+                for j in range(len(self.locationgroups[i])):
+                    name = self.batchlocations[self.locationgroups[i][j]][0]
+                    
+                    if not 3 in self.output_types[name]:
+                        suitable = False
+                    
+                if suitable:
+                    begin = i
+                    break
+            
+            # quit if no suitable locationgroup was found
+            if begin == -1:
+                continue
+
+            # find last locationgroup where all tools have a dual cassette output buffer
+            for i in range(begin+1,len(self.locationgroups)):
+
+                suitable = True
+                stop_search = False
+                for j in range(len(self.locationgroups[i])):
+                    name = self.batchlocations[self.locationgroups[i][j]][0]
+                    if not 3 in self.input_types[name]:
+                        suitable = False
+                
+                    if 1 in self.input_types[name]:
+                        stop_search = True
+            
+                if stop_search:
+                    break
+            
+                if suitable:
+                    end = i
+
+            # quit if no suitable locationgroup was found
+            if end == -1:
+                continue
+            
+            if not begin == -1 and not end == -1:
+                break
+
+        if begin == -1 or end == -1:
+            return
+
+        transport_time = 60 # default duration for cassette return to source
+        time_per_unit = 10 # default additional duration for each cassette
+        min_units = 1 # default minimum number of cassettes for return transport
+        max_units = 99 # default maximum number of cassettes for return transport
         
         if not begin >= end:
-            self.cassette_loops.append([begin,end,100,100])
+            self.cassette_loops.append([begin,end,100,100,transport_time,time_per_unit,min_units,max_units])
 
-    def print_cassetteloop(self, num): # NEW LOGIC
+    def print_cassetteloop(self, num):
         if (num >= len(self.locationgroups)):
             return "Error"
         
         tool = self.locationgroups[num][0]
         return self.group_names[self.batchlocations[tool][0]]
 
-    def load_definition_cassetteloops(self, default=True): # NEW LOGIC
+    def load_definition_cassetteloops(self, default=True):
 
         if (default):
             self.exec_cassetteloops()
@@ -420,20 +488,20 @@ class MainGui(QtWidgets.QMainWindow):
             index = self.cassetteloops_model.index(i, 0)
             self.cassetteloops_view.setExpanded(index, True)
 
-    def import_locationgroups(self): # NEW LOGIC
+    def import_locationgroups(self):
         self.load_definition_cassetteloops() # generate default loops and load it into interface
         self.statusBar().showMessage(self.tr("Cassette loops generated"))
     
-    def add_cassetteloop_view(self): # NEW LOGIC
+    def add_cassetteloop_view(self):
         AddCassetteLoopView(self)        
     
-    def del_cassetteloop_view(self): # NEW LOGIC
+    def del_cassetteloop_view(self):
         DelCassetteLoopView(self)
     
-    def edit_cassetteloop_view(self): # NEW LOGIC
+    def edit_cassetteloop_view(self):
         EditCassetteLoopView(self)
     
-    def trash_cassetteloops_view(self): # NEW LOGIC
+    def trash_cassetteloops_view(self):
         msgBox = QtWidgets.QMessageBox(self)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
@@ -549,8 +617,6 @@ class MainGui(QtWidgets.QMainWindow):
             self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
             self.simulation_thread.batchconnections = deepcopy(self.batchconnections)
             self.simulation_thread.operators = deepcopy(self.operators)
-            
-            ### NEW LOGIC ###
             self.simulation_thread.cassette_loops = deepcopy(self.cassette_loops)
             
             self.simulation_thread.params = {}

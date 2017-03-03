@@ -6,92 +6,113 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
     def __init__(self, _parent, _row):
 
         super(QtWidgets.QDialog, self).__init__(_parent)
-        
+
         self.parent = _parent
         self.row = _row
         self.setWindowTitle(self.tr("Cassette loop settings"))
         vbox = QtWidgets.QVBoxLayout()            
 
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Number of cassettes")
+        text = "Number of cassettes in loop"
+        label = QtWidgets.QLabel(text)
         self.spinbox0 = QtWidgets.QSpinBox()
         self.spinbox0.setAccelerated(True)
         self.spinbox0.setMaximum(999)
         self.spinbox0.setMinimum(1)
         self.spinbox0.setValue(self.parent.cassette_loops[self.row][2])
-        label.setToolTip("Number of cassettes")
-        self.spinbox0.setToolTip("Number of cassettes")
+        label.setToolTip(text)
+        self.spinbox0.setToolTip(text)
         hbox.addWidget(self.spinbox0)  
         hbox.addWidget(label)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Amount of wafers that fit in each cassette")
+        text = "Amount of wafers that fit in each cassette"
+        label = QtWidgets.QLabel(text)
         self.spinbox1 = QtWidgets.QSpinBox()
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999)
         self.spinbox1.setMinimum(1)
         self.spinbox1.setValue(self.parent.cassette_loops[self.row][3])
-        label.setToolTip("Amount of wafers that fit in each cassette")
-        self.spinbox1.setToolTip("Amount of wafers that fit in each cassette")
+        label.setToolTip(text)
+        self.spinbox1.setToolTip(text)
         hbox.addWidget(self.spinbox1)  
         hbox.addWidget(label)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        non_cassette_names = []
-        non_cassette_names.append("Source")        
-        non_cassette_names.append("Plasma edge isolation")
-
-        self.dataset_cb = []
-        non_cassette_groups = []        
-        for i, value in enumerate(self.parent.locationgroups):
-            name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
-            self.dataset_cb.append(QtWidgets.QCheckBox(name))
-            if self.parent.cassette_loops[self.row][0] <= i <= self.parent.cassette_loops[self.row][1]:
-                self.dataset_cb[i].setChecked(True)
-
-            if name in non_cassette_names:
-                non_cassette_groups.append(i)
-
-        unavailable_groups = []
-        # remove groups already allocated in other cassette loops
-        for i in range(len(self.parent.cassette_loops)):
-            if not (i == self.row):
-                for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]+1):
-                    unavailable_groups.append(j)
-
-        # re-insert groups that are in the current cassette loop
-        for i in range(self.parent.cassette_loops[self.row][0],self.parent.cassette_loops[self.row][1]+1):
-            if i in unavailable_groups:
-                unavailable_groups = list(filter(lambda a: a != i, unavailable_groups))
-
-        # groups before and after are the list are also unavailable
-        unavailable_groups.append(-1)
-        unavailable_groups.append(len(self.parent.locationgroups))
-
-        unavailable_groups += non_cassette_groups
-
-        for i in range(len(self.parent.locationgroups)):
-            # remove any groups that cannot form a connection
-            if ((i-1) in unavailable_groups) and ((i+1) in unavailable_groups):
-                unavailable_groups.append(i)
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Time needed for a single empty cassette return transport"
+        label = QtWidgets.QLabel(text)
+        self.spinbox2 = QtWidgets.QSpinBox()
+        self.spinbox2.setAccelerated(True)
+        self.spinbox2.setMaximum(9999)
+        self.spinbox2.setValue(self.parent.cassette_loops[self.row][4])
+        label.setToolTip(text)
+        self.spinbox2.setToolTip(text)
+        hbox.addWidget(self.spinbox2)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
         
-            if i in unavailable_groups:
-                self.dataset_cb[i].setEnabled(False)
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Time added for each additional cassette"
+        label = QtWidgets.QLabel(text)
+        self.spinbox3 = QtWidgets.QSpinBox()
+        self.spinbox3.setAccelerated(True)
+        self.spinbox3.setMaximum(9999)
+        self.spinbox3.setValue(self.parent.cassette_loops[self.row][5])
+        label.setToolTip(text)
+        self.spinbox3.setToolTip(text)
+        hbox.addWidget(self.spinbox3)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)        
 
-        scroll_area = QtWidgets.QScrollArea()
-        checkbox_widget = QtWidgets.QWidget()
-        checkbox_vbox = QtWidgets.QVBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Minimum number of cassettes needed to start transport"
+        label = QtWidgets.QLabel(text)
+        self.spinbox4 = QtWidgets.QSpinBox()
+        self.spinbox4.setAccelerated(True)
+        self.spinbox4.setMaximum(99)
+        self.spinbox4.setMinimum(1)
+        self.spinbox4.setValue(self.parent.cassette_loops[self.row][6])
+        label.setToolTip(text)
+        self.spinbox4.setToolTip(text)
+        hbox.addWidget(self.spinbox4)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
 
-        for i in range(len(self.dataset_cb)):
-            self.dataset_cb[i].setMinimumWidth(400) # prevent obscured text
-            checkbox_vbox.addWidget(self.dataset_cb[i])
 
-        checkbox_widget.setLayout(checkbox_vbox)
-        scroll_area.setWidget(checkbox_widget)
-        vbox.addWidget(scroll_area)
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Maximum number of cassettes for one transport run"
+        label = QtWidgets.QLabel(text)
+        self.spinbox5 = QtWidgets.QSpinBox()
+        self.spinbox5.setAccelerated(True)
+        self.spinbox5.setMaximum(99)
+        self.spinbox5.setMinimum(1)
+        self.spinbox5.setValue(self.parent.cassette_loops[self.row][7])
+        label.setToolTip(text)
+        self.spinbox5.setToolTip(text)
+        hbox.addWidget(self.spinbox5)  
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
+
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Apply current settings to all cassette loops"
+        label = QtWidgets.QLabel(text)
+        self.boolean = QtWidgets.QCheckBox()
+        self.boolean.setChecked(False)
+        label.setToolTip(text)
+        self.boolean.setToolTip(text)        
+        label.mouseReleaseEvent = self.switch_boolean        
+        hbox.addWidget(self.boolean)
+        hbox.addWidget(label)
+        hbox.addStretch(1)                 
+        vbox.addLayout(hbox)
 
         ### Buttonbox for ok or cancel ###
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
@@ -103,29 +124,28 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
 
         self.setLayout(vbox)
 
+    def switch_boolean(self, event):
+        # function for making QLabel near checkbox clickable
+        self.boolean.setChecked(not self.boolean.isChecked())
+
     def read(self):
+        
         # read contents of each widget
-        self.parent.cassette_loops[self.row][2] = int(self.spinbox0.text())
-        self.parent.cassette_loops[self.row][3] = int(self.spinbox1.text())
-
-        begin = end = 0
-
-        for i in range(len(self.dataset_cb)-1):
-            if self.dataset_cb[i].isChecked():
-                begin = i
-                break
-
-        for i in range(begin,len(self.dataset_cb)):
-            if (self.dataset_cb[i].isChecked()):    
-                end = i
-            elif (not self.dataset_cb[i].isChecked()):
-                break
-            
-        if not begin >= end:
-            self.parent.cassette_loops[self.row][0] = begin
-            self.parent.cassette_loops[self.row][1] = end
-
-        self.parent.load_definition_cassetteloops(False)
+        if self.boolean.isChecked():
+            for i in range(len(self.parent.cassette_loops)):
+                self.parent.cassette_loops[i][2] = int(self.spinbox0.text())
+                self.parent.cassette_loops[i][3] = int(self.spinbox1.text())
+                self.parent.cassette_loops[i][4] = int(self.spinbox2.text())
+                self.parent.cassette_loops[i][5] = int(self.spinbox3.text())
+                self.parent.cassette_loops[i][6] = int(self.spinbox4.text())
+                self.parent.cassette_loops[i][7] = int(self.spinbox5.text())
+        else:
+            self.parent.cassette_loops[self.row][2] = int(self.spinbox0.text())
+            self.parent.cassette_loops[self.row][3] = int(self.spinbox1.text())
+            self.parent.cassette_loops[self.row][4] = int(self.spinbox2.text())
+            self.parent.cassette_loops[self.row][5] = int(self.spinbox3.text())
+            self.parent.cassette_loops[self.row][6] = int(self.spinbox4.text())
+            self.parent.cassette_loops[self.row][7] = int(self.spinbox5.text())
 
         self.parent.statusBar().showMessage(self.tr("Cassette loop settings updated"))                
         self.accept()

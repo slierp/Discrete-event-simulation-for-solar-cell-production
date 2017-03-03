@@ -85,20 +85,8 @@ class RunSimulationThread(QtCore.QObject):
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances
             for j in range(len(self.locationgroups[i])):
-                self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]
-
-        ### NEW LOGIC ###
-        ### GENERATE CASSETTES FROM self.cassette_loops ###
-        self.cassettes = [] # container for all cassettes
-        self.cassette_runs = [] # keep track of number of runs
-        self.cassette_status = [] # 0 is idle; 1 is in use
+                self.locationgroups[i][j] = self.batchlocations[self.locationgroups[i][j]]           
         
-        for i in range(len(self.cassette_loops)):
-            for j in range(self.cassette_loops[i][2]):                
-                self.cassettes.append(BatchContainer(self.env,"cassette",self.cassette_loops[i][3],1))
-                self.cassette_runs.append(0)
-                self.cassette_status.append(0)
-           
         for i, value in enumerate(self.batchconnections):
             # replace locationgroup number indicators for references to real class instances
             self.batchconnections[i][0] = self.locationgroups[self.batchconnections[i][0][0]][self.batchconnections[i][0][1]]
@@ -114,6 +102,18 @@ class RunSimulationThread(QtCore.QObject):
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
 
+    def generate_cassettes(self):
+        # generate cassettes from self.cassette_loops
+        self.cassettes = [] # container for all cassettes
+        self.cassette_status = [] # 0 is idle; 1 is in use
+        
+        for i in range(len(self.cassette_loops)):
+            self.cassettes.append([])
+            self.cassette_status.append([])
+            for j in range(self.cassette_loops[i][2]):                
+                self.cassettes[i].append(BatchContainer(self.env,"cassette",self.cassette_loops[i][3],1))
+                self.cassette_status[i].append(0)
+
     @QtCore.pyqtSlot()
     def run(self):
         
@@ -121,6 +121,7 @@ class RunSimulationThread(QtCore.QObject):
                 
         self.env = simpy.Environment()
         self.replace_for_real_instances() 
+        #self.generate_cassettes()
 
         ### Calculate time steps needed ###
         no_hourly_updates = self.params['time_limit'] // (60*60)

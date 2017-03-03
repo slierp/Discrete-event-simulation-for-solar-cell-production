@@ -9,85 +9,53 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
 
         self.parent = _parent
         self.setWindowTitle(self.tr("Add cassette loop"))
-        vbox = QtWidgets.QVBoxLayout()            
+        vbox = QtWidgets.QVBoxLayout()
 
-        hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Number of cassettes")
-        self.spinbox0 = QtWidgets.QSpinBox()
-        self.spinbox0.setAccelerated(True)
-        self.spinbox0.setMaximum(999)
-        self.spinbox0.setMinimum(1)
-        self.spinbox0.setValue(100)
-        label.setToolTip("Number of cassettes")
-        self.spinbox0.setToolTip("Number of cassettes")
-        hbox.addWidget(self.spinbox0)  
-        hbox.addWidget(label)
-        hbox.addStretch(1)
-        vbox.addLayout(hbox)
-
-        hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Amount of wafers that fit in each cassette")
-        self.spinbox1 = QtWidgets.QSpinBox()
-        self.spinbox1.setAccelerated(True)
-        self.spinbox1.setMaximum(999)
-        self.spinbox1.setMinimum(1)
-        self.spinbox1.setValue(100)
-        label.setToolTip("Amount of wafers that fit in each cassette")
-        self.spinbox1.setToolTip("Amount of wafers that fit in each cassette")
-        hbox.addWidget(self.spinbox1)  
-        hbox.addWidget(label)
-        hbox.addStretch(1)
-        vbox.addLayout(hbox)
-
-        non_cassette_names = []
-        non_cassette_names.append("Source")        
-        non_cassette_names.append("Plasma edge isolation")
-
-        self.dataset_cb = []
-        non_cassette_groups = [] 
-        for i, value in enumerate(self.parent.locationgroups):
-            name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
-            self.dataset_cb.append(QtWidgets.QCheckBox(name))
-                
-            if (name in non_cassette_names):
-               non_cassette_groups.append(i)
-
-        unavailable_groups = []
+        ## Beginning of loop ###
+        begin_label = QtWidgets.QLabel(self.tr("Begin positions:"))
+        vbox.addWidget(begin_label)
+        
         # remove groups already allocated in other cassette loops
+        unavailable_groups = []
+
         for i in range(len(self.parent.cassette_loops)):
-            for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]+1):
+            for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]):
                 unavailable_groups.append(j)
 
-        # re-insert possible connections
-        for i in range(len(self.parent.locationgroups)):
-            if (i in unavailable_groups) and (not (i+1) in unavailable_groups) and (not (i+1) in non_cassette_groups):
-                unavailable_groups = list(filter(lambda a: a != i, unavailable_groups))
+        # find locationgroups where all tools have a dual cassette output buffer
+        self.begin_positions = []
 
-        # groups before and after are the list are also unavailable
-        unavailable_groups.append(-1)
-        unavailable_groups.append(len(self.parent.locationgroups))
+        for i in range(len(self.parent.locationgroups)-1):
+            suitable = True
+            for j in range(len(self.parent.locationgroups[i])):
+                name = self.parent.batchlocations[self.parent.locationgroups[i][j]][0]
+                    
+                if not 3 in self.parent.output_types[name]:
+                    suitable = False
+                    
+            if suitable and not i in unavailable_groups:
+                self.begin_positions.append(i)
 
-        unavailable_groups += non_cassette_groups
+        self.combo_begin = QtWidgets.QComboBox(self)
         
-        for i in range(len(self.parent.locationgroups)):
-            # remove any groups that cannot form a connection
-            if ((i-1) in unavailable_groups) and ((i+1) in unavailable_groups):
-                unavailable_groups.append(i)
+        for i in self.begin_positions:
+            name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
+            self.combo_begin.addItem(name)
+
+        self.combo_begin.currentIndexChanged.connect(self.find_end_positions)
+        vbox.addWidget(self.combo_begin)
+
+        ### End of loop ###
+        end_label = QtWidgets.QLabel(self.tr("End positions:"))
+        vbox.addWidget(end_label)
+
+        self.combo_end = QtWidgets.QComboBox(self)
+
+        self.end_positions = []
         
-            if i in unavailable_groups:
-                self.dataset_cb[i].setEnabled(False)
+        vbox.addWidget(self.combo_end)
 
-        scroll_area = QtWidgets.QScrollArea()
-        checkbox_widget = QtWidgets.QWidget()
-        checkbox_vbox = QtWidgets.QVBoxLayout()
-
-        for i in range(len(self.dataset_cb)):
-            self.dataset_cb[i].setMinimumWidth(400) # prevent obscured text
-            checkbox_vbox.addWidget(self.dataset_cb[i])
-
-        checkbox_widget.setLayout(checkbox_vbox)
-        scroll_area.setWidget(checkbox_widget)
-        vbox.addWidget(scroll_area)
+        self.find_end_positions()
 
         ### Buttonbox for ok or cancel ###
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
@@ -99,37 +67,69 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
 
         self.setLayout(vbox)
 
-    def read(self):      
+    def find_end_positions(self):
+        self.combo_end.clear()
+        self.end_positions = []
         
-        # read contents of each widget
-        no_cassettes = int(self.spinbox0.text())
-        no_wafers = int(self.spinbox1.text())
+        begin = self.combo_begin.currentIndex()
+        
+        if begin == -1:
+            return
+        
+        begin = self.begin_positions[begin]
 
-        begin = end = 0
+        # remove groups already allocated in other cassette loops
+        unavailable_groups = []
 
-        for i in range(len(self.dataset_cb)):
-            if self.dataset_cb[i].isChecked():
-                begin = i
+        for i in range(len(self.parent.cassette_loops)):
+            for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]):
+                if j > begin:
+                    for k in range(j+1,len(self.parent.locationgroups)):
+                        unavailable_groups.append(k)
+
+        # find suitable end groups
+        for i in range(begin+1,len(self.parent.locationgroups)):
+
+            suitable = True
+            stop_search = False
+            for j in range(len(self.parent.locationgroups[i])):
+                name = self.parent.batchlocations[self.parent.locationgroups[i][j]][0]
+                
+                if not 3 in self.parent.input_types[name]:
+                    suitable = False
+                
+                if 1 in self.parent.input_types[name]:
+                    stop_search = True
+            
+            if stop_search:
                 break
             
-        for i in range(begin,len(self.dataset_cb)):
-            if (self.dataset_cb[i].isChecked()):    
-                end = i
-            elif (not self.dataset_cb[i].isChecked()):
-                break
-            
-        if (begin >= end):
-            self.parent.statusBar().showMessage(self.tr("Cassette loop could not be added"))                
+            if suitable and not i in unavailable_groups:
+                self.end_positions.append(i)
+
+        for i in self.end_positions:
+            name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
+            self.combo_end.addItem(name)
+
+    def read(self):
+
+        begin = self.begin_positions[self.combo_begin.currentIndex()]
+        
+        end = self.combo_end.currentIndex()
+    
+        if end == -1:
+            self.parent.statusBar().showMessage(self.tr("Cassette loop could not be added"))
             self.accept()
             return
         
-        if (not len(self.parent.cassetteloops_view.selectedIndexes())):
-            # if nothing selected
-            self.parent.cassette_loops.append([begin,end,no_cassettes,no_wafers])           
-        else:
-            row = self.parent.cassetteloops_view.selectedIndexes()[0].parent().row()
-            self.parent.cassette_loops.insert(row,[begin,end,no_cassettes,no_wafers])
+        end = self.end_positions[end]
 
+        transport_time = 60 # default duration for cassette return to source
+        time_per_unit = 10 # default additional duration for each cassette
+        min_units = 1 # default minimum number of cassettes for return transport
+        max_units = 99 # default maximum number of cassettes for return transport
+
+        self.parent.cassette_loops.append([begin,end,100,100,transport_time,time_per_unit,min_units,max_units])
         self.parent.load_definition_cassetteloops(False)
 
         self.parent.statusBar().showMessage(self.tr("Cassette loop added"))                

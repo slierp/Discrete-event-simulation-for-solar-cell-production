@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
-from batchlocations.CassetteContainer import CassetteContainer
 import collections
 
 class WaferUnstacker(QtCore.QObject):
@@ -77,11 +76,6 @@ The second loop consists of the following steps:
         self.params['time_pick_and_place'] = 1/1
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
-        
-        self.params['input'] = 1
-        self.params['input_type'] = "immutable" # not changeable / do not show
-        self.params['output'] = 3
-        self.params['output_type'] = "immutable"        
 
         self.params.update(_params)
 
@@ -91,10 +85,9 @@ The second loop consists of the following steps:
         if (self.params['time_pick_and_place'] < 1/10): # enforce minimum time step
             self.params['time_pick_and_place'] = 1/10
 
-        self.input = BatchContainer(self.env,"stack_in",self.params['stack_size'],self.params['max_stack_no'])
+        self.input = BatchContainer(self.env,"input",self.params['stack_size'],self.params['max_stack_no'])
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
-        self.output_cass_in = CassetteContainer(self.env,"cass_in",self.params['max_cassette_no'])
-        self.output_cass_out = CassetteContainer(self.env,"cass_out",self.params['max_cassette_no'])
+        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())

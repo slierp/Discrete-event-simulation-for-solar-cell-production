@@ -13,13 +13,14 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         vbox = QtWidgets.QVBoxLayout()            
         
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Time needed for a single transport action")
+        text = "Time needed for a single transport action"
+        label = QtWidgets.QLabel(text)
         self.spinbox0 = QtWidgets.QSpinBox()
         self.spinbox0.setAccelerated(True)
-        self.spinbox0.setMaximum(999999999)
+        self.spinbox0.setMaximum(9999)
         self.spinbox0.setValue(self.batchconnection[2])
-        label.setToolTip("Time needed for a single transport action")
-        self.spinbox0.setToolTip("Time needed for a single transport action")
+        label.setToolTip(text)
+        self.spinbox0.setToolTip(text)
         if (self.batchconnection[2] >= 100):
             self.spinbox0.setSingleStep(100)
         elif (self.batchconnection[2] >= 10):
@@ -30,13 +31,14 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Time added for each additional batch")
+        text = "Time added for each additional cassette or wafer stack"
+        label = QtWidgets.QLabel(text)
         self.spinbox1 = QtWidgets.QSpinBox()
         self.spinbox1.setAccelerated(True)
-        self.spinbox1.setMaximum(999999999)
+        self.spinbox1.setMaximum(9999)
         self.spinbox1.setValue(self.batchconnection[3])
-        label.setToolTip("Time added for each additional batch")
-        self.spinbox1.setToolTip("Time added for each additional batch")
+        label.setToolTip(text)
+        self.spinbox1.setToolTip(text)
         if (self.batchconnection[3] >= 100):
             self.spinbox1.setSingleStep(100)
         elif (self.batchconnection[3] >= 10):
@@ -47,39 +49,42 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Minimum number of batches needed to start transport")
+        text = "Minimum number of cassettes or stacks needed to start transport"
+        label = QtWidgets.QLabel(text)
         self.spinbox2 = QtWidgets.QSpinBox()
         self.spinbox2.setAccelerated(True)
-        self.spinbox2.setMaximum(999)
+        self.spinbox2.setMaximum(99)
         self.spinbox2.setMinimum(1)
         self.spinbox2.setValue(self.batchconnection[4])
-        label.setToolTip("Minimum number of batches needed to start transport")
-        self.spinbox2.setToolTip("Minimum number of batches needed to start transport")
+        label.setToolTip(text)
+        self.spinbox2.setToolTip(text)
         hbox.addWidget(self.spinbox2)  
         hbox.addWidget(label)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Maximum number of batches for one transport run")
+        text = "Maximum number of cassettes or stacks for one transport run"
+        label = QtWidgets.QLabel(text)
         self.spinbox3 = QtWidgets.QSpinBox()
         self.spinbox3.setAccelerated(True)
-        self.spinbox3.setMaximum(999)
+        self.spinbox3.setMaximum(99)
         self.spinbox3.setMinimum(1)
         self.spinbox3.setValue(self.batchconnection[5])
-        label.setToolTip("Maximum number of batches for one transport run")
-        self.spinbox3.setToolTip("Maximum number of batches for one transport run")
+        label.setToolTip(text)
+        self.spinbox3.setToolTip(text)
         hbox.addWidget(self.spinbox3)  
         hbox.addWidget(label)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel("Apply current settings to all connections")
+        text = "Apply current settings to all connections"
+        label = QtWidgets.QLabel(text)
         self.boolean = QtWidgets.QCheckBox()
         self.boolean.setChecked(False)
-        label.setToolTip("Apply current settings to all connections")
-        self.boolean.setToolTip("Apply current settings to all connections")        
+        label.setToolTip(text)
+        self.boolean.setToolTip(text)        
         label.mouseReleaseEvent = self.switch_boolean        
         hbox.addWidget(self.boolean)
         hbox.addWidget(label)
