@@ -15,7 +15,7 @@ from batchlocations.IonImplanter import IonImplanter
 from batchlocations.SpatialALD import SpatialALD
 from batchlocations.InlinePECVD import InlinePECVD
 from batchlocations.PlasmaEtcher import PlasmaEtcher
-from batchlocations.Cassette import Cassette
+from batchlocations.BatchContainer import BatchContainer # NEW LOGIC
 import simpy
 from PyQt5 import QtCore
 import pandas as pd
@@ -47,11 +47,10 @@ class RunSimulationThread(QtCore.QObject):
         return unique
 
     def replace_for_real_instances(self):        
- 
+   
         ### Replace string elements in production line definition for real class instances ###
         for i, value in enumerate(self.batchlocations):
             # replace class names for real class instances in the same list
-            # simpy env, message output link, settings dictionary
             if (self.batchlocations[i][0] == "WaferSource"):
                 self.batchlocations[i] = WaferSource(self.env,self.output,self.batchlocations[i][1])
             elif (self.batchlocations[i][0] == "WaferStacker"):
@@ -103,75 +102,12 @@ class RunSimulationThread(QtCore.QObject):
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
 
-        # generate all cassette instances and add them to source batchlocations
-        self.cassettes = [] # container for all cassettes
-        source_group = len(self.locationgroups)-1
-        
-        for i in range(len(self.cassette_loops)):          
-            self.cassettes.append([])
-            for j in range(self.cassette_loops[i][2]):
-                self.cassettes[i].append(Cassette(self.env,self.cassette_loops[i][3]))
-                self.locationgroups[source_group][i].input.put(j)
-
-    def add_cassette_loops(self):
-        # tell all batchlocations what cassette loop they belong to (if any)
-        for i in range(len(self.cassette_loops)):
-            for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
-                for k in self.locationgroups[j]:
-                    self.batchlocations[k][1]['cassette_loop'] = i
-
-        # generate cassette sources
-        first_source_location = len(self.batchlocations)
-        source_group = len(self.locationgroups)
-        self.locationgroups.append([])
-                                
-        for i in range(len(self.cassette_loops)):
-            self.batchlocations.append(["Buffer", {'max_cassette_no' : self.cassette_loops[i][2]}])
-            self.locationgroups[source_group].append(first_source_location+i)
-        
-        first_source_batchconnection = len(self.batchconnections)
-
-        # add connections from and to sources
-        for i in range(len(self.cassette_loops)):
-            transport_time = self.cassette_loops[i][4]
-            time_per_unit = self.cassette_loops[i][5]
-            min_units = self.cassette_loops[i][6]
-            max_units = self.cassette_loops[i][7]
-
-            # add connections from cassette sources to loop beginning
-            for j in range(len(self.locationgroups[self.cassette_loops[i][0]])):
-                self.batchconnections.append([[source_group,i],[self.cassette_loops[i][0],j],
-                                              transport_time,time_per_unit,min_units,max_units])
-
-            # add connections from loop endings to cassette sources
-            for k in range(len(self.locationgroups[self.cassette_loops[i][1]])):
-                self.batchconnections.append([[self.cassette_loops[i][1],k],[source_group,i],
-                                              transport_time,time_per_unit,min_units,max_units])
-        
-        # add source connections to operators that are already responsible for the same tools
-        for i in range(first_source_batchconnection,len(self.batchconnections)):
-            if self.batchconnections[i][0][0] == source_group: # if it is source > tool connection
-                for j in range(len(self.operators)):
-                    for k in self.operators[j][0]:
-                        if self.batchconnections[k][0] == self.batchconnections[i][1]:
-                            self.operators[j][0].append(i)
-
-            else: # if it is tool > source connection
-                for j in range(len(self.operators)):
-                    for k in self.operators[j][0]:
-                        if self.batchconnections[k][1] == self.batchconnections[i][0]:
-                            self.operators[j][0].append(i)                            
-        
-        for i in range(len(self.operators)): # make operator connection lists unique
-            self.operators[i][0] = list(set(self.operators[i][0]))
-
     @QtCore.pyqtSlot()
     def run(self):
         
         start_time = time.clock()
                 
-        self.env = simpy.Environment()        
-        self.add_cassette_loops()         
+        self.env = simpy.Environment()
         self.replace_for_real_instances()
 
         ### Calculate time steps needed ###

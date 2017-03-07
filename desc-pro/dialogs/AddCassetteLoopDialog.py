@@ -129,7 +129,7 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         min_units = 1 # default minimum number of cassettes for return transport
         max_units = 99 # default maximum number of cassettes for return transport
 
-        self.parent.cassette_loops.append([begin,end,100,100,transport_time,time_per_unit,min_units,max_units])
+        self.parent.cassette_loops.append([begin,end,50,100,transport_time,time_per_unit,min_units,max_units])
         self.parent.load_definition_cassetteloops(False)
 
         self.parent.statusBar().showMessage(self.tr("Cassette loop added"))                

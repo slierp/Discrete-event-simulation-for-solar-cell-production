@@ -148,8 +148,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations.append(["PrintLine", {'name' : '0'}])
         self.batchlocations.append(["PrintLine", {'name' : '1'}])
                 
-        self.cassette_loops = [] # define last locationgroup in loop and number of cassettes for each loop
-
+        self.cassette_loops = []
         self.locationgroups = [] 
         self.batchconnections = []
         self.operators = []
@@ -459,7 +458,7 @@ class MainGui(QtWidgets.QMainWindow):
         max_units = 99 # default maximum number of cassettes for return transport
         
         if not begin >= end:
-            self.cassette_loops.append([begin,end,100,100,transport_time,time_per_unit,min_units,max_units])
+            self.cassette_loops.append([begin,end,50,100,transport_time,time_per_unit,min_units,max_units])
 
     def print_cassetteloop(self, num):
         if (num >= len(self.locationgroups)):

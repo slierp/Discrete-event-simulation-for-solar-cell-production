@@ -37,9 +37,9 @@ There is one simple loop that consists of two steps:
         """         
         
         self.params['name'] = ""
-        self.params['batch_size'] = 100
-        self.params['batch_size_desc'] = "Number of units in a single cassette"
-        self.params['batch_size_type'] = "configuration"
+#        self.params['batch_size'] = 100
+#        self.params['batch_size_desc'] = "Number of units in a single cassette"
+#        self.params['batch_size_type'] = "configuration"
         self.params['max_batch_no'] = 4
         self.params['max_batch_no_desc'] = "Number of input cassette positions"
         self.params['max_batch_no_type'] = "configuration"
@@ -49,17 +49,18 @@ There is one simple loop that consists of two steps:
 
         self.params['input'] = 3
         self.params['input_type'] = "immutable" # not changeable / do not show       
+        self.params['cassette_loop'] = -1
+        self.params['cassette_loop_type'] = "immutable"
                    
         self.params.update(_params)
-        
+            
 #        string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG
       
 #        self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
-        self.input_cass_in = CassetteContainer(self.env,"cass_in",self.params['max_cassette_no'])
-        self.input_cass_out = CassetteContainer(self.env,"cass_out",self.params['max_cassette_no'])        
+        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],self.params['max_cassette_no'])       
         
-        self.output = InfiniteContainer(self.env,"output")
+        self.output = simpy.Container(self.env,init=0)
         
         self.env.process(self.run())
 
@@ -70,19 +71,13 @@ There is one simple loop that consists of two steps:
         return self.output.container.level
         
     def run(self):
-        batch_size = self.params['batch_size']
         wait_time = self.params['wait_time']
+        cassette_loop = self.params['cassette_loop']
+        batch_size = self.parent.cassette_loops[cassette_loop][3]
         
         while True:
-            if (self.input.container.level >= batch_size):
-                yield self.input.container.get(batch_size)
-                yield self.output.container.put(batch_size)                
-            yield self.env.timeout(wait_time)    
-        
-class InfiniteContainer(object):
-    
-    def __init__(self, env, name=""):
-        
-        self.env = env
-        self.name = name
-        self.container = simpy.Container(self.env,init=0)
+            cassette = yield self.input.input.get() # receive cassette
+            yield self.parent.cassettes[cassette_loop][cassette].get(batch_size) # get wafers out of cassette
+            yield self.env.timeout(wait_time) # simulate time taken to perform action
+            yield self.output.container.put(batch_size) # put wafers into infinite output container
+            yield self.input.output.put(cassette) # return empty cassette

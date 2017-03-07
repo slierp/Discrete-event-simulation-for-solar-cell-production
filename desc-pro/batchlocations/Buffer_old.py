@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
-#from batchlocations.BatchContainer import BatchContainer
-import simpy
+from batchlocations.BatchContainer import BatchContainer
 
 class Buffer(QtCore.QObject):
         
@@ -27,37 +26,19 @@ The space available in the buffer can be configured.\n
         """
         
         self.params['name'] = ""
-#        self.params['cassette_size'] = 100
-#        self.params['cassette_size_desc'] = "Number of units in a single cassette"
-#        self.params['cassette_size_type'] = "configuration"
+        self.params['cassette_size'] = 100
+        self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 50
         self.params['max_cassette_no_desc'] = "Number of cassette positions available"
         self.params['max_cassette_no_type'] = "configuration"
         self.params.update(_params)
         
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-#        self.output = self.input
-        self.max_cass = self.params['max_cassette_no']        
-
-        # stores cassette number references
-        self.input = simpy.Store(self.env,self.max_cass)
+        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.output = self.input
-                                           
-    def space_available_input(self,added_units):
-        if (len(self.input.items)+added_units) <= self.max_cass:
-            return True
-        else:
-            return False       
-
-    def space_available_output(self,added_units):
-        if (len(self.output.items)+added_units) <= self.max_cass:
-            return True
-        else:
-            return False
 
     def report(self):
         return
         
     def prod_volume(self):
-#        return self.output.container.level
-        return
+        return self.output.container.level

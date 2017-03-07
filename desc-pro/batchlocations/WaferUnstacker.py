@@ -55,9 +55,9 @@ The second loop consists of the following steps:
         self.params['max_stack_no'] = 3
         self.params['max_stack_no_desc'] = "Maximum number of stacks at the input side"
         self.params['max_stack_no_type'] = "configuration"
-        self.params['cassette_size'] = 100
-        self.params['cassette_size_desc'] = "Number of wafers in a single cassette"
-        self.params['cassette_size_type'] = "configuration"
+#        self.params['cassette_size'] = 100
+#        self.params['cassette_size_desc'] = "Number of wafers in a single cassette"
+#        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of output cassette positions"
         self.params['max_cassette_no_type'] = "configuration"
@@ -81,7 +81,9 @@ The second loop consists of the following steps:
         self.params['input'] = 1
         self.params['input_type'] = "immutable" # not changeable / do not show
         self.params['output'] = 3
-        self.params['output_type'] = "immutable"        
+        self.params['output_type'] = "immutable"
+        self.params['cassette_loop'] = -1
+        self.params['cassette_loop_type'] = "immutable"                   
 
         self.params.update(_params)
 
@@ -93,8 +95,8 @@ The second loop consists of the following steps:
 
         self.input = BatchContainer(self.env,"stack_in",self.params['stack_size'],self.params['max_stack_no'])
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
-        self.output_cass_in = CassetteContainer(self.env,"cass_in",self.params['max_cassette_no'])
-        self.output_cass_out = CassetteContainer(self.env,"cass_out",self.params['max_cassette_no'])
+#        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
+        self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'],self.params['max_cassette_no'])
 
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())
@@ -143,9 +145,12 @@ The second loop consists of the following steps:
             
     def run_cassette_loader(self):
         current_load = 0
-        cassette_size = self.params['cassette_size']
         time_new_cassette = self.params['time_new_cassette']
         time_step = self.params['time_step'] 
+        cassette_loop = self.params['cassette_loop']
+        cassette_size = self.parent.cassette_loops[cassette_loop][3]
+        
+        cassette = yield self.input.input.get() # receive first empty cassette
         
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):
@@ -164,9 +169,11 @@ The second loop consists of the following steps:
                 yield self.env.timeout(time_step)                
             
             if (current_load == cassette_size):            
-                # if current cassette is full, replace full one for empty cassette
-                yield self.output.container.put(cassette_size)
+                # if load is full, fill cassette and replace it for empty cassette
+                yield self.parent.cassettes[cassette_loop][cassette].put(cassette_size) # put wafers into cassette
+                yield self.output.output.put(cassette) # return full cassette
                 self.output.process_counter += cassette_size
+                cassette = yield self.input.input.get() # receive empty cassette
                 
                 current_load = 0                
                 yield self.env.timeout(time_new_cassette) # time for loading new cassette
