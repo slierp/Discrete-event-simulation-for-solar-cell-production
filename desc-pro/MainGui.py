@@ -102,7 +102,6 @@ class MainGui(QtWidgets.QMainWindow):
         self.output_overload_signal_given = False
         
         self.wid = None # will contain window for displaying production rates
-        self.profiling_mode = False
         self.plot_selection = [] # selected items for display
 
         self.prev_dir_path = ""
@@ -209,6 +208,7 @@ class MainGui(QtWidgets.QMainWindow):
 
         self.params = {}
         self.params['time_limit'] = 60*60
+        self.params['profiling_mode'] = False
         
         self.create_menu()
         self.create_main_frame()
@@ -646,15 +646,11 @@ class MainGui(QtWidgets.QMainWindow):
 
     def switch_profiling_mode(self):
         
-        if (self.profiling_mode):
-            self.profiling_mode = False
-            self.qt_thread.started.disconnect(self.simulation_thread.run_with_profiling) # Start simulation when thread is started
-            self.qt_thread.started.connect(self.simulation_thread.run) # Start simulation when thread is started
+        if (self.params['profiling_mode']):
+            self.params['profiling_mode'] = False
             self.statusBar().showMessage(self.tr("Profiling mode has been turned off"))
         else:
-            self.profiling_mode = True
-            self.qt_thread.started.disconnect(self.simulation_thread.run) # Start simulation when thread is started
-            self.qt_thread.started.connect(self.simulation_thread.run_with_profiling) # Start simulation when thread is started
+            self.params['profiling_mode'] = True
             self.statusBar().showMessage(self.tr("Profiling mode has been turned on"))
 
     def plot_production_rates(self):

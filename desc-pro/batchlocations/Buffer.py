@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
-#from batchlocations.BatchContainer import BatchContainer
-import simpy
+from batchlocations.CassetteContainer import CassetteContainer
+#import simpy
 
 class Buffer(QtCore.QObject):
         
@@ -40,24 +40,18 @@ The space available in the buffer can be configured.\n
         self.max_cass = self.params['max_cassette_no']        
 
         # stores cassette number references
-        self.input = simpy.Store(self.env,self.max_cass)
+#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        self.input = CassetteContainer(self.env,"input",self.max_cass,0,True)
         self.output = self.input
                                            
     def space_available_input(self,added_units):
-        if (len(self.input.items)+added_units) <= self.max_cass:
-            return True
-        else:
-            return False       
+        self.input.space_available_input(added_units)      
 
     def space_available_output(self,added_units):
-        if (len(self.output.items)+added_units) <= self.max_cass:
-            return True
-        else:
-            return False
+        self.input.space_available_input(added_units)
 
     def report(self):
         return
         
     def prod_volume(self):
-#        return self.output.container.level
-        return
+        return len(self.output.input.items)

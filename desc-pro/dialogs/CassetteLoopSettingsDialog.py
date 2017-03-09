@@ -43,7 +43,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
-        text = "Time needed for a single empty cassette return transport"
+        text = "Time needed for a single empty cassette transport"
         label = QtWidgets.QLabel(text)
         self.spinbox2 = QtWidgets.QSpinBox()
         self.spinbox2.setAccelerated(True)

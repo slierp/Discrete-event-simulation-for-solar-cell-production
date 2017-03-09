@@ -51,6 +51,8 @@ There is one simple loop that consists of two steps:
         self.params['input_type'] = "immutable" # not changeable / do not show       
         self.params['cassette_loop'] = -1
         self.params['cassette_loop_type'] = "immutable"
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
                    
         self.params.update(_params)
             
@@ -58,9 +60,8 @@ There is one simple loop that consists of two steps:
 #        self.output_text.sig.emit(string) #DEBUG
       
 #        self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
-        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],self.params['max_cassette_no'])       
-        
-        self.output = simpy.Container(self.env,init=0)
+        self.input = CassetteContainer(self.env,"input",self.params['max_batch_no'],self.params['max_batch_no'])
+        self.output = InfiniteContainer(self.env,"output")
         
         self.env.process(self.run())
 
@@ -72,12 +73,18 @@ There is one simple loop that consists of two steps:
         
     def run(self):
         wait_time = self.params['wait_time']
-        cassette_loop = self.params['cassette_loop']
-        batch_size = self.parent.cassette_loops[cassette_loop][3]
+        cassette_size = self.params['cassette_size']
         
         while True:
             cassette = yield self.input.input.get() # receive cassette
-            yield self.parent.cassettes[cassette_loop][cassette].get(batch_size) # get wafers out of cassette
             yield self.env.timeout(wait_time) # simulate time taken to perform action
-            yield self.output.container.put(batch_size) # put wafers into infinite output container
+            yield self.output.container.put(cassette_size) # put wafers into infinite output container
             yield self.input.output.put(cassette) # return empty cassette
+            
+class InfiniteContainer(object):
+    
+    def __init__(self, env, name=""):
+        
+        self.env = env
+        self.name = name
+        self.container = simpy.Container(self.env,init=0)                                       

@@ -83,7 +83,9 @@ The second loop consists of the following steps:
         self.params['output'] = 3
         self.params['output_type'] = "immutable"
         self.params['cassette_loop'] = -1
-        self.params['cassette_loop_type'] = "immutable"                   
+        self.params['cassette_loop_type'] = "immutable"
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"                   
 
         self.params.update(_params)
 
@@ -146,12 +148,11 @@ The second loop consists of the following steps:
     def run_cassette_loader(self):
         current_load = 0
         time_new_cassette = self.params['time_new_cassette']
-        time_step = self.params['time_step'] 
-        cassette_loop = self.params['cassette_loop']
-        cassette_size = self.parent.cassette_loops[cassette_loop][3]
+        time_step = self.params['time_step']
+        cassette_size = self.params['cassette_size']
         
-        cassette = yield self.input.input.get() # receive first empty cassette
-        
+        cassette = yield self.output.input.get() # receive first empty cassette
+
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):
                 # if wafer available and cassette is not full, load into cassette
@@ -170,10 +171,9 @@ The second loop consists of the following steps:
             
             if (current_load == cassette_size):            
                 # if load is full, fill cassette and replace it for empty cassette
-                yield self.parent.cassettes[cassette_loop][cassette].put(cassette_size) # put wafers into cassette
                 yield self.output.output.put(cassette) # return full cassette
                 self.output.process_counter += cassette_size
-                cassette = yield self.input.input.get() # receive empty cassette
+                cassette = yield self.output.input.get() # receive empty cassette
                 
-                current_load = 0                
-                yield self.env.timeout(time_new_cassette) # time for loading new cassette
+                current_load = 0
+                yield self.env.timeout(time_new_cassette) # time for loading new cassette                
