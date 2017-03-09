@@ -84,18 +84,13 @@ If none of the tool connections allowed for a transport event, then the operator
                     destination = self.batchconnections[i][1].output
                 
                 if cassette_transport:
-                    buffer = destination.max_cass_in
+                    buffer = destination.max_cass
                     level = len(destination.input.items)
                     units_for_transport = min(buffer - level,len(origin.output.items))                  
                 else:
                     buffer = destination.buffer_size
                     level = destination.container.level
                     units_for_transport = min(buffer - level,origin.container.level)
-                
-#                if (units_needed >= units_available):
-#                    units_for_transport = units_available
-#                else:
-#                    units_for_transport = units_needed
                
                 continue_action = False
 
@@ -108,9 +103,6 @@ If none of the tool connections allowed for a transport event, then the operator
                     continue_action = True
                 else:
                     continue_action = False
-                    
-#                if (units_for_transport >= self.batchconnections[i][0].output.batch_size):
-#                    no_batches_for_transport = units_for_transport // self.batchconnections[i][0].output.batch_size
 
                 if continue_action:
                     continue_action = False

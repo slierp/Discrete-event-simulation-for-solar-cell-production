@@ -172,7 +172,7 @@ class MainGui(QtWidgets.QMainWindow):
         # 1 = stack buffer; 2 = single cassette buffer; 3 = dual cassette buffer
         self.input_types = {}
         self.input_types['WaferSource'] = []
-        self.input_types['WaferStacker'] = [2]
+        self.input_types['WaferStacker'] = [3]
         self.input_types['WaferUnstacker'] = [1]
         self.input_types['BatchTex'] = [2]
         self.input_types['BatchClean'] = [2]

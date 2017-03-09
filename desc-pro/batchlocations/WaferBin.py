@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
-#from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
 import simpy
 
@@ -37,9 +36,6 @@ There is one simple loop that consists of two steps:
         """         
         
         self.params['name'] = ""
-#        self.params['batch_size'] = 100
-#        self.params['batch_size_desc'] = "Number of units in a single cassette"
-#        self.params['batch_size_type'] = "configuration"
         self.params['max_batch_no'] = 4
         self.params['max_batch_no_desc'] = "Number of input cassette positions"
         self.params['max_batch_no_type'] = "configuration"
@@ -47,10 +43,6 @@ There is one simple loop that consists of two steps:
         self.params['wait_time_desc'] = "Wait period between wafer removal attempts (seconds)"
         self.params['wait_time_type'] = "automation"
 
-        self.params['input'] = 3
-        self.params['input_type'] = "immutable" # not changeable / do not show       
-        self.params['cassette_loop'] = -1
-        self.params['cassette_loop_type'] = "immutable"
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
                    
@@ -59,8 +51,7 @@ There is one simple loop that consists of two steps:
 #        string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG
       
-#        self.input = BatchContainer(self.env,"input",self.params['batch_size'],self.params['max_batch_no'])
-        self.input = CassetteContainer(self.env,"input",self.params['max_batch_no'],self.params['max_batch_no'])
+        self.input = CassetteContainer(self.env,"input",self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")
         
         self.env.process(self.run())

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
-from batchlocations.CassetteContainer import CassetteContainer
 import collections
 
 class WaferStacker(QtCore.QObject):
@@ -56,6 +55,9 @@ The second loop consists of the following steps:
         self.params['max_stack_no'] = 3
         self.params['max_stack_no_desc'] = "Maximum number of stacks at the output side"
         self.params['max_stack_no_type'] = "configuration"
+        self.params['cassette_size'] = 100
+        self.params['cassette_size_desc'] = "Number of wafers in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of input cassette positions"
         self.params['max_cassette_no_type'] = "configuration"
@@ -84,8 +86,7 @@ The second loop consists of the following steps:
         if (self.params['time_pick_and_place'] < 1/10): # enforce minimum time step
             self.params['time_pick_and_place'] = 1/10
 
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],self.params['max_cassette_no'])        
+        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['stack_size'],self.params['max_stack_no'])
 
@@ -99,28 +100,36 @@ The second loop consists of the following steps:
         return self.output.process_counter
 
     def run_load_in_conveyor(self):
+        wafer_counter = 0
+        restart = True # start with new cassette
         time_new_cassette = self.params['time_new_cassette']
         cassette_size = self.params['cassette_size']
         time_step = self.params['time_step']
-        
-        cassette = yield self.input.input.get() # receive first cassette
-        wafer_counter = cassette_size
+        wafer_available = False
         
         while True:
             
+            if (not wafer_available): # if we don't already have a wafer in position try to get one
+                yield self.input.container.get(1)
+                wafer_available = True
+
+            if (restart):
+                #time delay for loading new cassette if input had been completely empty
+                yield self.env.timeout(time_new_cassette - time_step)
+                restart = False            
+            
             if (not self.belt[0]):                 
                 self.belt[0] = True
-                wafer_counter -= 1
+                wafer_available = False
+                wafer_counter += 1                              
                 
 #                string = str(self.env.now) + " [WaferStacker][" + self.params['name'] + "] Put wafer from cassette onto conveyor" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
-
-            if not wafer_counter:
-                yield self.input.output.put(cassette) # return empty cassette
-                cassette = yield self.input.input.get() # receive new cassette
-                wafer_counter = cassette_size
-                yield self.env.timeout(time_new_cassette)
-                continue
+                    
+            if (wafer_counter == cassette_size):
+                # if current cassette is empty then delay to load a new cassette                                   
+                wafer_counter = 0                
+                restart = True
                 
             yield self.env.timeout(time_step)
 

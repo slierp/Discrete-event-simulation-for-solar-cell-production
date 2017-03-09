@@ -2,8 +2,7 @@
 from PyQt5 import QtCore
 from batchlocations.BatchTransport import BatchTransport
 from batchlocations.BatchProcess import BatchProcess
-#from batchlocations.BatchContainer import BatchContainer
-from batchlocations.CassetteContainer import CassetteContainer
+from batchlocations.BatchContainer import BatchContainer
 
 class BatchTex(QtCore.QObject):
         
@@ -69,9 +68,12 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         """
 
         self.params['name'] = ""
-        self.params['batch_size'] = 4
-        self.params['batch_size_desc'] = "Number of cassettes in a single process batch"
+        self.params['batch_size'] = 400
+        self.params['batch_size_desc'] = "Number of units in a single process batch"
         self.params['batch_size_type'] = "configuration"
+        self.params['cassette_size'] = 100
+        self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         self.params['max_cassette_no_type'] = "configuration"
@@ -133,8 +135,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.params.update(_params)        
         
         ### Add input ###
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],True)        
+        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
 
         self.batchprocesses = []
 
@@ -185,8 +186,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         ### Add output ###
-#        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'],True) 
+        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
         ### Batch transporter between input, texture baths and first rinse ###
         # First check whether batch can be brought to rinse, because that has priority

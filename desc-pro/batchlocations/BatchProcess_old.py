@@ -28,8 +28,7 @@ class BatchProcess(QtCore.QObject):
         self.process_counter = 0
         self.last_downtime = 0
         self.status = 1 # up or down
-#        self.container = simpy.Container(self.env,capacity=self.params['batch_size'],init=0)
-        self.store = simpy.Store(self.env,self.params['batch_size'])
+        self.container = simpy.Container(self.env,capacity=self.params['batch_size'],init=0)
             
         self.env.process(self.run())
         
@@ -47,8 +46,7 @@ class BatchProcess(QtCore.QObject):
                 self.start_time = self.env.now
                 self.first_run = False
                 
-#            if (self.container.level >= batch_size) & (not self.process_finished):
-            if (len(self.store.items) == batch_size) & (not self.process_finished):
+            if (self.container.level >= batch_size) & (not self.process_finished):
                 with self.resource.request() as request:
                     yield request
                     yield self.env.timeout(process_time) 
@@ -61,8 +59,7 @@ class BatchProcess(QtCore.QObject):
             
     def space_available(self,_batch_size):
         # see if space is available for the specified _batch_size
-#        if ((self.container.level+_batch_size) <= self.params['batch_size']):
-        if ((len(self.store.items)+_batch_size) <= self.params['batch_size']):            
+        if ((self.container.level+_batch_size) <= self.params['batch_size']):
             return True
         else:
             return False
@@ -85,8 +82,8 @@ class BatchProcess(QtCore.QObject):
         while True:
             yield self.env.timeout(1)
             
-#            if ((self.env.now - self.last_downtime) >= downtime_time) & (not self.container.level):
-            if ((self.env.now - self.last_downtime) >= downtime_time) & (not len(self.store.items)):                
+            if ((self.env.now - self.last_downtime) >= downtime_time) & \
+                (not self.container.level):
                 # perform a downtime cycle at time limit and when empty
                     
                 with self.resource.request() as request:

@@ -41,7 +41,7 @@ The space available in the buffer can be configured.\n
 
         # stores cassette number references
 #        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.input = CassetteContainer(self.env,"input",self.max_cass,0,True)
+        self.input = CassetteContainer(self.env,"input",self.max_cass,True)
         self.output = self.input
                                            
     def space_available_input(self,added_units):
