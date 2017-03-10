@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
-from batchlocations.BatchContainer import BatchContainer
+from batchlocations.CassetteContainer import CassetteContainer
 import simpy
 import collections
 
@@ -17,7 +17,7 @@ class PrintLine(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):
         QtCore.QObject.__init__(self)
-        self.env = _env
+        self.env = _env        
         self.output_text = _output
         self.utilization = []
         self.diagram = """blockdiag {       
@@ -78,9 +78,6 @@ After a drying step the wafer is placed on the input belt of the next printer an
         """
         
         self.params['name'] = ""
-        self.params['cassette_size'] = 100
-        self.params['cassette_size_desc'] = "Number of units in a single cassette"
-        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input"
         self.params['max_cassette_no_type'] = "configuration"
@@ -124,7 +121,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.time_fire = int(60*self.params['firing_tool_length']//self.params['firing_belt_speed'])
 
         ### Input ###
-        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'])
 
         ### Array of zeroes represents belts ###
         self.belts = []
@@ -150,11 +147,13 @@ After a drying step the wafer is placed on the input belt of the next printer an
             self.first_run.append(True)
             self.start_time.append(0)
 
+        self.next_step = self.env.event() # triggers load-in from cassette
+        # start belt before printers; otherwise next_step will be triggered already
+        # and a different one will be created
+        self.env.process(self.run_belt()) 
+
         for i in range(self.params['no_print_steps']):
             self.env.process(self.run_printer(i))
-
-        self.next_step = self.env.event() # triggers load-in from cassette
-        self.env.process(self.run_belt())      
 
     def report(self):        
         self.utilization.append("PrintLine")
@@ -181,36 +180,27 @@ After a drying step the wafer is placed on the input belt of the next printer an
         return self.output.container.level
         
     def run_belt(self): # For first belt
-        wafer_counter = 0
-        restart = True # start with new cassette
         time_new_cassette = self.params['time_new_cassette']
         cassette_size = self.params['cassette_size']
-        wafer_available = False
-        
+
+        cassette = yield self.input.input.get() # receive first cassette
+        wafer_counter = cassette_size
+
         while True:
             yield self.next_step
-            
-            if (not wafer_available): # if we don't already have a wafer in position try to get one
-                yield self.input.container.get(1)
-                wafer_available = True
 
-            if (restart):
-                #time delay for loading new cassette if input had been completely empty
+            if not wafer_counter:
+                yield self.input.output.put(cassette) # return empty cassette
+                cassette = yield self.input.input.get() # receive new cassette
+                wafer_counter = cassette_size
                 yield self.env.timeout(time_new_cassette)
-                restart = False
-            
-            if (not self.belts[0][0]): 
+
+            if (not self.belts[0][0]):                 
                 self.belts[0][0] = True
-                wafer_available = False
-                wafer_counter += 1
+                wafer_counter -= 1
                 
 #                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
-                    
-            if (wafer_counter == cassette_size):
-                # if current cassette is empty and there are more cassettes available, delay to load a new cassette                                   
-                wafer_counter = 0                
-                restart = True
            
     def run_printer(self, num):
         time_step = self.params['time_step']
@@ -233,8 +223,8 @@ After a drying step the wafer is placed on the input belt of the next printer an
                 # move belt and perform print
                 self.belts[num].rotate(1)
 
-                if (not num):                    
-                    yield self.next_step.succeed() # let first belt run
+                if (not num):
+                    self.next_step.succeed() # let first belt run
                     self.next_step = self.env.event() # make new event                
                     
                 yield self.env.timeout(time_out) # belt movement time determined by the slowest: print time or by belt speed
@@ -252,8 +242,8 @@ After a drying step the wafer is placed on the input belt of the next printer an
                 # if cannot print: move belt and wait
                 self.belts[num].rotate(1)
                 
-                if (not num):                    
-                    yield self.next_step.succeed() # let first belt run
+                if (not num):
+                    self.next_step.succeed() # let first belt run
                     self.next_step = self.env.event() # make new event                 
                     
                 yield self.env.timeout(time_step) # belt movement time determined by user defined value               

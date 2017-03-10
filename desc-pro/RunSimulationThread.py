@@ -240,7 +240,7 @@ class RunSimulationThread(QtCore.QObject):
             if (i == self.params['time_limit']):                
                 string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
                 self.output.sig.emit(string)
-            
+           
             elif profiling_mode and (i in hourly_updates):
 
                 prod_volumes = []                
@@ -273,7 +273,7 @@ class RunSimulationThread(QtCore.QObject):
 
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
-
+        
         end_time = time.clock()
         
         if profiling_mode:

@@ -2,7 +2,6 @@
 from PyQt5 import QtCore
 from batchlocations.BatchTransport import BatchTransport
 from batchlocations.BatchProcess import BatchProcess
-#from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
 
 class BatchTex(QtCore.QObject):
@@ -133,7 +132,6 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.params.update(_params)        
         
         ### Add input ###
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],True)        
 
         self.batchprocesses = []
@@ -185,7 +183,6 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
             self.batchprocesses.append(BatchProcess(self.env,self.output_text,process_params))
         
         ### Add output ###
-#        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'],True) 
 
         ### Batch transporter between input, texture baths and first rinse ###

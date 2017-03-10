@@ -85,7 +85,7 @@ The second loop consists of the following steps:
             self.params['time_pick_and_place'] = 1/10
 
 #        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],self.params['max_cassette_no'])        
+        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'])        
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['stack_size'],self.params['max_stack_no'])
 
