@@ -46,7 +46,7 @@ class RunSimulationThread(QtCore.QObject):
         return unique
 
     def replace_for_real_instances(self):
-        
+
         ### Replace string elements in production line definition for real class instances ###
         for i, value in enumerate(self.batchlocations):
             # replace class names for real class instances in the same list
@@ -114,7 +114,6 @@ class RunSimulationThread(QtCore.QObject):
 #        print(self.batchconnections)
 #        print(self.operators)
 #        print(self.cassette_loops)
-#        print(self.cassettes)
 
     def add_cassette_loops(self):
         # tell all tools in each cassette loop what cassette size they have
@@ -232,10 +231,7 @@ class RunSimulationThread(QtCore.QObject):
                 self.output.sig.emit(string) 
                 break
 
-            try:
-                self.env.run(until=i)
-            except Exception as inst:
-                self.output.sig.emit(inst)
+            self.env.run(until=i)
             
             if (i == self.params['time_limit']):                
                 string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
