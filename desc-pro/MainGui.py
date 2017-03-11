@@ -426,21 +426,23 @@ class MainGui(QtWidgets.QMainWindow):
             # find last locationgroup where all tools have a dual cassette output buffer
             for i in range(begin+1,len(self.locationgroups)):
 
-                suitable = True
+                suitable = True # suitable as a cassette loop ending or not
                 stop_search = False
+                
                 for j in range(len(self.locationgroups[i])):
                     name = self.batchlocations[self.locationgroups[i][j]][0]
+                
                     if not 3 in self.input_types[name]:
                         suitable = False
-                
-                    if 1 in self.input_types[name]:
+                        
+                    if not 2 in self.input_types[name] or 1 in self.input_types[name]:
                         stop_search = True
-            
-                if stop_search:
-                    break
-            
+                    
                 if suitable:
                     end = i
+
+                if stop_search:
+                    break
 
             # quit if no suitable locationgroup was found
             if end == -1:

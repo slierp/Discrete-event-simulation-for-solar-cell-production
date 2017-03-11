@@ -98,14 +98,14 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
                 if not 3 in self.parent.input_types[name]:
                     suitable = False
                 
-                if 1 in self.parent.input_types[name]:
+                if not 2 in self.parent.input_types[name] or 1 in self.parent.input_types[name]:
                     stop_search = True
-            
-            if stop_search:
-                break
             
             if suitable and not i in unavailable_groups:
                 self.end_positions.append(i)
+
+            if stop_search:
+                break
 
         for i in self.end_positions:
             name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
