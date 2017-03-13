@@ -84,10 +84,10 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
         self.params['downtime_duration_type'] = "downtime"
         
-        self.params['no_of_processes'] = 4
+        self.params['no_of_processes'] = 5
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
         self.params['no_of_processes_type'] = "configuration"
-        self.params['no_of_cooldowns'] = 3
+        self.params['no_of_cooldowns'] = 4
         self.params['no_of_cooldowns_desc'] = "Number of cooldown locations in the tool"
         self.params['no_of_cooldowns_type'] = "configuration"
         
@@ -217,7 +217,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())
-        self.env.process(self.run_transport()) # import not to trigger signal before starting load processes
+        self.env.process(self.run_transport()) # important not to trigger signal before starting load processes
 
     def report(self):        
         self.utilization.append("TubeFurnace")
@@ -410,7 +410,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
 
             #print(str(self.env.now) + "-" + "Starting load-in")
             for i in range(no_loads):
-                
+                #print("1")
                 if not wafer_counter:
 
                     cassette = yield self.input.input.get()
@@ -420,11 +420,11 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                         yield self.input.output.put(cassette)
                     else:
                         yield self.empty_cassette_buffer.input.put(cassette)                        
-
+                #print("2")
                 wafer_counter -= automation_loadsize                               
                 yield self.env.timeout(automation_time)            
                 yield self.boat[self.loadstation].container.put(automation_loadsize)                                        
-
+            #print("3")
             self.boat_status[self.loadstation] = 0 # set boat status to unprocessed
             self.batches_loaded += 1 # keep track of number of loads in the system
             self.loadstation_status = 0 # set loadstation status to non-busy
