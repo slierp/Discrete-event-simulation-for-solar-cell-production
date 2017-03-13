@@ -116,11 +116,19 @@ class RunSimulationThread(QtCore.QObject):
 #        print(self.cassette_loops)
 
     def add_cassette_loops(self):
-        # tell all tools in each cassette loop what cassette size they have
+        # tell all tools in each cassette loop what cassette size they have and whether they
+        # are the begin or end of a loop
         for i in range(len(self.cassette_loops)):
+
             for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
-                for k in self.locationgroups[j]:
+                for k in self.locationgroups[j]:                    
                     self.batchlocations[k][1]['cassette_size'] = self.cassette_loops[i][3]
+            
+            for l in self.locationgroups[self.cassette_loops[i][0]]:
+                self.batchlocations[l][1]['loop_begin'] = True
+
+            for m in self.locationgroups[self.cassette_loops[i][1]]:
+                self.batchlocations[m][1]['loop_end'] = True                                   
 
         # generate cassette sources
         first_source_location = len(self.batchlocations)

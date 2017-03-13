@@ -154,10 +154,10 @@ If none of the tool connections allowed for a transport event, then the operator
                             yield destination.container.put(no_batches_for_transport*batch_size)
                     
                         continue_loop = True
-
-#                        string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: " #DEBUG
-#                        string += str(no_batches_for_transport) #DEBUG
-#                        self.output_text.sig.emit(string) #DEBUG                           
+                        
+                        string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: " #DEBUG
+                        string += str(no_batches_for_transport) #DEBUG
+                        #print(string) #DEBUG                           
 
             if (continue_loop):
                 continue_loop = False

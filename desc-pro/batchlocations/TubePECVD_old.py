@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
-from batchlocations.CassetteContainer import CassetteContainer
 
 """
 
@@ -9,7 +8,7 @@ TODO
 
 """
 
-class TubeFurnace(QtCore.QObject):
+class TubePECVD(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):       
         QtCore.QObject.__init__(self)
@@ -22,7 +21,7 @@ class TubeFurnace(QtCore.QObject):
                        default_group_color = none               
                        A [label = "Input"];
                        B [label = "Load station"];
-                       C [label = "Tube furnaces", stacked];
+                       C [label = "Tube PECVD", stacked];
                        D [label = "Cooldown shelves", stacked];
                        E [label = "Output"];
                        A -> B -> C -> D -> B;
@@ -35,11 +34,12 @@ class TubeFurnace(QtCore.QObject):
         self.params = {}
         self.params['specification'] = """
 <h3>General description</h3>
-A tube furnace is used for high-temperature processes such as diffusion or annealing.
-Wafers are first loaded into boats in the loadstation and then transferred to the tube furnaces where the process is performed.
+A TubePECVD serves to deposit dielectric layers on wafers.
+Wafers are first loaded into boats in the loadstation and then transferred to the process tubes where the deposition are performed.
 When the processes are finished the boats are transferred to a cooldown shelf and then back to the loadstation for wafer load-out.
-There is a downtime procedure available for preventive maintenance after a set number of process runs.
-There is also a downtime procedure for performing a boat and tube cleaning process after a defined number of process runs on a boat, but this is not enabled by default.
+There is a downtime procedure in light of the required boat cleaning after using it for a defined number of depositions.
+The cleaning itself is done externally but the boats need to undergo a coating run before re-using them.
+There is also a downtime procedure available for preventive maintenance after a set number of process runs, but this is not enabled by default.
 <h3>Description of the algorithm</h3>
 The main loop is primarily concerned with the boat transport inside the tool, as described in the list below:
 <ol>
@@ -48,7 +48,7 @@ The main loop is primarily concerned with the boat transport inside the tool, as
 <li>Try to move boat from cooldown to loadstation; try full boats first</li>
 <li>Perform action on boat in loadstation depending on state of boat and wafers:</li>
 <ol>
-<li>Perform cleaning run on empty boat if boat has been used for a set number of times</li>
+<li>Perform coating run on empty boat if boat has been used for a set number of times</li>
 <li>Start wafer load-in if boat is empty and wafers are available, except if downtime is required</li>
 <li>If boat is sitting idle and there are batches in the system that need to be loaded out, check idle time and move boat to furnace if it is too long</li>
 <li>If boat is full and not yet processed, try to move it to a furnace for processing</li>
@@ -60,25 +60,25 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         """
 
         self.params['name'] = ""
-        self.params['batch_size'] = 5
-        self.params['batch_size_desc'] = "Number of cassettes in a single process batch"
+        self.params['batch_size'] = 294
+        self.params['batch_size_desc'] = "Number of units in a single process batch"
         self.params['batch_size_type'] = "configuration"
-        self.params['process_time'] = 60
+        self.params['process_time'] = 35
         self.params['process_time_desc'] = "Time for a single process (minutes)"
         self.params['process_time_type'] = "process"
-        self.params['cool_time'] = 10
+        self.params['cool_time'] = 5
         self.params['cool_time_desc'] = "Time for a single cooldown (minutes)"
         self.params['cool_time_type'] = "process"
 
-        self.params['runs_before_boatclean'] = 0
-        self.params['runs_before_boatclean_desc'] = "Number of furnace processes before boat needs to be cleaned (0 to disable function)"
+        self.params['runs_before_boatclean'] = 100
+        self.params['runs_before_boatclean_desc'] = "Number of PECVD processes before boat needs to be cleaned (0 to disable function)"
         self.params['runs_before_boatclean_type'] = "downtime"
-        self.params['coating_run_duration'] = 60
-        self.params['coating_run_duration_desc'] = "Time for a single furnace cleaning process (minutes)"
+        self.params['coating_run_duration'] = 75
+        self.params['coating_run_duration_desc'] = "Time for a single PECVD coating run (minutes)"
         self.params['coating_run_duration_type'] = "downtime"
 
-        self.params['downtime_runs'] = 1000
-        self.params['downtime_runs_desc'] = "Number of furnace processes before downtime of the whole tool (0 to disable function)"
+        self.params['downtime_runs'] = 0
+        self.params['downtime_runs_desc'] = "Number of PECVD processes before downtime of the whole tool (0 to disable function)"
         self.params['downtime_runs_type'] = "downtime"
         self.params['downtime_duration'] = 60
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
@@ -91,7 +91,10 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['no_of_cooldowns_desc'] = "Number of cooldown locations in the tool"
         self.params['no_of_cooldowns_type'] = "configuration"
         
-        self.params['max_cassette_no'] = 8
+        self.params['cassette_size'] = 100
+        self.params['cassette_size_desc'] = "Number of units in a single cassette"
+        self.params['cassette_size_type'] = "configuration"
+        self.params['max_cassette_no'] = 5
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         self.params['max_cassette_no_type'] = "configuration"
         
@@ -109,7 +112,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['transfer2_time_desc'] = "Time for boat transfer from cooldown to load-out (seconds)"
         self.params['transfer2_time_type'] = "automation"
         
-        self.params['automation_loadsize'] = 50
+        self.params['automation_loadsize'] = 21
         self.params['automation_loadsize_desc'] = "Number of units per loading/unloading automation cycle"
         self.params['automation_loadsize_type'] = "automation"
         self.params['automation_time'] = 10
@@ -124,19 +127,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['wait_time_desc'] = "Wait period between boat transport attempts (seconds)"
         self.params['wait_time_type'] = "automation"
         
-        self.params['loop_begin'] = False
-        self.params['loop_begin_type'] = "immutable"
-        self.params['loop_end'] = False
-        self.params['loop_end_type'] = "immutable"
-        
         self.params.update(_params)        
-
-        self.loop_begin = self.params['loop_begin']
-        self.loop_end = self.params['loop_end']
-        
-        if not self.loop_begin == self.loop_end:
-            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Cassette loop definition is not consistent for in- and output."
-            self.output_text.sig.emit(string) 
 
         self.transport_counter = 0
         self.batches_loaded = 0        
@@ -145,23 +136,19 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.process_counter = 0
         
         ### Check automation loadsize ###
-        if (not (self.output_text == None)) and (self.params['cassette_size'] % self.params['automation_loadsize']):
-            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work."
+        if (not (self.output_text == None)) and (self.params['batch_size'] % self.params['automation_loadsize']):
+            string = "[TubePECVD][" + self.params['name'] + "] WARNING: Automation loadsize is not a multiple of batch size. Automation will not work."
             self.output_text.sig.emit(string)        
         
-        ### Add input and boat load/unload location ###        
-        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],not self.loop_end)
-
-        if not self.loop_end:
-            buffer_size = self.params['batch_size']*(self.params['no_of_processes']+self.params['no_of_cooldowns'])
-            self.empty_cassette_buffer = CassetteContainer(self.env,"buffer",buffer_size,True)
+        ### Add input and boat load/unload location ###
+        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         
         ### Add boats ###
         self.boat = [] # container for keeping tracking of wafer count
         self.boat_runs = [] # keep track of number of runs
         self.boat_status = [] # 0 is unprocessed; 1 is processed; 2 is cooled down
         for i in range(self.params['no_of_boats']):
-            self.boat.append(BatchContainer(self.env,"boat",self.params['batch_size']*self.params['cassette_size'],1))
+            self.boat.append(BatchContainer(self.env,"boat",self.params['batch_size'],1))
             self.boat_runs.append(0)
             self.boat_status.append(0)
 
@@ -190,7 +177,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.loadstation_status = 0 # 0 is free; 1 is busy        
             
         ### Add output ###
-        self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'],not self.loop_begin)
+        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])        
      
         ### Distribute boats ###
         no_boats = self.params['no_of_boats']
@@ -214,13 +201,13 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                 
                 if not no_boats:
                     break
-        
+     
+        self.env.process(self.run_transport())   
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())
-        self.env.process(self.run_transport()) # import not to trigger signal before starting load processes
 
     def report(self):        
-        self.utilization.append("TubeFurnace")
+        self.utilization.append("TubePECVD")
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
@@ -244,30 +231,27 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         return self.transport_counter
 
     def run_cooldown(self,num):
-        #print(str(self.env.now) + "-" + "Cooldown " + str(num) + " started on boat " + str(self.cooldown[num]))
         yield self.env.timeout(60*self.params['cool_time'])
         self.boat_status[self.cooldown[num]] = 2 # set status as cooled down
         self.cooldown_status[num] = 0 # set status as non-busy
-        #print(str(self.env.now) + "-" + "Cooldown " + str(num) + " finished on boat " + str(self.cooldown[num]))
+        #print("Cooldown " + str(num) + " finished on boat " + str(self.cooldown[num]))
 
     def run_process(self,num,normal_process=True):
-        #print(str(self.env.now) + "-" + "Process " + str(num) + " started on boat " + str(self.furnace[num]))
 
         if self.furnace_first_run[num]:
             self.furnace_start_time[num] = self.env.now
             self.furnace_first_run[num] = False
-
+        
         if normal_process:
             yield self.env.timeout(60*self.params['process_time'])
             self.furnace_runs[num] += 1 # keep track of number of normal runs in this furnace
             self.process_counter += 1 # keep track of total number or process runs             
         else:
             yield self.env.timeout(60*self.params['coating_run_duration'])
-  
         self.boat_runs[self.furnace[num]] += 1 # keep track of number of runs with this boat
         self.boat_status[self.furnace[num]] = 1 # set boat status as processed     
         self.furnace_status[num] = 0 # set status furnace as non-busy       
-        #print(str(self.env.now) + "-" + "Process " + str(num) + " finished on boat " + str(self.furnace[num]))
+        #print("Process " + str(num) + " finished on boat " + str(self.furnace[num]))
         
     def run_transport(self):
 
@@ -297,52 +281,53 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                     for j in range(no_of_cooldowns): # check cooldown locations
                         if (not self.cooldown_status[j]) and (self.cooldown[j] == -1): # if empty
                             boat = self.furnace[i] # store boat number
-                            #print(str(self.env.now) + "-" + "Move full boat " + str(boat) + " to cooldown " + str(j))
                             self.furnace[i] = -1 # empty the furnace
                             yield self.env.timeout(transfer1_time) # wait for transfer
                             self.cooldown[j] = boat # enter boat into cooldown
                             self.cooldown_status[j] = 1 # cooldown is busy status
                             self.env.process(self.run_cooldown(j)) # start process for cooldown
+                            #print("Moved boat " + str(boat) + " to cooldown " + str(j))
                             break # discontinue search for free cooldown locations for this boat
 
-            for i in range(no_of_processes): # check if we can move an empty boat from tube to cooldown
+            for i in range(no_of_processes): # check if we can move any boat from tube to cooldown
                 if (not self.furnace_status[i]) and (not (self.furnace[i] == -1)): # if boat is available
                     for j in range(no_of_cooldowns): # check cooldown locations
                         if (not self.cooldown_status[j]) and (self.cooldown[j] == -1): # if empty
                             boat = self.furnace[i] # store boat number
-                            #print(str(self.env.now) + "-" + "Move empty boat " + str(boat) + " to cooldown " + str(j))
                             self.furnace[i] = -1 # empty the furnace
                             yield self.env.timeout(transfer1_time) # wait for transfer
                             self.cooldown[j] = boat # enter boat into cooldown
+                            self.cooldown_status[j] = 1 # cooldown is busy status
+                            self.env.process(self.run_cooldown(j)) # start process for cooldown
+                            #print("Moved boat " + str(boat) + " to cooldown " + str(j))
                             break # discontinue search for free cooldown locations for this boat
 
             ### MOVE FROM COOLDOWN TO LOADSTATION ###
             if (not self.loadstation_status) and (self.loadstation == -1) and (self.batches_loaded > 0): # if loadstation is not busy and empty and there are batches in the system
-                # check if we can move a full boat from cooldown to loadstation; always proceed with load-out immediately after
-                for i in range(no_of_cooldowns):
+                for i in range(no_of_cooldowns): # check if we can move a full boat from cooldown to loadstation; always proceed with load-out immediately after
                     if (not self.cooldown_status[i]) and (not self.cooldown[i] == -1) and (self.boat[self.cooldown[i]].container.level):
                         boat = self.cooldown[i] # store boat number
-                        #print(str(self.env.now) + "-" + "Move boat " + str(boat) + " to loadstation")
                         self.cooldown[i] = -1 # empty the cooldown
                         yield self.env.timeout(transfer2_time) # wait for transfer
                         self.loadstation = boat # enter boat into loadstation
-
-                        #print(str(self.env.now) + "-" + "Ask for load-out for boat " + str(self.loadstation))                        
+                        #print("Moved boat " + str(boat) + " to loadstation")
+                        
                         self.loadstation_status = 1 # set status as busy
                         yield self.load_out_start.succeed() # ask for load-out
                         self.load_out_start = self.env.event() # create new event
+                        #print("Asked for load-out")
                         
                         break # stop search for available boat to put into loadstation
             
             if (not self.loadstation_status) and (self.loadstation == -1): # if loadstation is still not busy and empty
-                # check if we can move an empty boat from cooldown to loadstation; do not proceed with load-in immediately after as there may be downtime planned
-                for i in range(no_of_cooldowns): 
+                for i in range(no_of_cooldowns): # check if we can move an empty boat from cooldown to loadstation; do not proceed with load-in immediately after as there may be downtime planned
                     if (not self.cooldown_status[i]) and (not self.cooldown[i] == -1):
                         boat = self.cooldown[i] # store boat number
-                        #print(str(self.env.now) + "-" + "Move boat " + str(boat) + " to loadstation")
                         self.cooldown[i] = -1 # empty the cooldown
                         yield self.env.timeout(transfer2_time) # wait for transfer
-                        self.loadstation = boat # enter boat into loadstation                        
+                        self.loadstation = boat # enter boat into loadstation
+                        #print("Moved boat " + str(boat) + " to loadstation")
+                        
                         break # stop search for available boat to put into loadstation
 
             ### RUN LOAD-IN AND MOVE TO FURNACE ###
@@ -351,120 +336,87 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                     for i in range(no_of_processes):
                         if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
                             boat = self.loadstation # store boat number
-                            #print(str(self.env.now) + "-" + "Move boat " + str(boat) + " to furnace " + str(i) + " for cleaning run")
                             self.loadstation = -1 # empty the loadstation                        
                             yield self.env.timeout(transfer0_time) # wait for transfer
                             self.furnace[i] = boat # put boat into furnace
                             self.furnace_status[i] = 1 # furnace is busy status
                             self.boat_runs[boat] = 0 # reset number of runs
                             self.env.process(self.run_process(i, False)) # start coating run for furnace
+                            #print("Moved boat " + str(boat) + " to furnace " + str(i) + " for coating run")
                             break # discontinue search for a free furnace for this boat                           
-                elif (not self.boat[self.loadstation].container.level) and (len(self.input.input.items) >= batch_size) and ((downtime_runs == 0) or (self.process_counter <= downtime_runs)):
+                elif (not self.boat[self.loadstation].container.level) and (self.input.container.level >= batch_size) and ((downtime_runs == 0) or (self.process_counter <= downtime_runs)):
                     # if boat is empty and wafers are available ask for load-in, except if downtime is required
                     self.loadstation_status = 1 # set status as busy
-                    #print(str(self.env.now) + "-" + "Ask for load-in for boat " + str(self.loadstation))
                     yield self.load_in_start.succeed()
                     self.load_in_start = self.env.event() # create new event                    
+                    #print("Asked for load-in")
                 elif (not self.boat[self.loadstation].container.level) and (self.batches_loaded > 0):
                     # if boat is empty and there are batches in the system check if the situation has been like this for a while; if so, try to move empty boat to furnace
                     if (idle_boat > 0) and ((self.env.now - idle_boat) >= idle_boat_timeout): # if we waited for new wafers for more than 5 minutes
-                        #print(str(self.env.now) + "-" + "Try to move idle boat from loadstation to furnace")
+                        #print("Try to move idle boat from loadstation to furnace")
                         for i in range(no_of_processes):
                             if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
-                                #print(str(self.env.now) + "-" + "Move idle boat " + str(self.loadstation) + " from loadstation to furnace " + str(i))                                
                                 boat = self.loadstation # store boat number
                                 self.loadstation = -1 # empty the loadstation                        
                                 yield self.env.timeout(transfer0_time) # wait for transfer
                                 self.furnace[i] = boat # put boat into furnace
-                                break # discontinue search for a free furnace for this boat
+                                #print("Moved idle boat from loadstation to furnace " + str(i))
                         idle_boat = 0
                     elif (idle_boat == 0):
-                        #print(str(self.env.now) + "-" + "Boat "+ str(self.loadstation) + " is idle in loadstation")
-                        idle_boat = self.env.now                        
+                        idle_boat = self.env.now
+                        #print("Idle boat in loadstation")
                 elif self.boat[self.loadstation].container.level and (not self.boat_status[self.loadstation]): # if boat is full and has not been processed then try to load to furnace
-                    #print(str(self.env.now) + "-" + "Boat " + str(self.loadstation) + " in loadstation contains unprocessed wafers")
+                    #print("Boat " + str(self.loadstation) + " in loadstation contains unprocessed wafers")
                     for i in range(no_of_processes):
                         if (not self.furnace_status[i]) and (self.furnace[i] == -1): # if furnace is free
                             boat = self.loadstation # store boat number
-                            #print(str(self.env.now) + "-" + "Move boat " + str(boat) + " to furnace " + str(i))
                             self.loadstation = -1 # empty the loadstation                        
                             yield self.env.timeout(transfer0_time) # wait for transfer
                             self.furnace[i] = boat # put boat into furnace
                             self.furnace_status[i] = 1 # furnace is busy status
                             self.env.process(self.run_process(i)) # start process for furnace
+                            #print("Moved boat " + str(boat) + " to furnace " + str(i))
                             break # discontinue search for a free furnace for this boat
                                     
             yield self.env.timeout(wait_time)                        
             
     def run_load_in(self):
-        cassette_size = self.params['cassette_size']
-        no_loads = self.params['batch_size']*cassette_size // self.params['automation_loadsize']
+        no_loads = self.params['batch_size'] // self.params['automation_loadsize']
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
-        loop_end = self.loop_end
         
-        wafer_counter = 0
-
         while True:
             yield self.load_in_start
 
-            #print(str(self.env.now) + "-" + "Starting load-in")
+            #print("Starting load-in")
             for i in range(no_loads):
-                
-                if not wafer_counter:
-
-                    cassette = yield self.input.input.get()
-                    wafer_counter = cassette_size                    
-                    
-                    if loop_end:
-                        yield self.input.output.put(cassette)
-                    else:
-                        yield self.empty_cassette_buffer.input.put(cassette)                        
-
-                wafer_counter -= automation_loadsize                               
+                yield self.input.container.get(automation_loadsize)                
                 yield self.env.timeout(automation_time)            
-                yield self.boat[self.loadstation].container.put(automation_loadsize)                                        
-
+                yield self.boat[self.loadstation].container.put(automation_loadsize)
+                        
             self.boat_status[self.loadstation] = 0 # set boat status to unprocessed
             self.batches_loaded += 1 # keep track of number of loads in the system
             self.loadstation_status = 0 # set loadstation status to non-busy
-            #print(str(self.env.now) + "-" + "Finished load-in for boat " + str(self.loadstation))
+            #print("Finished load-in for boat " + str(self.loadstation))
 
     def run_load_out(self):
-        cassette_size = self.params['cassette_size']
-        no_loads = self.params['batch_size']*cassette_size // self.params['automation_loadsize']
+        no_loads = self.params['batch_size'] // self.params['automation_loadsize']
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
-        loop_begin = self.loop_begin
-
-        cassette = None
-        wafer_counter = 0
         
         while True:
             yield self.load_out_start
             
-            #print(str(self.env.now) + "-" + "Starting load-out")
+            #print("Starting load-out")
             for i in range(no_loads):
-                
-                if not cassette:
-                    if loop_begin:
-                        cassette = yield self.output.input.get()
-                    else:
-                        cassette = yield self.empty_cassette_buffer.output.get()
-                    
-                yield self.boat[self.loadstation].container.get(automation_loadsize)
-                wafer_counter += automation_loadsize
-                yield self.env.timeout(automation_time)
-                
-                if wafer_counter == cassette_size:
-                    yield self.output.output.put(cassette)
-                    cassette = None
-                    wafer_counter = 0
-                    self.transport_counter += cassette_size
+                yield self.boat[self.loadstation].container.get(automation_loadsize)                
+                yield self.env.timeout(automation_time)             
+                yield self.output.container.put(automation_loadsize)
+                self.transport_counter += automation_loadsize
             
             self.batches_loaded -= 1 # keep track of number of loads in the system
             self.loadstation_status = 0 # set loadstation status to non-busy
-            #print(str(self.env.now) + "-" + "Finished load-out for boat " + str(self.loadstation))
+            #print("Finished load-out for boat " + str(self.loadstation))
 
     def nominal_throughput(self):
         throughputs = []        

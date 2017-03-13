@@ -27,21 +27,13 @@ The space available in the buffer can be configured.\n
         """
         
         self.params['name'] = ""
-#        self.params['cassette_size'] = 100
-#        self.params['cassette_size_desc'] = "Number of units in a single cassette"
-#        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 50
         self.params['max_cassette_no_desc'] = "Number of cassette positions available"
         self.params['max_cassette_no_type'] = "configuration"
         self.params.update(_params)
-        
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-#        self.output = self.input
-        self.max_cass = self.params['max_cassette_no']        
 
         # stores cassette number references
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
-        self.input = CassetteContainer(self.env,"input",self.max_cass,True)
+        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],True)
         self.output = self.input
                                            
     def space_available_input(self,added_units):
