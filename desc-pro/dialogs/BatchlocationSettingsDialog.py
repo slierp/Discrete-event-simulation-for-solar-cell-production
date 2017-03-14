@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from blockdiag import parser, builder, drawer
-from PyQt5 import QtWidgets, QtCore, QtSvg, QtGui
+from PyQt5 import QtWidgets, QtSvg, QtGui
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
@@ -99,7 +99,7 @@ class BatchlocationSettingsDialog(QtWidgets.QDialog):
             curr_diagram  = PlasmaEtcher(env).diagram
         else:
             return                            
-        
+
         # update default settings list with currently stored settings
         curr_params.update(batchlocation[1])
         

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.CassetteContainer import CassetteContainer
+from batchlocations.Buffer import Buffer
 
 class Operator(QtCore.QObject):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
@@ -113,10 +114,10 @@ If none of the tool connections allowed for a transport event, then the operator
                     elif (no_batches_for_transport > max_units):
                         # limit transport to size if higher than user set maximum
                         no_batches_for_transport = max_units
-                    
+
+                    # if one or both resources are in use then abort                    
                     if origin.oper_resource.count or destination.oper_resource.count:
-                        # if one or both resources are in use then abort
-                        continue
+                        continue                 
                     
                     if not start_time_set:
                         self.start_time = self.env.now
@@ -125,6 +126,7 @@ If none of the tool connections allowed for a transport event, then the operator
                     request_time  = self.env.now
                     with origin.oper_resource.request() as request_input, \
                         destination.oper_resource.request() as request_output:
+                        
                         yield request_input
                         yield request_output
                         

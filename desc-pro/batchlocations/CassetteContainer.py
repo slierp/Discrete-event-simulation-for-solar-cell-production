@@ -12,7 +12,7 @@ class CassetteContainer(object):
         self.max_cass = max_cass
         self.loop = loop
         self.process_counter = 0 # for counting processed units
-        self.oper_resource = simpy.Resource(self.env, 1) # resource to disentangle multiple operators       
+        self.oper_resource = simpy.Resource(self.env,1) # resource to disentangle multiple operators       
 
         # stores cassette number references
         self.input = simpy.Store(self.env,self.max_cass)

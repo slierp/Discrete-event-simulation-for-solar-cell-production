@@ -78,7 +78,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         """
         
         self.params['name'] = ""
-        self.params['max_cassette_no'] = 4
+        self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input"
         self.params['max_cassette_no_type'] = "configuration"
         self.params['time_new_cassette'] = 10

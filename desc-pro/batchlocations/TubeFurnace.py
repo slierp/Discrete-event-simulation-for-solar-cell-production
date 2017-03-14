@@ -60,7 +60,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         """
 
         self.params['name'] = ""
-        self.params['batch_size'] = 5
+        self.params['batch_size'] = 6
         self.params['batch_size_desc'] = "Number of cassettes in a single process batch"
         self.params['batch_size_type'] = "configuration"
         self.params['process_time'] = 60
@@ -95,17 +95,17 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         self.params['max_cassette_no_type'] = "configuration"
         
-        self.params['no_of_boats'] = 6
+        self.params['no_of_boats'] = 7
         self.params['no_of_boats_desc'] = "Number of boats available"
         self.params['no_of_boats_type'] = "configuration"
         
-        self.params['transfer0_time'] = 90
+        self.params['transfer0_time'] = 60
         self.params['transfer0_time_desc'] = "Time for boat transfer from load-in to process tube (seconds)"
         self.params['transfer0_time_type'] = "automation"
-        self.params['transfer1_time'] = 90
+        self.params['transfer1_time'] = 60
         self.params['transfer1_time_desc'] = "Time for boat transfer from process tube to cooldown (seconds)"
         self.params['transfer1_time_type'] = "automation"
-        self.params['transfer2_time'] = 90
+        self.params['transfer2_time'] = 60
         self.params['transfer2_time_desc'] = "Time for boat transfer from cooldown to load-out (seconds)"
         self.params['transfer2_time_type'] = "automation"
         
@@ -128,6 +128,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['loop_begin_type'] = "immutable"
         self.params['loop_end'] = False
         self.params['loop_end_type'] = "immutable"
+        self.params['cassette_size'] = 100
+        self.params['cassette_size_type'] = "immutable"
         
         self.params.update(_params)        
 

@@ -35,7 +35,7 @@ There is one simple loop that consists of three steps:
         """        
         
         self.params['name'] = ""
-        self.params['batch_size'] = 400
+        self.params['batch_size'] = 500
         self.params['batch_size_desc'] = "Number of units in a single stack"
         self.params['batch_size_type'] = "configuration"
         self.params['time_limit'] = 0
