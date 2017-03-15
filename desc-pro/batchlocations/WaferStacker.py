@@ -53,10 +53,10 @@ The second loop consists of the following steps:
         self.params['stack_size'] = 500
         self.params['stack_size_desc'] = "Number of wafers in a single stack"
         self.params['stack_size_type'] = "configuration"
-        self.params['max_stack_no'] = 3
+        self.params['max_stack_no'] = 4
         self.params['max_stack_no_desc'] = "Maximum number of stacks at the output side"
         self.params['max_stack_no_type'] = "configuration"
-        self.params['max_cassette_no'] = 4
+        self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of input cassette positions"
         self.params['max_cassette_no_type'] = "configuration"
         self.params['units_on_belt'] = 5
@@ -76,7 +76,16 @@ The second loop consists of the following steps:
         self.params['time_pick_and_place_desc'] = "Time for putting a single wafer on a stack (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
         
-        self.params.update(_params)    
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
+        self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
 
         if (self.params['time_step'] < 1/10): # enforce minimum time step
             self.params['time_step'] = 1/10

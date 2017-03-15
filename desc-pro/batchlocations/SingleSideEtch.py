@@ -2,6 +2,7 @@
 from PyQt5 import QtCore
 from batchlocations.CassetteContainer import CassetteContainer
 import collections
+import simpy
 
 class SingleSideEtch(QtCore.QObject):
         
@@ -45,7 +46,7 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.params['no_of_lanes'] = 5
         self.params['no_of_lanes_desc'] = "Number of process lanes"
         self.params['no_of_lanes_type'] = "configuration"
-        self.params['tool_length'] = 10
+        self.params['tool_length'] = 8
         self.params['tool_length_desc'] = "Travel distance for wafers between input and output (meters)"
         self.params['tool_length_type'] = "configuration"
         self.params['belt_speed'] = 18/10
@@ -65,16 +66,25 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
         self.params['downtime_duration_type'] = "downtime"
         
-        self.params.update(_params)         
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
+        self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
         
         self.transport_counter = 0
         self.start_time = self.env.now
         self.first_run = True
-        self.process_counter = 0      
+        self.process_counter = 0
+        self.time_step = 60*self.params['unit_distance']/self.params['belt_speed']
         
         ### Input ###
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'])
-        self.wafer_counter_in = 0
 
         ### Array of zeroes represents lanes ###
         self.lanes = []
@@ -83,19 +93,14 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         ### Output ###
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'])
-        self.wafer_counter_out = 0
-        
-        self.idle_times_internal = {}
-        
-        for i in range(self.params['no_of_lanes']):
-            self.env.process(self.run_lane_load_in(i))
-            self.idle_times_internal[i] = 0
+        self.wafer_out = simpy.Container(self.env)
 
+        self.idle_time = 0
+                                     
         self.env.process(self.run_cassette_load_out())
         self.env.process(self.run_lane_load_out())
         self.env.process(self.run_lanes())
         self.env.process(self.run_cassette_load_in())
-
 
     def report(self):
         self.utilization.append("SingleSideEtch")
@@ -112,76 +117,70 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.utilization.append(self.transport_counter)
 
-        for i in range(len(self.idle_times_internal)):
-            if self.first_run:
-                idle_time = 0
-            else:
-                idle_time = 100-100*self.idle_times_internal[i]/(self.env.now-self.start_time)
-            self.utilization.append(["Lane " + str(i),round(idle_time,1)])
+        if not self.first_run:
+            idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
+            self.utilization.append(["Lanes ",round(idle_time,1)])
+        else:
+            self.utilization.append(["Lanes ",0])
 
     def prod_volume(self):
         return self.transport_counter
 
     def run_cassette_load_in(self):
         cassette_size = self.params['cassette_size']
-        cassette = yield self.output.input.get() # receive empty cassette
-        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
+        time_step = self.time_step
+        no_of_lanes = self.params['no_of_lanes']
+        max_cassette_no = self.params['max_cassette_no']
+        max_volume = self.params['no_of_lanes']*self.params['tool_length']/self.params['unit_distance']
+        min_output_cass = 1+max_volume/self.params['cassette_size']
+        min_output_cass = min(max_cassette_no,min_output_cass)        
+        downtime_volume = 1000*self.params['downtime_volume']
+        downtime_duration = 60*self.params['downtime_duration']
         
-        cassette = yield self.input.input.get() # receive first full cassette
-        self.wafer_counter_in = cassette_size
+        cassette = yield self.input.input.get() # receive first full cassette        
+        wafer_counter = cassette_size
 
         while True:
-            if self.wafer_counter_in < cassette_size:
+            if wafer_counter < cassette_size:
                 # if not enough wafers available get new full cassette
                 yield self.input.output.put(cassette) # return empty cassette
                 cassette = yield self.input.input.get() # receive full cassette
-                self.wafer_counter_in += cassette_size        
-            
-            yield self.env.timeout(time_step)
+                wafer_counter += cassette_size
 
-    def run_lane_load_in(self, lane_number):
-        # Loads wafers if available
-        # Implementation optimized for minimal timeouts
-        # All processes timeout with the same duration
-        downtime_volume = 1000*self.params['downtime_volume']
-        downtime_duration = 60*self.params['downtime_duration']
-        no_of_lanes = self.params['no_of_lanes']
-        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
-    
-        while True:
             if (downtime_volume > 0) & (self.process_counter >= downtime_volume):
                 yield self.env.timeout(downtime_duration)
-                for i in range(0,no_of_lanes):
-                    self.idle_times_internal[i] += downtime_duration
+                self.idle_time += downtime_duration
                 self.process_counter = 0
-                
-#                string = str(int(self.env.now)) + " [SingleSideEtch][" + self.params['name'] + "][" + str(lane_number) + "] End downtime" #DEBUG
-#                self.output_text.sig.emit(string) #DEBUG
 
-            if (self.wafer_counter_in > lane_number):
-                # all lanes are started simultaneously, so only continue if there are enough wafers for this particular lane
-                if self.first_run:
-                    self.start_time = self.env.now
-                    self.first_run = False
+            # skip load-in if empty cassette buffer is not full or not enough wafers
+            #if (len(self.output.input.items) < min_output_cass) or (wafer_counter < no_of_lanes):
+            if (len(self.output.input.items) < max_cassette_no) or (wafer_counter < no_of_lanes):
+                if not self.first_run:
+                    self.idle_time += time_step
+                yield self.env.timeout(time_step)
+                continue
+            
+            if self.first_run:
+                self.start_time = self.env.now
+                self.first_run = False
+            
+            wafer_counter -= no_of_lanes
                 
-                self.wafer_counter_in -= 1
-                self.lanes[lane_number][0] = True
-                self.process_counter += 1               
-                
+            for i in range(no_of_lanes):
+                self.lanes[i][0] = True
+
 #                if ((self.process_counter % self.params['cassette_size']) == 0): #DEBUG      
 #                    string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] " #DEBUG
 #                    string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number) #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG
-                        
-            elif not self.first_run:
-                # start counting down-time after first run
-                self.idle_times_internal[lane_number] += time_step
-                        
+            
+            self.process_counter += no_of_lanes              
+            
             yield self.env.timeout(time_step)
 
     def run_lanes(self):
         no_of_lanes = self.params['no_of_lanes']
-        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
+        time_step = self.time_step
         
         while True:
             for i in range(0,no_of_lanes):
@@ -190,38 +189,48 @@ The time increment is determined by the belt speed and unit distance.</li>
 
     def run_lane_load_out(self):
         no_of_lanes = self.params['no_of_lanes']
-        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
+        time_step = self.time_step
         cassette_size = self.params['cassette_size']
-        signal_sent = False
+        signal_not_sent0 = True
+        signal_not_sent1 = True
         
         while True:
+            count = 0
             for i in range(0,no_of_lanes):
                 if self.lanes[i][-1]:
                     self.lanes[i][-1] = False
-                    self.wafer_counter_out += 1
+                    count += 1
+            
+            if count:
+                yield self.wafer_out.put(count)
 
-            if (self.wafer_counter_out > 2*cassette_size) and not signal_sent:
+            if signal_not_sent0 and (self.wafer_out.level > 2*cassette_size):
                 string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
-                string += "Overload in load-out section due to lack of empty cassettes"
+                string += "Overload in load-out section (> 1 cassette)"
                 self.output_text.sig.emit(string)
-                signal_sent = True
+                signal_not_sent0 = False
+
+            if signal_not_sent1 and (self.wafer_out.level > 11*cassette_size):
+                string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+                string += "Major overload in load-out section (>10 cassettes)"
+                self.output_text.sig.emit(string)
+                signal_not_sent1 = False
                     
             yield self.env.timeout(time_step)
 
     def run_cassette_load_out(self):
         cassette_size = self.params['cassette_size']
         cassette = yield self.output.input.get() # receive empty cassette
-        time_step = 60*self.params['unit_distance']/self.params['belt_speed']
 
         while True:
-            if self.wafer_counter_out >= cassette_size:
+            if self.wafer_out.level >= cassette_size:
                 # if load is full, fill cassette and replace it for empty cassette
+                yield self.wafer_out.get(cassette_size)
                 yield self.output.output.put(cassette) # return full cassette
                 self.transport_counter += cassette_size
                 cassette = yield self.output.input.get() # receive empty cassette
-                self.wafer_counter_out -= cassette_size        
             
-            yield self.env.timeout(time_step)
+            yield self.env.timeout(1) #time_step)
 
     def nominal_throughput(self):       
         return self.params['no_of_lanes']*60*self.params['belt_speed']/self.params['unit_distance']

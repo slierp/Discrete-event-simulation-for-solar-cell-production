@@ -74,11 +74,17 @@ The second loop consists of the following steps:
         self.params['time_pick_and_place'] = 1/1
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
-        
+
         self.params['cassette_size'] = -1
-        self.params['cassette_size_type'] = "immutable"                   
+        self.params['cassette_size_type'] = "immutable"
 
         self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
 
         if (self.params['time_step'] < 1/10): # enforce minimum time step
             self.params['time_step'] = 1/10

@@ -129,11 +129,18 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['loop_begin'] = False
         self.params['loop_begin_type'] = "immutable"
         self.params['loop_end'] = False
-        self.params['loop_end_type'] = "immutable"
-        self.params['cassette_size'] = 100
-        self.params['cassette_size_type'] = "immutable"        
+        self.params['loop_end_type'] = "immutable"       
         
-        self.params.update(_params)        
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
+        self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
 
         self.loop_begin = self.params['loop_begin']
         self.loop_end = self.params['loop_end']

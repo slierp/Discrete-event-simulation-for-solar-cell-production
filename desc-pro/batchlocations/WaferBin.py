@@ -42,11 +42,17 @@ There is one simple loop that consists of two steps:
         self.params['wait_time'] = 10
         self.params['wait_time_desc'] = "Wait period between wafer removal attempts (seconds)"
         self.params['wait_time_type'] = "automation"
-
+                   
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
-                   
+
         self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
             
 #        string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG

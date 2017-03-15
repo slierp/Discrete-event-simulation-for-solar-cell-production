@@ -57,9 +57,6 @@ During this time the wafer load-in is paused.\n
         """
 
         self.params['name'] = ""
-        self.params['cassette_size'] = 100
-        self.params['cassette_size_desc'] = "Number of units in a single cassette"       
-        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 5
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         self.params['max_cassette_no_type'] = "configuration"
@@ -97,7 +94,16 @@ During this time the wafer load-in is paused.\n
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
         self.params['downtime_duration_type'] = "downtime"
         
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
         self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
         
         ### Input buffer ###
         self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])

@@ -18,6 +18,7 @@ from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
 from PyQt5 import QtCore
 import pandas as pd
+from random import shuffle
 import time
 
 class StringSignal(QtCore.QObject):
@@ -168,16 +169,18 @@ class RunSimulationThread(QtCore.QObject):
                 for j in range(len(self.operators)):
                     for k in self.operators[j][0]:
                         if self.batchconnections[k][0] == self.batchconnections[i][1]:
-                            self.operators[j][0].append(i)
+                            self.operators[j][0].append(i) # add multiple times to increase priority
 
             else: # if it is tool > source connection
                 for j in range(len(self.operators)):
                     for k in self.operators[j][0]:
                         if self.batchconnections[k][1] == self.batchconnections[i][0]:
-                            self.operators[j][0].append(i)                            
+                            self.operators[j][0].append(i)                          
         
-        for i in range(len(self.operators)): # make operator connection lists unique
-            self.operators[i][0] = list(set(self.operators[i][0]))
+        for i in range(len(self.operators)):
+            self.operators[i][0] = list(set(self.operators[i][0])) # make connection lists unique
+            self.operators[i][0] += self.operators[i][0]
+            shuffle(self.operators[i][0]) # randomize to spread load
 
 #        print(self.batchconnections)
 #        print(self.operators)
@@ -239,7 +242,10 @@ class RunSimulationThread(QtCore.QObject):
                 self.output.sig.emit(string) 
                 break
 
+            #try:
             self.env.run(until=i)
+            #except Exception as inst:
+            #    print(inst)
             
             if (i == self.params['time_limit']):                
                 string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"

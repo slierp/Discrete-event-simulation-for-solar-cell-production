@@ -114,7 +114,16 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params['unit_distance_desc'] = "Minimal distance between wafers on firing furnace (meters)"
         self.params['unit_distance_type'] = "configuration"
         
-        self.params.update(_params)    
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
+        self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
         
         self.time_dry = self.params['time_dry']        
         self.no_print_steps = self.params['no_print_steps'] 

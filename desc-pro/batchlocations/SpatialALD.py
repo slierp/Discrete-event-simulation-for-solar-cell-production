@@ -81,9 +81,6 @@ After the process the wafer is placed on the output conveyor of the deposition u
         """
         
         self.params['name'] = ""
-        self.params['cassette_size'] = 100
-        self.params['cassette_size_desc'] = "Number of units in a single cassette"
-        self.params['cassette_size_type'] = "configuration"
         self.params['max_cassette_no'] = 4
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and output"
         self.params['max_cassette_no_type'] = "configuration"
@@ -112,7 +109,16 @@ After the process the wafer is placed on the output conveyor of the deposition u
         self.params['unit_distance_desc'] = "Minimal distance between wafers on belts (meters)"
         self.params['unit_distance_type'] = "configuration"
         
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
         self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+            return
         
         self.time_step = self.params['time_step']
 

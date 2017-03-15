@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.CassetteContainer import CassetteContainer
+from batchlocations.BatchContainer import BatchContainer
+from batchlocations.PlasmaEtcher import PlasmaEtcher
 from batchlocations.Buffer import Buffer
+import simpy
+import itertools
 
 class Operator(QtCore.QObject):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
@@ -50,116 +54,146 @@ If none of the tool connections allowed for a transport event, then the operator
         continue_loop = False
         wait_time = self.params['wait_time']
         start_time_set = False
+        dummy_resource_origin = simpy.Resource(self.env,1)
+        dummy_resource_destination = simpy.Resource(self.env,1)
 
         # Generate warning for batch size mismatch
-#        faulty_connections = 0        
-#        for i in self.batchconnections:
-#            if not (self.batchconnections[i][0].output.batch_size == self.batchconnections[i][1].input.batch_size):
-#                faulty_connections += 1
-#                
-#        if faulty_connections:
-#            string = "[Operator][" + self.params['name'] + "] WARNING: "
-#            string += str(faulty_connections) + " tool connections have dissimilar cassette or stack size at source and destination."
-#            string += "It may be impossible to fill the destination input, which could then prevent the destination tool from starting."
-#            self.output_text.sig.emit(string)
-        
-        while True:
-            for i in self.batchconnections:
-                transport_time = self.batchconnections[i][2]
-                time_per_unit = self.batchconnections[i][3]
-                min_units = self.batchconnections[i][4]
-                max_units = self.batchconnections[i][5]
-
-                if len(self.batchconnections[i]) == 6: # forward transport of cassette or stack 
-                    origin = self.batchconnections[i][0].output
-                    destination = self.batchconnections[i][1].input                
-                    
-                    if isinstance(origin,CassetteContainer):
-                        cassette_transport = True # cassette transport
-                    else:
-                        cassette_transport = False # stack transport
-                    
-                else: # return transport of cassette
-                    cassette_transport = True
-                    origin = self.batchconnections[i][0].input
-                    destination = self.batchconnections[i][1].output
+        faulty_connections = 0        
+        for i in self.batchconnections:
+            origin = self.batchconnections[i][0].output
+            destination = self.batchconnections[i][1].input
+            if isinstance(origin,BatchContainer) and isinstance(destination,BatchContainer):
+                if not (origin.batch_size == destination.batch_size):
+                    faulty_connections += 1
                 
-                if cassette_transport:
-                    buffer = destination.max_cass
-                    level = len(destination.input.items)
-                    units_for_transport = min(buffer - level,len(origin.output.items))                  
+        if faulty_connections:
+            string = "[Operator][" + self.params['name'] + "] WARNING: "
+            string += str(faulty_connections) + " tool connections have dissimilar stack sizes at source and destination."
+            string += "It may be impossible to fill the destination input, which could then prevent the destination tool from starting."
+            self.output_text.sig.emit(string)
+
+        # Main loop to find batchconnections that require action
+        for i in itertools.cycle(self.batchconnections):
+            transport_time = self.batchconnections[i][2]
+            time_per_unit = self.batchconnections[i][3]
+            min_units = self.batchconnections[i][4]
+            max_units = self.batchconnections[i][5]
+
+            if len(self.batchconnections[i]) == 6: # forward transport of cassette or stack 
+                origin = self.batchconnections[i][0].output
+                destination = self.batchconnections[i][1].input                
+                    
+                if isinstance(origin,CassetteContainer):
+                    cassette_transport = True # cassette transport
                 else:
-                    buffer = destination.buffer_size
-                    level = destination.container.level
-                    units_for_transport = min(buffer - level,origin.container.level)
+                    cassette_transport = False # stack transport
+                    
+            else: # return transport of cassette
+                cassette_transport = True
+                origin = self.batchconnections[i][0].input
+                destination = self.batchconnections[i][1].output
+                
+            if cassette_transport:
+                buffer = destination.max_cass
+                level = len(destination.input.items)
+                units_for_transport = min(buffer - level,len(origin.output.items))                  
+            else:
+                buffer = destination.buffer_size
+                level = destination.container.level
+                units_for_transport = min(buffer - level,origin.container.level)
                
+            continue_action = False
+            no_batches_for_transport = 0
+
+            if cassette_transport:
+                if units_for_transport > 0:
+                    no_batches_for_transport = units_for_transport
+                    continue_action = True
+            elif (units_for_transport >= origin.batch_size):
+                no_batches_for_transport = units_for_transport // origin.batch_size
+                continue_action = True
+            else:
                 continue_action = False
 
-                if cassette_transport:
-                    if units_for_transport > 0:
-                        no_batches_for_transport = units_for_transport
-                        continue_action = True
-                elif (units_for_transport >= origin.batch_size):
-                    no_batches_for_transport = units_for_transport // origin.batch_size
-                    continue_action = True
-                else:
-                    continue_action = False
+            if (no_batches_for_transport < min_units):
+                continue_action = False
 
-                if continue_action:
-                    continue_action = False
+            if not continue_action:
+                yield self.env.timeout(1)
+                if start_time_set:
+                    self.idle_time += 1                
+                continue
                                                                                             
-                    if (no_batches_for_transport < min_units):
-                        # abort transport if not enough batches available
-                        continue
-                    elif (no_batches_for_transport > max_units):
-                        # limit transport to size if higher than user set maximum
-                        no_batches_for_transport = max_units
+            # limit transport to size if higher than user set maximum
+            no_batches_for_transport = min(no_batches_for_transport,max_units)
 
-                    # if one or both resources are in use then abort                    
-                    if origin.oper_resource.count or destination.oper_resource.count:
-                        continue                 
-                    
-                    if not start_time_set:
-                        self.start_time = self.env.now
-                        start_time_set = True
-                    
-                    request_time  = self.env.now
-                    with origin.oper_resource.request() as request_input, \
-                        destination.oper_resource.request() as request_output:
-                        
-                        yield request_input
-                        yield request_output
-                        
-                        if (self.env.now > request_time):
-                            # if requests were not immediately granted, we cannot be sure if the source and destination
-                            # have not changed, so abort
-                            continue
-                        
-                        if cassette_transport:
-                            cassettes = []
+            # avoid asking reservation for a buffer location
+            if not isinstance(self.batchconnections[i][0],Buffer):
+                origin_resource = origin.oper_resource
+            else:
+                origin_resource = dummy_resource_origin
 
-                            for j in range(no_batches_for_transport):
-                                cassette = yield origin.output.get()
-                                cassettes.append(cassette)
+            # avoid asking reservation for a buffer location
+            if not isinstance(self.batchconnections[i][1],Buffer):
+                destination_resource = destination.oper_resource
+            else:
+                destination_resource = dummy_resource_destination
+
+            # if one or both resources are in use then abort                    
+            if origin_resource.count or destination_resource.count:
+                yield self.env.timeout(1)
+                if start_time_set:
+                    self.idle_time += 1                    
+                continue                 
+                    
+            if not start_time_set:
+                self.start_time = self.env.now
+                start_time_set = True
+                    
+            request_time  = self.env.now
+            with origin_resource.request() as request_input, \
+                destination_resource.request() as request_output:
+                        
+                yield request_input
+                yield request_output
+                        
+                if (self.env.now > request_time):
+                    # if requests were not immediately granted, we cannot be sure if the source and destination
+                    # have not changed, so abort
+                    yield self.env.timeout(1)
+                    if start_time_set:
+                        self.idle_time += 1                     
+                    continue
+                        
+                if cassette_transport:
+                    cassettes = []
+
+                    for j in range(no_batches_for_transport):
+                        cassette = yield origin.output.get()
+                        cassettes.append(cassette)
                             
-                            yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
-                            #self.transport_counter += no_batches_for_transport
+                    yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
+                    self.transport_counter += no_batches_for_transport
 
-                            for k in cassettes:
-                                yield destination.input.put(k)                            
-                        else:
-                            batch_size = origin.batch_size
-                            yield origin.container.get(no_batches_for_transport*batch_size)                                          
+                    for k in cassettes:
+                        yield destination.input.put(k)                            
+                else:
+                    batch_size = origin.batch_size
+                    yield origin.container.get(no_batches_for_transport*batch_size)                                          
                     
-                            yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
-                            #self.transport_counter += no_batches_for_transport*self.batchconnections[i][0].output.batch_size                    
-                            yield destination.container.put(no_batches_for_transport*batch_size)
+                    yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
+                    self.transport_counter += no_batches_for_transport                
+                    yield destination.container.put(no_batches_for_transport*batch_size)
+                            
+                    destination_tool = self.batchconnections[i][1]
+                    if isinstance(destination_tool,PlasmaEtcher):
+                        destination_tool.start_process()
                     
-                        continue_loop = True
+                continue_loop = True
                         
-                        string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: " #DEBUG
-                        string += str(no_batches_for_transport) #DEBUG
-                        #print(string) #DEBUG                           
+                string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: " #DEBUG
+                string += str(no_batches_for_transport) #DEBUG
+                #print(string) #DEBUG                           
 
             if (continue_loop):
                 continue_loop = False
@@ -182,5 +216,4 @@ If none of the tool connections allowed for a transport event, then the operator
         else:
             self.utilization.append(0)
             
-#        self.utilization.append(self.transport_counter)            
-        self.utilization.append("n/a")
+        self.utilization.append(self.transport_counter)

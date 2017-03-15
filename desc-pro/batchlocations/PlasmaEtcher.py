@@ -29,7 +29,7 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         """
         
         self.params['name'] = ""
-        self.params['stack_size'] = 400
+        self.params['stack_size'] = 500
         self.params['stack_size_desc'] = "Number of wafers in a single stack"
         self.params['stack_size_type'] = "configuration"
         self.params['process_time'] = 30
@@ -42,6 +42,7 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         
         self.production_volume = 0
         self.start_time = -1
+        self.start = self.env.event()
         
         self.env.process(self.run())        
 
@@ -63,32 +64,27 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
 
     def nominal_throughput(self):
         return self.params['stack_size']*60/self.params['process_time']
+
+    def start_process(self):
+        self.start.succeed()
+        self.start = self.env.event() # make new event
         
     def run(self):
         process_time = self.params['process_time']
         stack_size = self.params['stack_size']
-        process_finished = False
         first_run = True
         
         while True:
             
-            if self.input.container.level and (not process_finished):
-                # start process if stack available that has not been processed yet
+            yield self.start
 
-                if first_run:
-                    self.start_time = self.env.now
-                    first_run = False
+            if first_run:
+                self.start_time = self.env.now
+                first_run = False
             
-                with self.input.oper_resource.request() as request:
-                    yield request
-                    yield self.env.timeout(process_time*60)
-                    process_finished = True
-                    self.production_volume += stack_size
-            
-            if (not self.input.container.level) and process_finished:
-                # update process status if no wafers available anymore
-                process_finished = False
-                
-            yield self.env.timeout(1)
+            with self.input.oper_resource.request() as request:
+                yield request
+                yield self.env.timeout(process_time*60)
+                self.production_volume += stack_size
         
         
