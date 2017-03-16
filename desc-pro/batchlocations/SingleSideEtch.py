@@ -133,7 +133,7 @@ The time increment is determined by the belt speed and unit distance.</li>
         max_cassette_no = self.params['max_cassette_no']
         max_volume = self.params['no_of_lanes']*self.params['tool_length']/self.params['unit_distance']
         min_output_cass = 1+max_volume/self.params['cassette_size']
-        min_output_cass = min(max_cassette_no,min_output_cass)        
+        min_output_cass = min(max_cassette_no,min_output_cass)
         downtime_volume = 1000*self.params['downtime_volume']
         downtime_duration = 60*self.params['downtime_duration']
         
@@ -152,9 +152,10 @@ The time increment is determined by the belt speed and unit distance.</li>
                 self.idle_time += downtime_duration
                 self.process_counter = 0
 
-            # skip load-in if empty cassette buffer is not full or not enough wafers
-            #if (len(self.output.input.items) < min_output_cass) or (wafer_counter < no_of_lanes):
-            if (len(self.output.input.items) < max_cassette_no) or (wafer_counter < no_of_lanes):
+            # skip load-in if empty cassette buffer too low, full cassette buffer too full or not enough wafers
+            space_input = len(self.output.input.items)
+            space_output = (max_cassette_no - len(self.output.output.items))
+            if (space_input < min_output_cass) or (space_output < min_output_cass) or (wafer_counter < no_of_lanes):
                 if not self.first_run:
                     self.idle_time += time_step
                 yield self.env.timeout(time_step)
@@ -230,7 +231,7 @@ The time increment is determined by the belt speed and unit distance.</li>
                 self.transport_counter += cassette_size
                 cassette = yield self.output.input.get() # receive empty cassette
             
-            yield self.env.timeout(1) #time_step)
+            yield self.env.timeout(1)
 
     def nominal_throughput(self):       
         return self.params['no_of_lanes']*60*self.params['belt_speed']/self.params['unit_distance']
