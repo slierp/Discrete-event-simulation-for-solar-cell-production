@@ -38,14 +38,6 @@ class RunSimulationThread(QtCore.QObject):
         self.util = ListSignal()
         self.prod_rates_df = pd.DataFrame() # for storing production rates
 
-    def make_unique(self,nonunique):
-        unique = []
-        for x in nonunique:
-            if x not in unique:
-                unique.append(x)
-        unique.sort()
-        return unique
-
     def replace_for_real_instances(self):
 
         ### Replace string elements in production line definition for real class instances ###
@@ -188,8 +180,9 @@ class RunSimulationThread(QtCore.QObject):
     @QtCore.pyqtSlot()
     def run(self):
         profiling_mode = self.params['profiling_mode']
+        time_limit = self.params['time_limit']
 
-        if profiling_mode and (self.params['time_limit'] < 3601):
+        if profiling_mode and (time_limit < 3601):
             self.output.sig.emit("Profiling mode requires longer simulation duration.")
             self.signal.sig.emit('Simulation aborted')
             return
@@ -213,30 +206,32 @@ class RunSimulationThread(QtCore.QObject):
                 prev_prod_volumes.append(0)            
 
         ### Calculate time steps needed ###
-        no_hourly_updates = self.params['time_limit'] // (60*60)
+        no_hourly_updates = time_limit // (60*60)
         hourly_updates = []
         for i in range(0,no_hourly_updates):
             hourly_updates.append((i+1)*60*60)
         
         percentage_updates = []
         for i in range(0,10):
-            percentage_updates.append((i+1) * self.params['time_limit'] / 10)    
-                
+            percentage_updates.append(round((i+1) * time_limit / 10))
+        
         updates_list = hourly_updates + percentage_updates
-        updates_list = self.make_unique(updates_list)
+        updates_list = set(updates_list)
+        updates_list = sorted(updates_list)
 
         ### Run simulation ###
 
         string = "Simulation started "
         if profiling_mode:
             string += "in profiling mode "
-        string += "with " + str(self.params['time_limit'] // (60*60)) + " hour duration"
+        string += "with " + str(time_limit // (60*60)) + " hour duration"
         self.output.sig.emit(string)
 
         prev_production_volume_update = 0
         prev_percentage_time = self.env.now
 
         for i in updates_list:
+            
             if(self.stop_simulation):
                 string = "Stopped at "  + str(int(self.env.now // 3600)) + " hours"
                 self.output.sig.emit(string) 
@@ -245,13 +240,9 @@ class RunSimulationThread(QtCore.QObject):
             #try:
             self.env.run(until=i)
             #except Exception as inst:
-            #    print(inst)
-            
-            if (i == self.params['time_limit']):                
-                string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
-                self.output.sig.emit(string)
+            #    print(inst)            
            
-            elif profiling_mode and (i in hourly_updates):
+            if profiling_mode and (i in hourly_updates):
 
                 prod_volumes = []                
                 for i in range(len(self.batchlocations)):
@@ -265,24 +256,28 @@ class RunSimulationThread(QtCore.QObject):
 
                 prev_prod_volumes = prod_volumes
                            
-            elif i in percentage_updates:
-                
+            if (i in percentage_updates):
+
                 l_loc = len(self.locationgroups)-2 # second to last locationgroup
 
                 percentage_production_volume_update = 0
                 for j in range(len(self.locationgroups[l_loc])):
                     percentage_production_volume_update += self.locationgroups[l_loc][j].output.container.level
-                    
+   
                 percentage_wph_update = (percentage_production_volume_update - prev_production_volume_update)
                 percentage_wph_update = 3600 * percentage_wph_update / (self.env.now - prev_percentage_time)                
-                
+
                 # float needed for very large integer division                
-                string = str(round(100*float(i)/self.params['time_limit'])) + "% progress - " + str(round(i/3600,1)) + " hours / "
+                string = str(round(100*float(i)/time_limit)) + "% progress - " + str(round(i/3600,1)) + " hours / "
                 string += str(percentage_production_volume_update) + " produced (" + str(int(percentage_wph_update)) + " wph)"
                 self.output.sig.emit(string)
 
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
+
+            if (i == time_limit):                
+                string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
+                self.output.sig.emit(string)
         
         end_time = time.clock()
         
