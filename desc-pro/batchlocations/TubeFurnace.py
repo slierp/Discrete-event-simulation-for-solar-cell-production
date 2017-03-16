@@ -139,6 +139,9 @@ The process batch size therefore needs to be a multiple of the automation loadsi
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
             return
+        
+        if self.params['cassette_size'] == -1:
+            self.params['cassette_size'] = 100
 
         self.loop_begin = self.params['loop_begin']
         self.loop_end = self.params['loop_end']

@@ -210,14 +210,16 @@ class RunSimulationThread(QtCore.QObject):
         hourly_updates = []
         for i in range(0,no_hourly_updates):
             hourly_updates.append((i+1)*60*60)
-        
+                
         percentage_updates = []
         for i in range(0,10):
             percentage_updates.append(round((i+1) * time_limit / 10))
-        
+                
         updates_list = hourly_updates + percentage_updates
         updates_list = set(updates_list)
         updates_list = sorted(updates_list)
+        hourly_updates = set(hourly_updates)
+        percentage_updates = set(percentage_updates)
 
         ### Run simulation ###
 
@@ -240,22 +242,13 @@ class RunSimulationThread(QtCore.QObject):
             #try:
             self.env.run(until=i)
             #except Exception as inst:
-            #    print(inst)            
-           
-            if profiling_mode and (i in hourly_updates):
+            #    print(inst)
 
-                prod_volumes = []                
-                for i in range(len(self.batchlocations)):
-                    prod_volumes.append(self.batchlocations[i].prod_volume())
+            if (i == time_limit):                
+                string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
+                self.output.sig.emit(string)
+                break
 
-                prod_rates = []
-                for i in range(len(self.batchlocations)):
-                    prod_rates.append((prod_volumes[i]-prev_prod_volumes[i])/3600)
-
-                self.prod_rates_df.loc[len(self.prod_rates_df)] = prod_rates
-
-                prev_prod_volumes = prod_volumes
-                           
             if (i in percentage_updates):
 
                 l_loc = len(self.locationgroups)-2 # second to last locationgroup
@@ -275,10 +268,20 @@ class RunSimulationThread(QtCore.QObject):
                 prev_percentage_time = self.env.now
                 prev_production_volume_update = percentage_production_volume_update
 
-            if (i == time_limit):                
-                string = "Finished at "  + str(int(self.env.now // 3600)) + " hours"
-                self.output.sig.emit(string)
-        
+            if profiling_mode and (i in hourly_updates):
+
+                prod_volumes = []                
+                for i in range(len(self.batchlocations)):
+                    prod_volumes.append(self.batchlocations[i].prod_volume())
+
+                prod_rates = []
+                for i in range(len(self.batchlocations)):
+                    prod_rates.append((prod_volumes[i]-prev_prod_volumes[i])/3600)
+
+                self.prod_rates_df.loc[len(self.prod_rates_df)] = prod_rates
+
+                prev_prod_volumes = prod_volumes
+
         end_time = time.clock()
         
         if profiling_mode:
