@@ -176,7 +176,7 @@ If none of the tool connections allowed for a transport event, then the operator
                     self.transport_counter += no_batches_for_transport
 
                     for k in cassettes:
-                        yield destination.input.put(k)                            
+                        yield destination.input.put(k)
                 else:
                     batch_size = origin.batch_size
                     yield origin.container.get(no_batches_for_transport*batch_size)                                          
@@ -191,9 +191,9 @@ If none of the tool connections allowed for a transport event, then the operator
                     
                 continue_loop = True
                         
-                string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: " #DEBUG
-                string += str(no_batches_for_transport) #DEBUG
-                #print(string) #DEBUG                           
+                string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
+                string += str(no_batches_for_transport)
+                #self.output_text.sig.emit(string)
 
             if (continue_loop):
                 continue_loop = False

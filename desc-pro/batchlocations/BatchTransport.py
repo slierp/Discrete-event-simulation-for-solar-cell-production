@@ -48,15 +48,15 @@ class BatchTransport(QtCore.QObject):
                             yield self.env.timeout(self.batchconnections[i][2])
                             self.transport_counter += batch_size
                             
-                            for k in range(batch_size):
-                                yield self.batchconnections[i][1].store.put(cassettes[k])
+                            for k in cassettes:
+                                yield self.batchconnections[i][1].store.put(k)
                                 
                             self.batchconnections[i][1].start_process()
                             continue_loop = True
                             
-#                            string =  str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
-#                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
-#                            self.output_text.sig.emit(string) #DEBUG                                   
+                            string =  str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
+                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
+                            #self.output_text.sig.emit(string) #DEBUG                                   
 
                 elif isinstance(self.batchconnections[i][1],CassetteContainer):
                     # load-out from BatchProcess into CassetteContainer 
@@ -76,16 +76,16 @@ class BatchTransport(QtCore.QObject):
                             yield self.env.timeout(self.batchconnections[i][2])
                             self.transport_counter += batch_size
 
-                            for k in range(batch_size):
-                                yield self.batchconnections[i][1].input.put(cassettes[k])
+                            for k in cassettes:
+                                yield self.batchconnections[i][1].input.put(k)
                             
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
                             continue_loop = True
                             
-#                            string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
-#                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
-#                            self.output_text.sig.emit(string) #DEBUG                                    
+                            string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
+                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
+                            #self.output_text.sig.emit(string) #DEBUG                                    
                                 
                 elif (isinstance(self.batchconnections[i][0],BatchProcess)) & \
                         (isinstance(self.batchconnections[i][1],BatchProcess)):
@@ -110,17 +110,17 @@ class BatchTransport(QtCore.QObject):
                             yield self.env.timeout(self.batchconnections[i][2])
                             self.transport_counter += batch_size                            
 
-                            for k in range(batch_size):
-                                yield self.batchconnections[i][1].store.put(cassettes[k])
+                            for k in cassettes:
+                                yield self.batchconnections[i][1].store.put(k)
 
                             self.batchconnections[i][0].process_finished = 0
                             self.batchconnections[i][0].check_downtime()
                             self.batchconnections[i][1].start_process()
                             continue_loop = True
                             
-#                            string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
-#                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
-#                            self.output_text.sig.emit(string) #DEBUG                                   
+                            string = str(self.env.now) + " [BatchTransport][" + self.params['name'] + "] Transport from " #DEBUG
+                            string += self.batchconnections[i][0].name + " to " + self.batchconnections[i][1].name + " ended" #DEBUG
+                            #self.output_text.sig.emit(string) #DEBUG                                   
 
             if (continue_loop): # restart loop without waiting if a transport action was performed
                 continue_loop = False

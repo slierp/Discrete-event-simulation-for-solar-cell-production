@@ -414,7 +414,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         automation_loadsize = self.params['automation_loadsize']
         automation_time = self.params['automation_time']
         loop_end = self.loop_end
-        
+        warning_sent = False
         wafer_counter = 0
 
         while True:
@@ -422,7 +422,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
 
             #print(str(self.env.now) + "-" + "Starting load-in")
             for i in range(no_loads):
-                #print("1")
+
                 if not wafer_counter:
 
                     cassette = yield self.input.input.get()
@@ -431,12 +431,19 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                     if loop_end:
                         yield self.input.output.put(cassette)
                     else:
-                        yield self.empty_cassette_buffer.input.put(cassette)                        
-                #print("2")
+                        if self.empty_cassette_buffer.space_available_input(1):
+                            yield self.empty_cassette_buffer.input.put(cassette)                        
+                        else:
+                            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Internal cassette buffer overrun."
+                            string += " Further cassettes that are added will be lost."
+                            if not warning_sent:
+                                self.output_text.sig.emit(string)
+                                warning_sent = True
+
                 wafer_counter -= automation_loadsize                               
                 yield self.env.timeout(automation_time)            
                 yield self.boat[self.loadstation].container.put(automation_loadsize)                                        
-            #print("3")
+
             self.boat_status[self.loadstation] = 0 # set boat status to unprocessed
             self.batches_loaded += 1 # keep track of number of loads in the system
             self.loadstation_status = 0 # set loadstation status to non-busy

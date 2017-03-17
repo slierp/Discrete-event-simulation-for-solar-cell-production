@@ -316,6 +316,10 @@ class RunSimulationThread(QtCore.QObject):
 
         self.output.sig.emit("Production volume: " + str(prod_vol))
         self.output.sig.emit("Average throughput (WPH): " + str(int(3600*prod_vol/self.env.now)))
+
+        for i in range(len(self.locationgroups[-1])): # last locationgroup
+            buffer_content = len(self.locationgroups[-1][i].input.input.items)
+            self.output.sig.emit("Cassette source buffer content for loop " + str(i) + ": " + str(buffer_content))
         
         sim_time = end_time-start_time
         if sim_time < 60:            
