@@ -137,10 +137,9 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [TubePECVD][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
 
         if self.params['cassette_size'] == -1:
             self.params['cassette_size'] = 100

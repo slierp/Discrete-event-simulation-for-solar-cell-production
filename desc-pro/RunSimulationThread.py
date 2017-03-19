@@ -129,7 +129,7 @@ class RunSimulationThread(QtCore.QObject):
         self.locationgroups.append([])
                                 
         for i in range(len(self.cassette_loops)):
-            self.batchlocations.append(["Buffer", {'max_cassette_no' : self.cassette_loops[i][2]}])
+            self.batchlocations.append(["Buffer", {'max_cassette_no' : self.cassette_loops[i][2], 'name' : str(i)}])
             self.locationgroups[source_group].append(first_source_location+i)
         
         first_source_batchconnection = len(self.batchconnections)
@@ -187,7 +187,7 @@ class RunSimulationThread(QtCore.QObject):
             self.signal.sig.emit('Simulation aborted')
             return
 
-        self.env = simpy.Environment()        
+        self.env = simpy.Environment() # do not put in init; need a new one for every simulation    
         self.add_cassette_loops()         
         self.replace_for_real_instances()
             

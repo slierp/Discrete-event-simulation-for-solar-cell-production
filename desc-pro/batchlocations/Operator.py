@@ -58,19 +58,31 @@ If none of the tool connections allowed for a transport event, then the operator
         dummy_resource_destination = simpy.Resource(self.env,1)
 
         # Generate warning for batch size mismatch
-        faulty_connections = 0        
+        faulty_connection = False
+        string = ""
         for i in self.batchconnections:
             origin = self.batchconnections[i][0].output
             destination = self.batchconnections[i][1].input
+
             if isinstance(origin,BatchContainer) and isinstance(destination,BatchContainer):
                 if not (origin.batch_size == destination.batch_size):
-                    faulty_connections += 1
+                    string += "[Operator][" + self.params['name'] + "] ERROR: "
+                    string += "Tool connection " + str(i) + " has dissimilar stack sizes at source and destination. "
+                    faulty_connection = True
+            elif isinstance(origin,BatchContainer):
+                if not isinstance(destination,BatchContainer):
+                    string += "[Operator][" + self.params['name'] + "] ERROR: "
+                    string += "Tool connection " + str(i) + " has dissimilar input and output types (stack or cassette). "
+                    faulty_connection = True                
+            elif not isinstance(origin,CassetteContainer):
+                if not isinstance(destination,CassetteContainer):
+                    string += "[Operator][" + self.params['name'] + "] ERROR: "
+                    string += "Tool connection " + str(i) + " has dissimilar input and output types (stack or cassette). "
+                    faulty_connection = True
                 
-        if faulty_connections:
-            string = "[Operator][" + self.params['name'] + "] WARNING: "
-            string += str(faulty_connections) + " tool connections have dissimilar stack sizes at source and destination."
-            string += "It may be impossible to fill the destination input, which could then prevent the destination tool from starting."
+        if faulty_connection:
             self.output_text.sig.emit(string)
+            return
 
         # Main loop to find batchconnections that require action
         for i in itertools.cycle(self.batchconnections):

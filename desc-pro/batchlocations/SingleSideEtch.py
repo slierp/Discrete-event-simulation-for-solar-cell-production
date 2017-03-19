@@ -72,10 +72,12 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
+
+        if self.params['cassette_size'] == -1:
+            self.params['cassette_size'] = 100
         
         self.transport_counter = 0
         self.start_time = self.env.now
@@ -97,10 +99,10 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.idle_time = 0
                                      
-        self.env.process(self.run_cassette_load_out())
+        #self.env.process(self.run_cassette_load_out())
         self.env.process(self.run_lane_load_out())
-        self.env.process(self.run_lanes())
-        self.env.process(self.run_cassette_load_in())
+        #self.env.process(self.run_lanes())
+        #self.env.process(self.run_cassette_load_in())
 
     def report(self):
         self.utilization.append("SingleSideEtch")
@@ -201,10 +203,10 @@ The time increment is determined by the belt speed and unit distance.</li>
                 if self.lanes[i][-1]:
                     self.lanes[i][-1] = False
                     count += 1
-            
-            if count:
-                yield self.wafer_out.put(count)
 
+            #if count:
+            #    yield self.wafer_out.put(count)
+    
             if signal_not_sent0 and (self.wafer_out.level > 2*cassette_size):
                 string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
                 string += "Overload in load-out section (> 1 cassette)"

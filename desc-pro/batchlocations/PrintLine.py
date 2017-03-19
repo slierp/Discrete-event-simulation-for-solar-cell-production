@@ -120,10 +120,9 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [PrintLine][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
         
         self.time_dry = self.params['time_dry']        
         self.no_print_steps = self.params['no_print_steps'] 

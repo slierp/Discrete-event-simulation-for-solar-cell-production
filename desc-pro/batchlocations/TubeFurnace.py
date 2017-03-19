@@ -3,12 +3,6 @@ from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
 
-"""
-
-TODO
-
-"""
-
 class TubeFurnace(QtCore.QObject):
         
     def __init__(self, _env, _output=None, _params = {}):       
@@ -135,10 +129,9 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [TubeFurnace][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
         
         if self.params['cassette_size'] == -1:
             self.params['cassette_size'] = 100

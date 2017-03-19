@@ -49,10 +49,9 @@ There is one simple loop that consists of two steps:
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [WaferBin][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
             
 #        string = str(self.env.now) + " - [WaferBin][" + self.params['name'] + "] Added a wafer bin" #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG

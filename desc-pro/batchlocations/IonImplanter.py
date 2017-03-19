@@ -2,6 +2,7 @@
 from PyQt5 import QtCore
 from batchlocations.BatchTransport import BatchTransport
 from batchlocations.BatchContainer import BatchContainer
+from batchlocations.CassetteContainer import CassetteContainer
 import simpy
 import collections
 
@@ -57,12 +58,10 @@ During this time the wafer load-in is paused.\n
         """
 
         self.params['name'] = ""
-        self.params['max_cassette_no'] = 5
+        self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         self.params['max_cassette_no_type'] = "configuration"
-        self.params['batch_size'] = 200
-        self.params['batch_size_desc'] = "Number of units in a single process batch"
-        self.params['batch_size_type'] = "configuration"
+        
         self.params['transfer0_time'] = 30
         self.params['transfer0_time_desc'] = "Time for single batch transfer from input to loadlock (seconds)"
         self.params['transfer0_time_type'] = "automation"
@@ -100,13 +99,16 @@ During this time the wafer load-in is paused.\n
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [IonImplanter][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
+
+        if self.params['cassette_size'] == -1:
+            self.params['cassette_size'] = 100
         
         ### Input buffer ###
-        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        #self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
+        self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],True)
         
         ### Implant lanes ###
         # Owned by parent class so that loadlocks can see them both
@@ -124,7 +126,8 @@ During this time the wafer load-in is paused.\n
             self.batchprocesses.append(loadlock(self.env,self.output_text,process_params,self.implant_lanes))
 
         ### Output buffer ###
-        self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
+        #self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
+        self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'],True)
 
         ### Load-in transport ###
         batchconnections = []
@@ -196,7 +199,7 @@ class loadlock(QtCore.QObject):
         self.env.process(self.run())        
 
     def run(self):
-        batch_size = self.params['batch_size']
+        batch_size = 2*self.params['cassette_size']
         evacuation_time = self.params['evacuation_time']
         repressurization_time = self.params['repressurization_time']
         

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
+from batchlocations.CassetteContainer import CassetteContainer
 import collections
 
 """
@@ -60,7 +61,7 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         """
         
         self.params['name'] = ""
-        self.params['max_cassette_no'] = 4
+        self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and output"
         self.params['max_cassette_no_type'] = "configuration"
         self.params['time_new_cassette'] = 10
@@ -115,10 +116,12 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [InlinePECVD][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
+
+        if self.params['cassette_size'] == -1:
+            self.params['cassette_size'] = 100
         
         self.start_time = 0
         self.first_run = True

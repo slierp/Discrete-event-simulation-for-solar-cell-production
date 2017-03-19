@@ -84,7 +84,6 @@ The second loop consists of the following steps:
             string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
-            return
 
         if (self.params['time_step'] < 1/10): # enforce minimum time step
             self.params['time_step'] = 1/10
