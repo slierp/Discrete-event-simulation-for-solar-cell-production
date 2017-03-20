@@ -130,7 +130,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [TubeFurnace][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
         
@@ -141,7 +141,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.loop_end = self.params['loop_end']
         
         if not self.loop_begin == self.loop_end:
-            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Cassette loop definition is not consistent for in- and output."
+            string = "[" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Cassette loop definition is not consistent for in- and output."
             self.output_text.sig.emit(string) 
 
         self.transport_counter = 0
@@ -152,7 +153,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         ### Check automation loadsize ###
         if (not (self.output_text == None)) and (self.params['cassette_size'] % self.params['automation_loadsize']):
-            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work."
+            string = "[" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work."
             self.output_text.sig.emit(string)        
         
         ### Add input and boat load/unload location ###        
@@ -226,7 +228,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.env.process(self.run_transport()) # important not to trigger signal before starting load processes
 
     def report(self):        
-        self.utilization.append("TubeFurnace")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
@@ -428,8 +430,9 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                         if self.empty_cassette_buffer.space_available_input(1):
                             yield self.empty_cassette_buffer.input.put(cassette)                        
                         else:
-                            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Internal cassette buffer overrun."
-                            string += " Further cassettes that are added will be lost."
+                            string = "[" + self.params['type'] + "][" + self.params['name'] + "] "
+                            string += "WARNING: Internal cassette buffer overrun. "
+                            string += "Further cassettes that are added will be lost."
                             if not warning_sent:
                                 self.output_text.sig.emit(string)
                                 warning_sent = True
@@ -480,7 +483,14 @@ The process batch size therefore needs to be a multiple of the automation loadsi
             #print(str(self.env.now) + "-" + "Finished load-out for boat " + str(self.loadstation))
 
     def nominal_throughput(self):
+        batch_size = self.params['batch_size']
+        cassette_size = self.params['cassette_size']
+        no_of_processes = self.params['no_of_processes']
+        no_of_cooldowns = self.params['no_of_cooldowns']
+        process_time = self.params['process_time']
+        cool_time = self.params['cool_time']
+        
         throughputs = []        
-        throughputs.append(self.params['batch_size']*self.params['no_of_processes']*3600/(60*self.params['process_time']))
-        throughputs.append(self.params['batch_size']*self.params['no_of_cooldowns']*3600/(60*self.params['cool_time']))
+        throughputs.append(batch_size*cassette_size*no_of_processes*3600/(60*process_time))
+        throughputs.append(batch_size*cassette_size*no_of_cooldowns*3600/(60*cool_time))
         return min(throughputs)

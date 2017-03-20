@@ -74,7 +74,7 @@ If none of the tool connections allowed for a transport event, then the operator
                 if not (origin.batch_size == destination.batch_size):
                     origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
                     destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
-                    string += "[Operator][" + self.params['name'] + "] ERROR: "
+                    string += "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
                     string += "Tool connection from " + origin_name + " to " + destination_name
                     string += " has dissimilar stack sizes at source and destination. "
                     faulty_connection = True
@@ -82,7 +82,7 @@ If none of the tool connections allowed for a transport event, then the operator
                 if not isinstance(destination,BatchContainer):
                     origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
                     destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
-                    string += "[Operator][" + self.params['name'] + "] ERROR: "
+                    string += "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
                     string += "Tool connection from " + origin_name + " to " + destination_name
                     string += " has dissimilar input and output types (stack or cassette). "
                     faulty_connection = True                
@@ -90,7 +90,7 @@ If none of the tool connections allowed for a transport event, then the operator
                 if not isinstance(destination,CassetteContainer):
                     origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
                     destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
-                    string += "[Operator][" + self.params['name'] + "] ERROR: "
+                    string += "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
                     string += "Tool connection from " + origin_name + " to " + destination_name
                     string += " has dissimilar input and output types (stack or cassette). "
                     faulty_connection = True
@@ -218,7 +218,7 @@ If none of the tool connections allowed for a transport event, then the operator
                     
                 continue_loop = True
                         
-                string = str(self.env.now) + " - [Operator][" + self.params['name'] + "] Batches transported: "
+                string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Batches transported: "
                 string += str(no_batches_for_transport)
                 #self.output_text.sig.emit(string)
 
@@ -233,7 +233,7 @@ If none of the tool connections allowed for a transport event, then the operator
         
 
     def report(self):        
-        self.utilization.append("Operator")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append("n/a")
         

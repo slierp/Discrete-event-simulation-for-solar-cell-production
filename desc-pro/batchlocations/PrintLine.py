@@ -121,7 +121,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [PrintLine][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
         
@@ -145,7 +145,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         time_out.append(self.params['time_step'])
         time_out.append(self.params['time_print'])
         if (not (self.output_text == None)) and (max(time_out) < (60*self.params['unit_distance']/self.params['firing_belt_speed'])):
-            string = "[PrintLine][" + self.params['name'] + "] WARNING: Wafer distance in firing furnace below set minimum"
+            string = "[" + self.params['type'] + "][" + self.params['name'] + "] WARNING: Wafer distance in firing furnace below set minimum"
             self.output_text.sig.emit(string)
 
         self.start_time = []
@@ -165,7 +165,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
             self.env.process(self.run_printer(i))
 
     def report(self):        
-        self.utilization.append("PrintLine")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.output.container.level
@@ -208,7 +208,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
                 self.belts[0][0] = True
                 wafer_counter -= 1
                 
-#                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Put wafer from cassette on belt" #DEBUG
+#                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from cassette on belt" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
            
     def run_printer(self, num):
@@ -238,7 +238,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
                     
                 yield self.env.timeout(time_out) # belt movement time determined by the slowest: print time or by belt speed
               
-#                string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Printed a wafer on printer " + str(num) #DEBUG
+#                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Printed a wafer on printer " + str(num) #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
 
                 # place wafer in dryer or firing furnace after printing
@@ -265,7 +265,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         yield self.env.timeout(self.time_dry)
         self.belts[num+1][0] = True
             
-#        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Dried a wafer on dryer " + str(num) #DEBUG
+#        string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Dried a wafer on dryer " + str(num) #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG
 
     def fire_wafer(self): # inline process is continuous so it requires a timeout       
@@ -273,7 +273,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
         yield self.env.timeout(self.time_fire)
         yield self.output.container.put(1)
         
-#        string = str(self.env.now) + " [PrintLine][" + self.params['name'] + "] Fired a wafer" #DEBUG
+#        string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Fired a wafer" #DEBUG
 #        self.output_text.sig.emit(string) #DEBUG
     
     def nominal_throughput(self):

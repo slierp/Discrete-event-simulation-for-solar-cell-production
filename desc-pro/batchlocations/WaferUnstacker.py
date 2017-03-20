@@ -82,7 +82,7 @@ The second loop consists of the following steps:
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferUnstacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 
@@ -131,7 +131,7 @@ The second loop consists of the following steps:
                 wafer_available = False
                 unit_counter += 1
                                 
-#            string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from stack onto belt" #DEBUG
+#            string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from stack onto belt" #DEBUG
 #            self.output_text.sig.emit(string) #DEBUG
 
             if (unit_counter == stack_size):
@@ -157,7 +157,7 @@ The second loop consists of the following steps:
                 yield self.env.timeout(time_step)                
                 current_load += 1              
                 
-#                string = str(self.env.now) + " [WaferUnstacker][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
+#                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
             
             elif (not self.belt[-1]):

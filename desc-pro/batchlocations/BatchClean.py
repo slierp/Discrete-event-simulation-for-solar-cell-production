@@ -276,7 +276,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
     def report(self):
-        self.utilization.append("BatchClean")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport3.transport_counter
@@ -296,12 +296,13 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         return self.transport3.transport_counter
             
     def nominal_throughput(self):
+        batch_volume = self.params['batch_size']*self.params['cassette_size']        
         throughputs = []        
-        throughputs.append(self.params['batch_size']*self.params['oxetch0_baths']*3600/(60*self.params['oxetch0_time']))
-        throughputs.append(self.params['batch_size']*self.params['rinse0_baths']*3600/(60*self.params['rinse0_time']))
-        throughputs.append(self.params['batch_size']*self.params['chemox_baths']*3600/(60*self.params['chemox_time']))
-        throughputs.append(self.params['batch_size']*self.params['rinse1_baths']*3600/(60*self.params['rinse1_time']))
-        throughputs.append(self.params['batch_size']*self.params['oxetch1_baths']*3600/(60*self.params['oxetch1_time']))
-        throughputs.append(self.params['batch_size']*self.params['rinse2_baths']*3600/(60*self.params['rinse2_time']))
-        throughputs.append(self.params['batch_size']*self.params['dryer_count']*3600/(60*self.params['dry_time']))
+        throughputs.append(batch_volume*self.params['oxetch0_baths']*3600/(60*self.params['oxetch0_time']))
+        throughputs.append(batch_volume*self.params['rinse0_baths']*3600/(60*self.params['rinse0_time']))
+        throughputs.append(batch_volume*self.params['chemox_baths']*3600/(60*self.params['chemox_time']))
+        throughputs.append(batch_volume*self.params['rinse1_baths']*3600/(60*self.params['rinse1_time']))
+        throughputs.append(batch_volume*self.params['oxetch1_baths']*3600/(60*self.params['oxetch1_time']))
+        throughputs.append(batch_volume*self.params['rinse2_baths']*3600/(60*self.params['rinse2_time']))
+        throughputs.append(batch_volume*self.params['dryer_count']*3600/(60*self.params['dry_time']))
         return min(throughputs)

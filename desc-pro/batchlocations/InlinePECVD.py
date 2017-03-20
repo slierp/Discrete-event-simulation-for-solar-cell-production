@@ -117,7 +117,7 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [InlinePECVD][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 

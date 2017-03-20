@@ -138,7 +138,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [TubePECVD][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 
@@ -149,7 +149,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.loop_end = self.params['loop_end']
 
         if not self.loop_begin == self.loop_end:
-            string = "[TubeFurnace][" + self.params['name'] + "] WARNING: Cassette loop definition is not consistent for in- and output."
+            string = "[" + self.params['name'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Cassette loop definition is not consistent for in- and output."
             self.output_text.sig.emit(string) 
 
         self.transport_counter = 0
@@ -160,7 +161,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         
         ### Check automation loadsize ###
         if (not (self.output_text == None)) and (self.params['cassette_size'] % self.params['automation_loadsize']):
-            string = "[TubePECVD][" + self.params['name'] + "] WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work."
+            string = "[" + self.params['name'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work."
             self.output_text.sig.emit(string)        
         
         ### Add input and boat load/unload location ###

@@ -100,7 +100,7 @@ During this time the wafer load-in is paused.\n
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [IonImplanter][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 
@@ -108,7 +108,6 @@ During this time the wafer load-in is paused.\n
             self.params['cassette_size'] = 100
         
         ### Input buffer ###
-        #self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],True)
         
         ### Implant lanes ###
@@ -127,7 +126,6 @@ During this time the wafer load-in is paused.\n
             self.batchprocesses.append(loadlock(self.env,self.output_text,process_params,self.implant_lanes))
 
         ### Output buffer ###
-        #self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'],True)
 
         ### Load-in transport ###
@@ -152,7 +150,7 @@ During this time the wafer load-in is paused.\n
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
     def report(self):
-        self.utilization.append("IonImplanter")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport1.transport_counter

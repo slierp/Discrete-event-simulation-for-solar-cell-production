@@ -73,7 +73,7 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 
@@ -106,7 +106,7 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.env.process(self.run_cassette_load_in())
 
     def report(self):
-        self.utilization.append("SingleSideEtch")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
@@ -174,7 +174,7 @@ The time increment is determined by the belt speed and unit distance.</li>
                 self.lanes[i][0] = True
 
 #                if ((self.process_counter % self.params['cassette_size']) == 0): #DEBUG      
-#                    string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] " #DEBUG
+#                    string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] " #DEBUG
 #                    string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number) #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG
             
@@ -209,13 +209,13 @@ The time increment is determined by the belt speed and unit distance.</li>
                 yield self.wafer_out.put(count)
     
             if signal_not_sent0 and (self.wafer_out.level > 2*cassette_size):
-                string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+                string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
                 string += "Overload in load-out section (> 1 cassette)"
                 self.output_text.sig.emit(string)
                 signal_not_sent0 = False
 
             if signal_not_sent1 and (self.wafer_out.level > 11*cassette_size):
-                string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "
+                string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
                 string += "Major overload in load-out section (>10 cassettes)"
                 self.output_text.sig.emit(string)
                 signal_not_sent1 = False

@@ -83,7 +83,7 @@ The second loop consists of the following steps:
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [WaferStacker][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 
@@ -93,7 +93,6 @@ The second loop consists of the following steps:
         if (self.params['time_pick_and_place'] < 1/10): # enforce minimum time step
             self.params['time_pick_and_place'] = 1/10
 
-#        self.input = BatchContainer(self.env,"input",self.params['cassette_size'],self.params['max_cassette_no'])
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'])        
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['stack_size'],self.params['max_stack_no'])
@@ -121,7 +120,7 @@ The second loop consists of the following steps:
                 self.belt[0] = True
                 wafer_counter -= 1
                 
-#                string = str(self.env.now) + " [WaferStacker][" + self.params['name'] + "] Put wafer from cassette onto conveyor" #DEBUG
+#                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from cassette onto conveyor" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
 
             if not wafer_counter:
@@ -159,7 +158,7 @@ The second loop consists of the following steps:
                 yield self.output.container.put(1)
                 wafer_available = False
                     
-#                string = str(self.env.now) + " [WaferStacker][" + self.params['name'] + "] Put wafer from belt onto stack" #DEBUG
+#                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from belt onto stack" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
 
             if (unit_counter == stack_size):

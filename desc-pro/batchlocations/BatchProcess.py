@@ -57,7 +57,7 @@ class BatchProcess(QtCore.QObject):
                     self.process_counter += 1
                     self.process_time_counter += process_time
                     
-#                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End process " #DEBUG
+#                    string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] End process " #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG
             
     def space_available(self,_batch_size):
@@ -98,7 +98,7 @@ class BatchProcess(QtCore.QObject):
                     self.process_counter = 0
                     self.last_downtime = self.env.now
 
-#                    string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime " #DEBUG
+#                    string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] End downtime " #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG
 
     def downtime_cycle(self):
@@ -111,7 +111,7 @@ class BatchProcess(QtCore.QObject):
             self.process_counter = 0
             self.last_downtime = self.env.now
 
-#            string = str(self.env.now) + " [BatchProcess][" + self.params['name'] + "] End downtime " #DEBUG
+#            string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] End downtime " #DEBUG
 #            self.output_text.sig.emit(string) #DEBUG
         
     def idle_time(self):

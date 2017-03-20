@@ -117,7 +117,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
         self.params.update(_params)
 
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [SpatialALD][" + self.params['name'] + "] "
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
             string += "Missing cassette loop information"
             self.output_text.sig.emit(string)
 
@@ -128,7 +128,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
 
         ### Give warning for collisons ###
 #        if (not (self.output_text == None)) and (self.params['time_step'] > self.params['time_process']):
-#           string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "]  <span style=\"color: red\">WARNING: Wafer collisions are likely with present settings</span>"
+#           string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "]  <span style=\"color: red\">WARNING: Wafer collisions are likely with present settings</span>"
 #           self.output_text.sig.emit(string)
 
         ### Input ###
@@ -197,7 +197,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
             self.env.process(self.run_deposition_unit(i))
 
     def report(self):     
-        self.utilization.append("SpatialALD")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
@@ -315,7 +315,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
                 self.dep_unit[num][0] = num+1
 
 #                if (self.params['verbose']): #DEBUG     
-#                    string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "][du" + str(num) + "] Preheated one wafer" #DEBUG
+#                    string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "][du" + str(num) + "] Preheated one wafer" #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG
                 
             else:
@@ -341,7 +341,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
                 self.dep_unit[num][-1] = 0
 
 #                if (self.params['verbose']): #DEBUG     
-#                    string = str(self.env.now) + " - [SpatialALD][" + self.params['name'] + "][du" + str(num) + "] Processed one wafer" #DEBUG
+#                    string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "][du" + str(num) + "] Processed one wafer" #DEBUG
 #                    self.output_text.sig.emit(string) #DEBUG
                 
             else:

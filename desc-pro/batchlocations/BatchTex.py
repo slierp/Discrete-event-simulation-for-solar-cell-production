@@ -235,7 +235,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)          
 
     def report(self):
-        self.utilization.append("BatchTex")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport2.transport_counter
@@ -255,12 +255,13 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         return self.transport2.transport_counter
         
     def nominal_throughput(self):
+        batch_volume = self.params['batch_size']*self.params['cassette_size']
         throughputs = []        
-        throughputs.append(self.params['batch_size']*self.params['tex_baths']*3600/(60*self.params['tex_time']))
-        throughputs.append(self.params['batch_size']*self.params['rinse0_baths']*3600/(60*self.params['rinse0_time']))
-        throughputs.append(self.params['batch_size']*self.params['neutr_baths']*3600/(60*self.params['neutr_time']))
-        throughputs.append(self.params['batch_size']*self.params['rinse1_baths']*3600/(60*self.params['rinse1_time']))
-        throughputs.append(self.params['batch_size']*self.params['dryer_count']*3600/(60*self.params['dry_time']))
+        throughputs.append(batch_volume*self.params['tex_baths']*3600/(60*self.params['tex_time']))
+        throughputs.append(batch_volume*self.params['rinse0_baths']*3600/(60*self.params['rinse0_time']))
+        throughputs.append(batch_volume*self.params['neutr_baths']*3600/(60*self.params['neutr_time']))
+        throughputs.append(batch_volume*self.params['rinse1_baths']*3600/(60*self.params['rinse1_time']))
+        throughputs.append(batch_volume*self.params['dryer_count']*3600/(60*self.params['dry_time']))
         return min(throughputs)
         
         

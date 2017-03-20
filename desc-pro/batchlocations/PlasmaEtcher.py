@@ -48,7 +48,7 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         self.env.process(self.run())        
 
     def report(self):
-        self.utilization.append("PlasmaEtcher")
+        self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_hours = (self.env.now - self.start_time)/3600

@@ -70,7 +70,7 @@ There is one simple loop that consists of three steps:
         while True:
             
             if (time_limit > 0) and (self.env.now >= time_limit):   
-                string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Time limit reached"
+                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Time limit reached"
                 self.output_text.sig.emit(string)
                 break
             
@@ -78,7 +78,7 @@ There is one simple loop that consists of three steps:
                 yield self.output.container.put(batch_size)
                 self.output.process_counter += batch_size
                 
-#                string = str(self.env.now) + " [WaferSource][" + self.params['name'] + "] Performed refill" #DEBUG
+#                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Performed refill" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
                     
             yield self.env.timeout(wait_time)        
