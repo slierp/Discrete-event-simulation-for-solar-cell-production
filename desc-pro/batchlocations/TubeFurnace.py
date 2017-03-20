@@ -54,6 +54,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         """
 
         self.params['name'] = ""
+        self.params['type'] = "TubeFurnace"        
         self.params['batch_size'] = 6
         self.params['batch_size_desc'] = "Number of cassettes in a single process batch"
         self.params['batch_size_type'] = "configuration"

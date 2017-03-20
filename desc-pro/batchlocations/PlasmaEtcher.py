@@ -29,6 +29,7 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         """
         
         self.params['name'] = ""
+        self.params['type'] = "PlasmaEtcher"        
         self.params['stack_size'] = 500
         self.params['stack_size_desc'] = "Number of wafers in a single stack"
         self.params['stack_size_type'] = "configuration"

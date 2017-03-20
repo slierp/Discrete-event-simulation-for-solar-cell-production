@@ -82,6 +82,7 @@ After the process the wafer is placed on the output conveyor of the deposition u
         """
         
         self.params['name'] = ""
+        self.params['type'] = "SpatialALD"
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and output"
         self.params['max_cassette_no_type'] = "configuration"

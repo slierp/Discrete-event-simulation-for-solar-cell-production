@@ -39,6 +39,7 @@ If none of the tool connections allowed for a transport event, then the operator
         """
         
         self.params['name'] = ""
+        self.params['type'] = "Operator"        
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between transport attempts (seconds)"
         self.params.update(_params)
@@ -61,23 +62,37 @@ If none of the tool connections allowed for a transport event, then the operator
         faulty_connection = False
         string = ""
         for i in self.batchconnections:
-            origin = self.batchconnections[i][0].output
-            destination = self.batchconnections[i][1].input
+            
+            if len(self.batchconnections[i]) == 6: # forward transport of cassette or stack 
+                origin = self.batchconnections[i][0].output
+                destination = self.batchconnections[i][1].input
+            else:
+                origin = self.batchconnections[i][0].input
+                destination = self.batchconnections[i][1].output                                                   
 
             if isinstance(origin,BatchContainer) and isinstance(destination,BatchContainer):
                 if not (origin.batch_size == destination.batch_size):
+                    origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
+                    destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
                     string += "[Operator][" + self.params['name'] + "] ERROR: "
-                    string += "Tool connection " + str(i) + " has dissimilar stack sizes at source and destination. "
+                    string += "Tool connection from " + origin_name + " to " + destination_name
+                    string += " has dissimilar stack sizes at source and destination. "
                     faulty_connection = True
             elif isinstance(origin,BatchContainer):
                 if not isinstance(destination,BatchContainer):
+                    origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
+                    destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
                     string += "[Operator][" + self.params['name'] + "] ERROR: "
-                    string += "Tool connection " + str(i) + " has dissimilar input and output types (stack or cassette). "
+                    string += "Tool connection from " + origin_name + " to " + destination_name
+                    string += " has dissimilar input and output types (stack or cassette). "
                     faulty_connection = True                
             elif not isinstance(origin,CassetteContainer):
                 if not isinstance(destination,CassetteContainer):
+                    origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
+                    destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
                     string += "[Operator][" + self.params['name'] + "] ERROR: "
-                    string += "Tool connection " + str(i) + " has dissimilar input and output types (stack or cassette). "
+                    string += "Tool connection from " + origin_name + " to " + destination_name
+                    string += " has dissimilar input and output types (stack or cassette). "
                     faulty_connection = True
                 
         if faulty_connection:

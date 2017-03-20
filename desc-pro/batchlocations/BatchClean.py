@@ -71,6 +71,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         """
         
         self.params['name'] = ""
+        self.params['type'] = "BatchClean"        
         self.params['batch_size'] = 4
         self.params['batch_size_desc'] = "Number of cassettes in a single process batch"
         self.params['batch_size_type'] = "configuration"

@@ -27,6 +27,7 @@ The space available in the buffer can be configured.\n
         """
         
         self.params['name'] = ""
+        self.params['type'] = "Buffer"        
         self.params['max_cassette_no'] = 50
         self.params['max_cassette_no_desc'] = "Number of cassette positions available"
         self.params['max_cassette_no_type'] = "configuration"

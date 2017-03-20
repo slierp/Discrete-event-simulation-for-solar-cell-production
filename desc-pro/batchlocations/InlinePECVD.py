@@ -61,6 +61,7 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         """
         
         self.params['name'] = ""
+        self.params['type'] = "InlinePECVD"        
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and output"
         self.params['max_cassette_no_type'] = "configuration"

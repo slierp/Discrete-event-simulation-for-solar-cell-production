@@ -43,6 +43,7 @@ The time increment is determined by the belt speed and unit distance.</li>
         """
 
         self.params['name'] = ""
+        self.params['type'] = "SingleSideEtch"        
         self.params['no_of_lanes'] = 5
         self.params['no_of_lanes_desc'] = "Number of process lanes"
         self.params['no_of_lanes_type'] = "configuration"
@@ -99,10 +100,10 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.idle_time = 0
                                      
-        #self.env.process(self.run_cassette_load_out())
+        self.env.process(self.run_cassette_load_out())
         self.env.process(self.run_lane_load_out())
-        #self.env.process(self.run_lanes())
-        #self.env.process(self.run_cassette_load_in())
+        self.env.process(self.run_lanes())
+        self.env.process(self.run_cassette_load_in())
 
     def report(self):
         self.utilization.append("SingleSideEtch")
@@ -204,8 +205,8 @@ The time increment is determined by the belt speed and unit distance.</li>
                     self.lanes[i][-1] = False
                     count += 1
 
-            #if count:
-            #    yield self.wafer_out.put(count)
+            if count:
+                yield self.wafer_out.put(count)
     
             if signal_not_sent0 and (self.wafer_out.level > 2*cassette_size):
                 string = str(round(self.env.now,1)) + " [SingleSideEtch][" + self.params['name'] + "] "

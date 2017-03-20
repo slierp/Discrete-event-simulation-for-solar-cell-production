@@ -136,16 +136,11 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations = [] #tool class name, dict with settings
         self.batchlocations.append(["WaferSource", {'name' : '0'}])
         self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
-        self.batchlocations.append(["WaferUnstacker",{'name' : '1'}])
         self.batchlocations.append(["BatchTex", {'name' : '0'}])
         self.batchlocations.append(["TubeFurnace", {'name' : '0'}])
-        self.batchlocations.append(["TubeFurnace", {'name' : '1'}])
-        self.batchlocations.append(["Buffer", {'name' : '0'}])
         self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
         self.batchlocations.append(["TubePECVD", {'name' : '0'}])
-        self.batchlocations.append(["TubePECVD", {'name' : '1'}])
         self.batchlocations.append(["PrintLine", {'name' : '0'}])
-        self.batchlocations.append(["PrintLine", {'name' : '1'}])
                 
         self.cassette_loops = []
         self.locationgroups = [] 
@@ -401,11 +396,17 @@ class MainGui(QtWidgets.QMainWindow):
         # generate a default cassette loop list from locationgroups       
 
         self.cassette_loops = []
-        begin = end = -1
+        unavailable_groups = []
+        found_loops = []
 
         # find possible loops using every possible start position
-        for search_start_position in range(len(self.locationgroups)-1):
+        for search_start_position in range(len(self.locationgroups)-1):           
+            
+            if search_start_position in unavailable_groups:
+                continue
 
+            begin = end = -1 
+            
             # find first locationgroup where all tools have a dual cassette output buffer
             for i in range(search_start_position,len(self.locationgroups)-1):
                 suitable = True
@@ -449,18 +450,25 @@ class MainGui(QtWidgets.QMainWindow):
                 continue
             
             if not begin == -1 and not end == -1:
-                break
-
-        if begin == -1 or end == -1:
-            return
+                found_loops.append([begin,end])
+                
+                for i in range(0,end):
+                    unavailable_groups.append(i)
 
         transport_time = 60 # default duration for cassette return to source
         time_per_unit = 10 # default additional duration for each cassette
         min_units = 1 # default minimum number of cassettes for return transport
         max_units = 99 # default maximum number of cassettes for return transport
+
+        for i in range(len(found_loops)):
+            begin = found_loops[i][0]
+            end = found_loops[i][1]
+            
+            if begin == -1 or end == -1:
+                continue
         
-        if not begin >= end:
-            self.cassette_loops.append([begin,end,50,100,transport_time,time_per_unit,min_units,max_units])
+            if not begin >= end:
+                self.cassette_loops.append([begin,end,50,100,transport_time,time_per_unit,min_units,max_units])
 
     def print_cassetteloop(self, num):
         if (num >= len(self.locationgroups)):

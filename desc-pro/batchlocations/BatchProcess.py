@@ -11,6 +11,7 @@ class BatchProcess(QtCore.QObject):
 
         self.params = {}
         self.params['name'] = ""
+        self.params['type'] = "BatchProcess"        
         self.params['batch_size'] = 1
         self.params['process_time'] = 1
         self.params['downtime_runs'] = 0

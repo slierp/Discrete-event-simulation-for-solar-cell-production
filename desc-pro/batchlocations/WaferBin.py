@@ -36,6 +36,7 @@ There is one simple loop that consists of two steps:
         """         
         
         self.params['name'] = ""
+        self.params['type'] = "WaferBin"        
         self.params['max_batch_no'] = 8
         self.params['max_batch_no_desc'] = "Number of input cassette positions"
         self.params['max_batch_no_type'] = "configuration"

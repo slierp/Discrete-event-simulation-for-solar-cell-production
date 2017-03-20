@@ -58,6 +58,7 @@ During this time the wafer load-in is paused.\n
         """
 
         self.params['name'] = ""
+        self.params['type'] = "IonImplanter"        
         self.params['max_cassette_no'] = 8
         self.params['max_cassette_no_desc'] = "Number of cassette positions at input and the same number at output"
         self.params['max_cassette_no_type'] = "configuration"

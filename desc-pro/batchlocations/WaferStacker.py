@@ -50,6 +50,7 @@ The second loop consists of the following steps:
         """
         
         self.params['name'] = ""
+        self.params['type'] = "WaferStacker"        
         self.params['stack_size'] = 500
         self.params['stack_size_desc'] = "Number of wafers in a single stack"
         self.params['stack_size_type'] = "configuration"
