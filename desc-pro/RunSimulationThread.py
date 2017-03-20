@@ -111,6 +111,7 @@ class RunSimulationThread(QtCore.QObject):
     def add_cassette_loops(self):
         # tell all tools in each cassette loop what cassette size they have and whether they
         # are the begin or end of a loop
+        
         for i in range(len(self.cassette_loops)):
 
             for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
@@ -208,6 +209,11 @@ class RunSimulationThread(QtCore.QObject):
             self.output.sig.emit("Production line needs to end with printlines and/or waferbins.")
             self.signal.sig.emit('Simulation aborted')          
             return
+
+        if len(self.cassette_loops) == 0:
+            self.output.sig.emit("Production line requires at least one cassette loop.")
+            self.signal.sig.emit('Simulation aborted')          
+            return            
 
         self.env = simpy.Environment() # do not put in init; need a new one for every simulation    
         

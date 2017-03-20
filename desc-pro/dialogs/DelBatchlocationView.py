@@ -18,11 +18,8 @@ class DelBatchlocationView(QtCore.QObject):
             # if parent item, remove all batchlocation children and row in locationgroups
         
             row = self.parent.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups
-            self.reset_operators(row)
-            try:
-                self.reset_cassetteloops(row)
-            except Exception as inst:
-                print(inst)
+            self.reset_operators(row)            
+            self.reset_cassetteloops(row)
             
             start = self.parent.locationgroups[row][0]
             finish = self.parent.locationgroups[row][len(self.parent.locationgroups[row])-1]+1                
