@@ -19,6 +19,10 @@ class DelBatchlocationView(QtCore.QObject):
         
             row = self.parent.batchlocations_view.selectedIndexes()[0].row() # selected row in locationgroups
             self.reset_operators(row)
+            try:
+                self.reset_cassetteloops(row)
+            except Exception as inst:
+                print(inst)
             
             start = self.parent.locationgroups[row][0]
             finish = self.parent.locationgroups[row][len(self.parent.locationgroups[row])-1]+1                
@@ -73,3 +77,15 @@ class DelBatchlocationView(QtCore.QObject):
             self.parent.operators[i][0].append(0)
             
         self.parent.load_definition_operators(False)
+
+    def reset_cassetteloops(self, row):
+        # remove cassette loops whose tools no longer exist
+
+        if (len(self.parent.cassette_loops) == 0):
+            return
+            
+        for i in range(len(self.parent.cassette_loops)):
+            if (row >= self.parent.cassette_loops[i][0]) and (row <= self.parent.cassette_loops[i][1]):
+                del self.parent.cassette_loops[i]                        
+            
+        self.parent.load_definition_cassetteloops(False)        

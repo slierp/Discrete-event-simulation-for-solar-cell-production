@@ -177,6 +177,23 @@ class RunSimulationThread(QtCore.QObject):
 #        print(self.batchconnections)
 #        print(self.operators)
 
+    def sanity_check(self):
+        
+        not_approved = False
+        
+        for i in range(len(self.locationgroups[-1])):
+            location = self.locationgroups[-1][i]
+
+            if (self.batchlocations[location][0] == "PrintLine"):
+                continue
+            
+            if self.batchlocations[location][0] == "WaferBin":
+                continue
+            
+            not_approved = True
+        
+        return not_approved
+
     @QtCore.pyqtSlot()
     def run(self):
         profiling_mode = self.params['profiling_mode']
@@ -187,7 +204,13 @@ class RunSimulationThread(QtCore.QObject):
             self.signal.sig.emit('Simulation aborted')
             return
 
+        if self.sanity_check():
+            self.output.sig.emit("Production line needs to end with printlines and/or waferbins.")
+            self.signal.sig.emit('Simulation aborted')          
+            return
+
         self.env = simpy.Environment() # do not put in init; need a new one for every simulation    
+        
         self.add_cassette_loops()         
         self.replace_for_real_instances()
             
