@@ -171,9 +171,7 @@ class RunSimulationThread(QtCore.QObject):
                             self.operators[j][0].append(i)                          
         
         for i in range(len(self.operators)):
-            self.operators[i][0] = list(set(self.operators[i][0])) # make connection lists unique
-            self.operators[i][0] += self.operators[i][0]
-            shuffle(self.operators[i][0]) # randomize to spread load
+            self.operators[i][0] = sorted(list(set(self.operators[i][0]))) # make connection lists unique
 
 #        print(self.batchconnections)
 #        print(self.operators)

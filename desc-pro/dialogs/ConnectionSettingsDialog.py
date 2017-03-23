@@ -37,7 +37,7 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         self.spinbox1 = QtWidgets.QSpinBox()
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999)
-        self.spinbox1.setMinimum(1)
+        self.spinbox1.setMinimum(0)
         self.spinbox1.setValue(self.batchconnection[3])
         label.setToolTip(text)
         self.spinbox1.setToolTip(text)

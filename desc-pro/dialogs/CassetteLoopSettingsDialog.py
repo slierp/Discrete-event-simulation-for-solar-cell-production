@@ -63,7 +63,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox3 = QtWidgets.QSpinBox()
         self.spinbox3.setAccelerated(True)
         self.spinbox3.setMaximum(999)
-        self.spinbox3.setMinimum(1)
+        self.spinbox3.setMinimum(0)
         self.spinbox3.setValue(self.parent.cassette_loops[self.row][5])
         label.setToolTip(text)
         self.spinbox3.setToolTip(text)
