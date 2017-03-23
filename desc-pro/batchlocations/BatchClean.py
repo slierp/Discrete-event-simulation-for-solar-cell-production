@@ -144,7 +144,18 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.params['transfer3_time_desc'] = "Time for single transfer by transporter 3 (seconds)"
         self.params['transfer3_time_type'] = "automation"
         
+        self.params['cassette_size'] = -1
+        self.params['cassette_size_type'] = "immutable"
+
         self.params.update(_params)
+
+        if self.output_text and self.params['cassette_size'] == -1:
+            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "Missing cassette loop information"
+            self.output_text.sig.emit(string)
+
+        if self.params['cassette_size'] == -1:
+            self.params['cassette_size'] = 100
         
         ### Add input ###
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],True)          
