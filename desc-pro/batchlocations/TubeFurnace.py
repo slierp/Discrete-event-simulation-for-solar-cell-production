@@ -129,10 +129,11 @@ The process batch size therefore needs to be a multiple of the automation loadsi
 
         self.params.update(_params)
 
+        string = ""
+
         if self.output_text and self.params['cassette_size'] == -1:
-            string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
-            string += "Missing cassette loop information"
-            self.output_text.sig.emit(string)
+            string += str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "Missing cassette loop information. "
         
         if self.params['cassette_size'] == -1:
             self.params['cassette_size'] = 100
@@ -141,21 +142,25 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.loop_end = self.params['loop_end']
         
         if not self.loop_begin == self.loop_end:
-            string = "[" + self.params['type'] + "][" + self.params['name'] + "] "
-            string += "WARNING: Cassette loop definition is not consistent for in- and output."
-            self.output_text.sig.emit(string) 
+            string += "[" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Cassette loop definition is not consistent for in- and output. " 
+
+        if self.params['max_cassette_no'] < self.params['batch_size']:
+            string += "[" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Input buffer is smaller than batch-size. Tool will not start. "
+
+        if (not (self.output_text == None)) and (self.params['cassette_size'] % self.params['automation_loadsize']):
+            string += "[" + self.params['type'] + "][" + self.params['name'] + "] "
+            string += "WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work. " 
+
+        if len(string):
+            self.output_text.sig.emit(string)
 
         self.transport_counter = 0
         self.batches_loaded = 0        
         self.load_in_start = self.env.event()
         self.load_out_start = self.env.event()
-        self.process_counter = 0
-        
-        ### Check automation loadsize ###
-        if (not (self.output_text == None)) and (self.params['cassette_size'] % self.params['automation_loadsize']):
-            string = "[" + self.params['type'] + "][" + self.params['name'] + "] "
-            string += "WARNING: Automation loadsize is not a multiple of cassette size. Automation will not work."
-            self.output_text.sig.emit(string)        
+        self.process_counter = 0      
         
         ### Add input and boat load/unload location ###        
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'],not self.loop_end)
