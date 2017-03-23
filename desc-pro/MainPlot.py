@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtWidgets, QtGui
+import ntpath
 from dialogs.PlotSettingsDialog import PlotSettingsDialog
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -19,14 +20,20 @@ class MultiPlot(QtWidgets.QMainWindow):
     def __init__(self, _parent):
         
         QtWidgets.QMainWindow.__init__(self, _parent)
+        self.setWindowTitle("Production rates")
+        self.resize(1020, 752)
+        frameGm = self.frameGeometry()
+        centerPoint = QtWidgets.QDesktopWidget().availableGeometry().center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
         
         self.fig = None
         self.canvas = None
         self.parent = _parent
-        self.prod_rates_df = _parent.simulation_thread.prod_rates_df         
+        self.prod_rates_df = _parent.simulation_thread.prod_rates_df
+        self.prev_dir_path = ""
         self.create_menu()
-        self.create_main_frame()
-        self.setWindowTitle("Production rates")       
+        self.create_main_frame()       
         self.on_draw()        
 
     def create_menu(self):        
@@ -53,6 +60,12 @@ class MultiPlot(QtWidgets.QMainWindow):
         
         # Create the navigation toolbar, tied to the canvas
         self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
+
+        save_button = QtWidgets.QPushButton()
+        save_button.clicked.connect(self.save_production_data)
+        save_button.setIcon(QtGui.QIcon(":save.png"))
+        save_button.setToolTip("Save production data")
+        save_button.setStatusTip("Save production data")
         
         show_button = QtWidgets.QPushButton()
         show_button.clicked.connect(self.plot_settings_view)
@@ -61,9 +74,10 @@ class MultiPlot(QtWidgets.QMainWindow):
         show_button.setStatusTip("Edit settings")
 
         buttonbox0 = QtWidgets.QDialogButtonBox()
-        buttonbox0.addButton(show_button, QtWidgets.QDialogButtonBox.ActionRole)               
+        buttonbox0.addButton(save_button, QtWidgets.QDialogButtonBox.ActionRole)
+        buttonbox0.addButton(show_button, QtWidgets.QDialogButtonBox.ActionRole)
 
-        self.mpl_toolbar.addWidget(show_button)                      
+        self.mpl_toolbar.addWidget(buttonbox0)                      
                                 
         vbox = QtWidgets.QVBoxLayout()        
         vbox.addWidget(self.mpl_toolbar)
@@ -74,6 +88,17 @@ class MultiPlot(QtWidgets.QMainWindow):
         
         self.status_text = QtWidgets.QLabel("")        
         self.statusBar().addWidget(self.status_text,1)
+
+    def save_production_data(self):
+        filename = QtWidgets.QFileDialog.getSaveFileName(self,self.tr("Save file"), self.prev_dir_path, "CSV files (*.csv)")
+        filename = filename[0]
+        
+        if not filename:
+            return
+
+        self.prev_dir_path = ntpath.dirname(filename[0])
+        self.prod_rates_df.to_csv(filename)        
+        self.statusBar().showMessage("File saved")
 
     def plot_settings_view(self):
         settings_dialog = PlotSettingsDialog(self)
@@ -114,6 +139,7 @@ class MultiPlot(QtWidgets.QMainWindow):
                 axes.set_yticklabels(())
                 if (not num0 == self.parent.plot_selection[-1]):
                     axes.set_xticklabels(()) 
+                axes.tick_params(pad=8)
                 num1 += 1
 
             num0 += 1

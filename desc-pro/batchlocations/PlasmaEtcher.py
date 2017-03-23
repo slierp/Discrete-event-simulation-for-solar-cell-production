@@ -61,7 +61,7 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         self.utilization.append(self.production_volume)
         
     def prod_volume(self):
-        return self.output.container.level
+        return self.production_volume
 
     def nominal_throughput(self):
         return self.params['stack_size']*60/self.params['process_time']

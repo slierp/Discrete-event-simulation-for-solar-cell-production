@@ -305,7 +305,11 @@ class RunSimulationThread(QtCore.QObject):
 
                 prod_rates = []
                 for i in range(len(self.batchlocations)):
-                    prod_rates.append((prod_volumes[i]-prev_prod_volumes[i])/3600)
+                    if not isinstance(self.batchlocations[i],Buffer):
+                        prod_rates.append(prod_volumes[i]-prev_prod_volumes[i])
+                    else:
+                        # not really a production rate; just current buffer volume
+                        prod_rates.append(prod_volumes[i])
 
                 self.prod_rates_df.loc[len(self.prod_rates_df)] = prod_rates
 

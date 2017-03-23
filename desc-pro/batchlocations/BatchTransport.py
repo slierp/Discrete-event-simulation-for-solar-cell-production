@@ -17,6 +17,7 @@ class BatchTransport(QtCore.QObject):
         self.params['name'] = ""
         self.params['type'] = "BatchTransport"
         self.params['batch_size'] = 1
+        self.params['cassette_size'] = 1
         self.params['wait_time'] = 60 # simulation runs much faster with higher values!!! 
         self.params.update(_params)
 
@@ -27,6 +28,7 @@ class BatchTransport(QtCore.QObject):
     
     def run(self):
         batch_size = self.params['batch_size']
+        cassette_size = self.params['cassette_size']
         wait_time = self.params['wait_time']
         continue_loop = False        
         
@@ -47,7 +49,7 @@ class BatchTransport(QtCore.QObject):
                                 cassettes.append(cassette)
                                 
                             yield self.env.timeout(self.batchconnections[i][2])
-                            self.transport_counter += batch_size
+                            self.transport_counter += batch_size*cassette_size
                             
                             for k in cassettes:
                                 yield self.batchconnections[i][1].store.put(k)
@@ -75,7 +77,7 @@ class BatchTransport(QtCore.QObject):
                                 cassettes.append(cassette)
                         
                             yield self.env.timeout(self.batchconnections[i][2])
-                            self.transport_counter += batch_size
+                            self.transport_counter += batch_size*cassette_size
 
                             for k in cassettes:
                                 yield self.batchconnections[i][1].input.put(k)
@@ -109,7 +111,7 @@ class BatchTransport(QtCore.QObject):
                                 cassettes.append(cassette)
                             
                             yield self.env.timeout(self.batchconnections[i][2])
-                            self.transport_counter += batch_size                            
+                            self.transport_counter += batch_size*cassette_size                         
 
                             for k in cassettes:
                                 yield self.batchconnections[i][1].store.put(k)

@@ -223,6 +223,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params = {}
         transport_params['name'] = "cl0"
         transport_params['batch_size'] = self.params['batch_size']      
+        transport_params['cassette_size'] = self.params['cassette_size']
         self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between first rinse, chemical oxidation and second rinse ###
@@ -239,7 +240,8 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
 
         transport_params = {}
         transport_params['name'] = "cl1"
-        transport_params['batch_size'] = self.params['batch_size']        
+        transport_params['batch_size'] = self.params['batch_size']    
+        transport_params['cassette_size'] = self.params['cassette_size']
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
 
         ### Batch transporter between second rinse, second oxide etch, third rinse and dryers ###
@@ -261,6 +263,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params = {}
         transport_params['name'] = "cl2"
         transport_params['batch_size'] = self.params['batch_size']        
+        transport_params['cassette_size'] = self.params['cassette_size']
         self.transport2 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
         ### Batch transporter between dryers and output ###
@@ -273,6 +276,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params = {}
         transport_params['name'] = "cl3"
         transport_params['batch_size'] = self.params['batch_size']
+        transport_params['cassette_size'] = self.params['cassette_size']
         self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
     def report(self):
