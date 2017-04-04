@@ -7,10 +7,16 @@ class AddTechnicianToolDialog(QtWidgets.QDialog):
         super(QtWidgets.QDialog, self).__init__(parent)
         
         self.parent = parent
+        self.view = self.parent.technicians_view
+        self.model = self.parent.technicians_model
+        self.batchlocations = self.parent.batchlocations
+        self.technicians = self.parent.technicians_widget.technicians
+        self.statusbar = self.parent.statusBar()
+        self.load_definition = self.parent.technicians_widget.load_definition_technicians
 
         # find out which tool was selected
-        self.row = self.parent.technicians_view.selectedIndexes()[0].parent().row()
-        self.index = self.parent.technicians_view.selectedIndexes()[0].row()        
+        self.row = self.view.selectedIndexes()[0].parent().row()
+        self.index = self.view.selectedIndexes()[0].row()        
         
         self.setWindowTitle(self.tr("Add technician tools"))
         vbox = QtWidgets.QVBoxLayout()
@@ -23,12 +29,12 @@ class AddTechnicianToolDialog(QtWidgets.QDialog):
 
         self.dataset_cb = []
         self.dataset_tools = []
-        for i, value in enumerate(self.parent.batchlocations):
+        for i, value in enumerate(self.batchlocations):
             if value[0] in self.tools_list:
                 item = value[0] + " " + value[1]['name']
                 self.dataset_cb.append(QtWidgets.QCheckBox(item))
                 self.dataset_tools.append(i)
-                if i in self.parent.technicians[self.row][0]:
+                if i in self.technicians[self.row][0]:
                     self.dataset_cb[-1].setChecked(True)
 
         scroll_area = QtWidgets.QScrollArea()
@@ -61,23 +67,23 @@ class AddTechnicianToolDialog(QtWidgets.QDialog):
 
     def read(self):
         # Add tools to technician
-        self.parent.technicians[self.row][0] = []
+        self.technicians[self.row][0] = []
         
         j = 0
-        for i, value in enumerate(self.parent.batchlocations):
+        for i, value in enumerate(self.batchlocations):
             if value[0] in self.tools_list:
                 if self.dataset_cb[j].isChecked():
-                    self.parent.technicians[self.row][0].append(self.dataset_tools[j])
+                    self.technicians[self.row][0].append(self.dataset_tools[j])
                 j += 1
         
-        self.parent.technicians[self.row][0].sort()
+        self.technicians[self.row][0].sort()
         
-        self.parent.load_definition_technicians(False)
+        self.load_definition(False)
         
         # re-expand the technican parent item
-        index = self.parent.technicians_model.index(self.row, 0)
-        self.parent.technicians_view.setExpanded(index, True)              
+        index = self.model.index(self.row, 0)
+        self.view.setExpanded(index, True)              
             
-        self.parent.statusBar().showMessage("Technician tools updated") 
+        self.statusbar.showMessage("Technician tools updated") 
         
         self.accept()

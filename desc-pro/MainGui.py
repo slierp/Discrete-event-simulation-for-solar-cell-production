@@ -11,10 +11,8 @@ from dialogs.LineDiagramView import LineDiagramView
 from dialogs.AddCassetteLoopView import AddCassetteLoopView
 from dialogs.DelCassetteLoopView import DelCassetteLoopView
 from dialogs.EditCassetteLoopView import EditCassetteLoopView
-from dialogs.AddTechnicianView import AddTechnicianView
-from dialogs.DelTechnicianView import DelTechnicianView
-from dialogs.EditTechnicianView import EditTechnicianView
 from dialogs.HelpDialog import HelpDialog
+from TechniciansWidget import TechniciansWidget
 from RunSimulationThread import RunSimulationThread
 from MainPlot import MultiPlot
 import pickle
@@ -124,6 +122,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.prev_dir_path = ""
         self.prev_save_path = ""
 
+        # Batchlocations
         self.batchlocations_model = QtGui.QStandardItemModel()
         self.batchlocations_view = DeselectableTreeView()
         self.batchlocations_view.doubleClicked.connect(self.edit_batchlocation_view)
@@ -131,31 +130,6 @@ class MainGui(QtWidgets.QMainWindow):
         self.batch_filter = BatchlocationsViewKeyFilter()
         self.batchlocations_view.installEventFilter(self.batch_filter)
         self.batch_filter.signal.connect(self.treeview_signals)        
-
-        self.cassetteloops_model = QtGui.QStandardItemModel()
-        self.cassetteloops_view = DeselectableTreeView()
-        self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloop_view)     
-        self.cassetteloops_filter = CassetteLoopsKeyFilter()
-        self.cassetteloops_view.installEventFilter(self.cassetteloops_filter)
-        self.cassetteloops_filter.signal.connect(self.treeview_signals)
-
-        self.operators_model = QtGui.QStandardItemModel()
-        self.operators_view = DeselectableTreeView()
-        self.operators_view.doubleClicked.connect(self.edit_operator_view)
-        self.operators_view.setAlternatingRowColors(True)
-        self.oper_filter = OperatorsViewKeyFilter()
-        self.operators_view.installEventFilter(self.oper_filter)
-        self.oper_filter.signal.connect(self.treeview_signals)
-
-        self.technicians_model = QtGui.QStandardItemModel()
-        self.technicians_view = DeselectableTreeView()
-        self.technicians_view.doubleClicked.connect(self.edit_technician_view)
-        self.technicians_view.setAlternatingRowColors(True)
-        self.tech_filter = TechniciansViewKeyFilter()
-        self.technicians_view.installEventFilter(self.tech_filter)
-        self.tech_filter.signal.connect(self.treeview_signals)
-
-        self.batchlocation_dialog = None
 
         self.batchlocations = [] #tool class name, dict with settings
         self.batchlocations.append(["WaferSource", {'name' : '0'}])
@@ -165,12 +139,39 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
         self.batchlocations.append(["TubePECVD", {'name' : '0'}])
         self.batchlocations.append(["PrintLine", {'name' : '0'}])
-                
+
+        # Cassette loops
+        self.cassetteloops_model = QtGui.QStandardItemModel()
+        self.cassetteloops_view = DeselectableTreeView()
+        self.cassetteloops_view.doubleClicked.connect(self.edit_cassetteloop_view)     
+        self.cassetteloops_filter = CassetteLoopsKeyFilter()
+        self.cassetteloops_view.installEventFilter(self.cassetteloops_filter)
+        self.cassetteloops_filter.signal.connect(self.treeview_signals)
         self.cassette_loops = []
-        self.locationgroups = [] 
-        self.batchconnections = []
+
+        # Operators
+        self.operators_model = QtGui.QStandardItemModel()
+        self.operators_view = DeselectableTreeView()
+        self.operators_view.doubleClicked.connect(self.edit_operator_view)
+        self.operators_view.setAlternatingRowColors(True)
+        self.oper_filter = OperatorsViewKeyFilter()
+        self.operators_view.installEventFilter(self.oper_filter)
+        self.oper_filter.signal.connect(self.treeview_signals)
         self.operators = []
-        self.technicians = []        
+
+        # Technicians       
+        self.technicians_model = QtGui.QStandardItemModel()
+        self.technicians_view = DeselectableTreeView()
+        self.technicians_widget = TechniciansWidget(self)
+        self.technicians_view.doubleClicked.connect(self.technicians_widget.edit_technician_view)
+        self.technicians_view.setAlternatingRowColors(True)
+        self.tech_filter = TechniciansViewKeyFilter()
+        self.technicians_view.installEventFilter(self.tech_filter)
+        self.tech_filter.signal.connect(self.treeview_signals)
+
+        # Misc
+        self.locationgroups = [] 
+        self.batchconnections = []        
 
         self.group_names = {}
         self.group_names['BatchClean'] = "Wet chemical clean"
@@ -235,7 +236,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.load_definition_batchlocations()
         self.load_definition_cassetteloops()
         self.load_definition_operators()
-        self.load_definition_technicians()        
+        self.technicians_widget.load_definition_technicians()        
 
     @QtCore.pyqtSlot(str)
     def treeview_signals(self,signal):
@@ -252,9 +253,9 @@ class MainGui(QtWidgets.QMainWindow):
         elif signal == "del_cassetteloop_view":
             self.del_cassetteloop_view()            
         elif signal == "add_technician_view":
-            self.add_technician_view()
+            self.technicians_widget.add_technician_view()
         elif signal == "del_technician_view":
-            self.del_technician_view()
+            self.technicians_widget.del_technician_view()
             
     def open_file(self):
 
@@ -269,7 +270,7 @@ class MainGui(QtWidgets.QMainWindow):
         
         try:
             with open(filename,'rb') as f:
-                self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators,self.technicians = pickle.load(f)
+                self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators,self.technicians_widget.technicians = pickle.load(f)
         except:
             msg = self.tr("Could not read file \"" + ntpath.basename(filename) + "\"")
             QtWidgets.QMessageBox.about(self, self.tr("Warning"), msg) 
@@ -278,7 +279,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.load_definition_batchlocations(False)
         self.load_definition_cassetteloops(False)
         self.load_definition_operators(False)
-        self.load_definition_technicians(False)
+        self.technicians_widget.load_definition_technicians(False)
             
         self.statusBar().showMessage(self.tr("New description loaded"))
 
@@ -289,7 +290,7 @@ class MainGui(QtWidgets.QMainWindow):
             return
         
         with open(self.prev_save_path, 'wb') as f:
-            pickle.dump([self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators,self.technicians], f)
+            pickle.dump([self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators,self.technicians_widget.technicians], f)
             
         self.statusBar().showMessage(self.tr("File saved"))
 
@@ -307,7 +308,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.prev_dir_path = ntpath.dirname(filename)
         
         with open(filename, 'wb') as f:        
-            pickle.dump([self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators,self.technicians], f)
+            pickle.dump([self.batchlocations,self.locationgroups,self.cassette_loops,self.batchconnections,self.operators,self.technicians_widget.technicians], f)
             
         self.statusBar().showMessage(self.tr("File saved"))            
 
@@ -345,23 +346,6 @@ class MainGui(QtWidgets.QMainWindow):
                 parent.appendRow(child)
             self.operators_model.appendRow(parent)
             #self.operators_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True) 
-
-    def load_definition_technicians(self, default=True):
-
-        if (default): # generate default technicians list based on batchlocationgroup
-            self.generate_technicians()
-
-        self.technicians_model.clear()
-        self.technicians_model.setHorizontalHeaderLabels(['Technicians'])                       
-
-        for i in range(len(self.technicians)):
-            parent = QtGui.QStandardItem('Technician ' + self.technicians[i][1]['name'])
-
-            for j, value in enumerate(self.technicians[i][0]):
-                item = self.batchlocations[value][0] + " " + self.batchlocations[value][1]['name']
-                child = QtGui.QStandardItem(item)
-                parent.appendRow(child)
-            self.technicians_model.appendRow(parent)
 
     def reindex_locationgroups(self):
         # change it so that all indexes are consecutive, which should always be the case
@@ -574,10 +558,6 @@ class MainGui(QtWidgets.QMainWindow):
         self.load_definition_operators() # default operators list
         self.statusBar().showMessage(self.tr("Operators automatically generated"))
 
-    def import_batchlocations_tech(self):
-        self.load_definition_technicians() # default operators list
-        self.statusBar().showMessage(self.tr("Technicians automatically generated"))
-
     def print_batchconnection(self, num):
         if (num >= len(self.batchconnections)):
             return "Error"
@@ -604,31 +584,6 @@ class MainGui(QtWidgets.QMainWindow):
                 curr_locationgroup = self.batchconnections[i][0][0]
                 num += 1
                 self.operators[num][0].append(i)
-
-    def generate_technicians(self):
-        # generate a default technician list from batchlocations list
-
-        self.technicians = []
-        
-        wet_chem_list = ['BatchClean','BatchTex','SingleSideEtch']
-        backend_list = ['TubeFurnace','IonImplanter','WaferStacker','WaferUnstacker','PlasmaEtcher']
-        frontend_list = ['TubePECVD','InlinePECVD','PrintLine','SpatialALD']
-        
-        # make three technicians by default
-        self.technicians.append([[],{'name' : 'wet'}])
-        self.technicians.append([[],{'name' : 'back'}])
-        self.technicians.append([[],{'name' : 'front'}])
-        
-        for i, value in enumerate(self.batchlocations):
-            
-            if value[0] in wet_chem_list:
-                self.technicians[0][0].append(i)
-
-            if value[0] in backend_list:
-                self.technicians[1][0].append(i)
-
-            if value[0] in frontend_list:
-                self.technicians[2][0].append(i)
         
     def add_operator_view(self):
         AddOperatorView(self)    
@@ -653,30 +608,6 @@ class MainGui(QtWidgets.QMainWindow):
             self.operators_model.clear()
             self.operators_model.setHorizontalHeaderLabels(['Operators']) 
             self.statusBar().showMessage(self.tr("All operators were removed"))
-
-    def add_technician_view(self):        
-        AddTechnicianView(self)    
-
-    def del_technician_view(self):
-        DelTechnicianView(self)
-
-    def edit_technician_view(self):
-        EditTechnicianView(self)
-
-    def trash_technician_view(self):
-        msgBox = QtWidgets.QMessageBox(self)
-        msgBox.setWindowTitle(self.tr("Warning"))
-        msgBox.setIcon(QtWidgets.QMessageBox.Warning)
-        msgBox.setText(self.tr("This will remove all technicians. Continue?"))
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-        msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        ret = msgBox.exec_()
-        
-        if (ret == QtWidgets.QMessageBox.Ok):
-            self.technicians = []
-            self.technicians_model.clear()
-            self.technicians_model.setHorizontalHeaderLabels(['Technicians']) 
-            self.statusBar().showMessage(self.tr("All technicians were removed"))
 
     def run_simulation(self):
         self.output_signal_counter = 0
@@ -1039,31 +970,31 @@ class MainGui(QtWidgets.QMainWindow):
         self.technicians_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         import_batchlocations_tech_button = QtWidgets.QPushButton()
-        import_batchlocations_tech_button.clicked.connect(self.import_batchlocations_tech)        
+        import_batchlocations_tech_button.clicked.connect(self.technicians_widget.import_batchlocations_tech)        
         import_batchlocations_tech_button.setIcon(QtGui.QIcon(":import.png"))
         import_batchlocations_tech_button.setToolTip(self.tr("Auto-generate technicians"))
         import_batchlocations_tech_button.setStatusTip(self.tr("Auto-generate technicians"))
 
         add_technician_button = QtWidgets.QPushButton()
-        add_technician_button.clicked.connect(self.add_technician_view)           
+        add_technician_button.clicked.connect(self.technicians_widget.add_technician_view)           
         add_technician_button.setIcon(QtGui.QIcon(":plus.png"))
         add_technician_button.setToolTip(self.tr("Add [A]"))
         add_technician_button.setStatusTip(self.tr("Add [A]"))
         
         del_technician_button = QtWidgets.QPushButton()
-        del_technician_button.clicked.connect(self.del_technician_view)          
+        del_technician_button.clicked.connect(self.technicians_widget.del_technician_view)          
         del_technician_button.setIcon(QtGui.QIcon(":minus.png"))
         del_technician_button.setToolTip(self.tr("Remove [Del]"))
         del_technician_button.setStatusTip(self.tr("Remove [Del]"))
 
         edit_technician_button = QtWidgets.QPushButton()
-        edit_technician_button.clicked.connect(self.edit_technician_view)        
+        edit_technician_button.clicked.connect(self.technicians_widget.edit_technician_view)        
         edit_technician_button.setIcon(QtGui.QIcon(":gear.png"))
         edit_technician_button.setToolTip(self.tr("Edit settings"))
         edit_technician_button.setStatusTip(self.tr("Edit settings"))
         
         empty_technician_view_button = QtWidgets.QPushButton()
-        empty_technician_view_button.clicked.connect(self.trash_technician_view)        
+        empty_technician_view_button.clicked.connect(self.technicians_widget.trash_technician_view)        
         empty_technician_view_button.setIcon(QtGui.QIcon(":trash.png"))
         empty_technician_view_button.setToolTip(self.tr("Remove all"))
         empty_technician_view_button.setStatusTip(self.tr("Remove all"))        

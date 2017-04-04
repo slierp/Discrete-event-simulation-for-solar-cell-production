@@ -15,15 +15,21 @@ class dummy_env(object):
         pass
 
 class TechnicianSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, _parent):
+    def __init__(self, parent):
 
-        super(QtWidgets.QDialog, self).__init__(_parent)
+        super(QtWidgets.QDialog, self).__init__(parent)
         # create dialog screen for each parameter in curr_params
         
-        self.parent = _parent
+        self.parent = parent
+        self.view = self.parent.technicians_view
+        self.model = self.parent.technicians_model
+        self.batchlocations = self.parent.batchlocations
+        self.technicians = self.parent.technicians_widget.technicians
+        self.statusbar = self.parent.statusBar()
+        self.load_definition = self.parent.technicians_widget.load_definition_technicians        
 
         # find out which operator was selected
-        self.row = self.parent.technicians_view.selectedIndexes()[0].row()
+        self.row = self.view.selectedIndexes()[0].row()
 
         env = dummy_env()
         curr_params = {}
@@ -31,7 +37,7 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         curr_params = Technician(env).params
 
         # update default settings list with currently stored settings
-        curr_params.update(self.parent.technicians[self.row][1])
+        curr_params.update(self.technicians[self.row][1])
 
         self.setWindowTitle(self.tr("Technician settings"))
 
@@ -155,11 +161,11 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         for i in self.booleans:
             new_params[str(i.objectName())] = i.isChecked()
         
-        self.parent.technicians[self.row][1].update(new_params)
-        self.parent.load_definition_technicians(False)
+        self.technicians[self.row][1].update(new_params)
+        self.load_definition(False)
 
         # select row again after reloading operator definitions
-        index = self.parent.technicians_model.index(self.row, 0)
-        self.parent.technicians_view.setCurrentIndex(index)
-        self.parent.statusBar().showMessage(self.tr("Technician settings updated"))
+        index = self.model.index(self.row, 0)
+        self.view.setCurrentIndex(index)
+        self.statusbar.showMessage(self.tr("Technician settings updated"))
         self.accept()
