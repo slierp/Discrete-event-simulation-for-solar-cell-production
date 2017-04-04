@@ -195,7 +195,10 @@ class TechniciansWidget(QtCore.QObject):
         ret = msgBox.exec_()
         
         if (ret == QtWidgets.QMessageBox.Ok):
-            self.technicians = []
-            self.model.clear()
-            self.model.setHorizontalHeaderLabels(['Technicians']) 
-            self.statusbar.showMessage(self.tr("All technicians were removed"))
+            self.trash_technicians()
+            
+    def trash_technicians(self):            
+        self.technicians = []
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(['Technicians']) 
+        self.statusbar.showMessage(self.tr("All technicians were removed"))

@@ -238,7 +238,10 @@ class OperatorsWidget(QtCore.QObject):
         ret = msgBox.exec_()
         
         if (ret == QtWidgets.QMessageBox.Ok):
-            self.operators = []
-            self.model.clear()
-            self.model.setHorizontalHeaderLabels(['Operators']) 
-            self.statusbar.showMessage(self.tr("All operators were removed"))
+            self.trash_operators()
+            
+    def trash_operators(self):            
+        self.operators = []
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(['Operators']) 
+        self.statusbar.showMessage(self.tr("All operators were removed"))

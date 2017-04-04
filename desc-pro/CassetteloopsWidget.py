@@ -187,10 +187,16 @@ class CassetteloopsWidget(QtCore.QObject):
 
         if (len(self.cassette_loops) == 0):
             return
-            
+    
+        reset_list = []
         for i in range(len(self.cassette_loops)):
             if (row >= self.cassette_loops[i][0]) and (row <= self.cassette_loops[i][1]):
-                del self.cassette_loops[i]                        
+                reset_list.append(i)
+        
+        reset_list = list(set(reset_list)) # make unique
+
+        for i in reset_list:
+            del self.cassette_loops[i]                        
             
         self.load_definition(False)
     
@@ -216,7 +222,10 @@ class CassetteloopsWidget(QtCore.QObject):
         ret = msgBox.exec_()
         
         if (ret == QtWidgets.QMessageBox.Ok):
-            self.cassette_loops = []
-            self.model.clear()
-            self.model.setHorizontalHeaderLabels(['Cassette loops']) 
-            self.statusbar.showMessage(self.tr("All cassette loops were removed"))
+            self.trash_cassetteloops()
+            
+    def trash_cassetteloops(self):            
+        self.cassette_loops = []
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(['Cassette loops']) 
+        self.statusbar.showMessage(self.tr("All cassette loops were removed"))

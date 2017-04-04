@@ -113,7 +113,6 @@ class ToolsWidget(QtCore.QObject):
 
         else: # if child item
             row = self.view.selectedIndexes()[0].parent().row() # selected row in locationgroups           
-
             
             if (len(self.locationgroups[row]) == 1):
                 # if last child item, remove batchlocation and whole row in locationgroups
@@ -129,7 +128,7 @@ class ToolsWidget(QtCore.QObject):
         # do a bit of housekeeping now that batchlocations has changed
         self.reindex_locationgroups()
         self.load_definition(False)
-        self.generate_batchconnections() # generate new connections list        
+        self.generate_batchconnections() # generate new connections list
         
         if child_item:
             index = self.model.index(row, 0)
@@ -164,10 +163,14 @@ class ToolsWidget(QtCore.QObject):
             batchlocation_dialog.show() 
 
     def trash_batchlocation_view(self):
+        trash_cassetteloops = self.parent.cassetteloops_widget.trash_cassetteloops
+        trash_operators = self.parent.operators_widget.trash_operators
+        trash_technicians = self.parent.technicians_widget.trash_technicians
+
         msgBox = QtWidgets.QMessageBox(self.parent)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
-        msgBox.setText(self.tr("This will remove all tools. Continue?"))
+        msgBox.setText(self.tr("This will remove all tools, cassette loops, operators and technicians. Continue?"))
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
         ret = msgBox.exec_()
@@ -176,6 +179,9 @@ class ToolsWidget(QtCore.QObject):
             self.batchlocations = []
             self.locationgroups = []
             self.batchconnections = []
+            trash_cassetteloops()
+            trash_operators()
+            trash_technicians()
             self.model.clear()
             self.model.setHorizontalHeaderLabels(['Process flow']) 
             self.statusbar.showMessage(self.tr("All tools were removed"))

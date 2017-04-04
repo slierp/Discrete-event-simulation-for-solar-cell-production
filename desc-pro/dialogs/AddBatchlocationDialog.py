@@ -17,6 +17,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         self.append_mode = False
         parent_type = None
         self.child_item = False
+        self.row = False
         
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
@@ -106,6 +107,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         reindex_locationgroups = self.parent.tools_widget.reindex_locationgroups
         load_definition = self.parent.tools_widget.load_definition
         generate_locationgroups = self.parent.tools_widget.generate_locationgroups
+        reset_cassetteloops = self.parent.cassetteloops_widget.reset_cassetteloops
         reset_operators = self.parent.operators_widget.reset_operators
 
         if (self.append_mode): # if nothing was selected
@@ -133,8 +135,11 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         # do a bit of housekeeping, now that batchlocations has changed
         reindex_locationgroups()
         load_definition(False)
-        generate_locationgroups() # generate new connections list        
-        reset_operators(self.row)
+        generate_locationgroups() # generate new connections list
+        
+        if self.row:
+            reset_cassetteloops(self.row)
+            reset_operators(self.row)
 
         # re-expand parent item in view       
         index = self.model.index(self.row, 0)
