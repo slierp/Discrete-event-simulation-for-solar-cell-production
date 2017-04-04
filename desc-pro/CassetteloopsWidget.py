@@ -11,7 +11,7 @@ class CassetteloopsWidget(QtCore.QObject):
         self.cassette_loops = []
         self.view = self.parent.cassetteloops_view        
         self.model = self.parent.cassetteloops_model
-        self.group_names = self.parent.group_names
+        self.group_names = self.parent.tools_widget.group_names
         self.statusbar = self.parent.statusBar()
 
         # 1 = stack buffer; 2 = single cassette buffer; 3 = dual cassette buffer
@@ -55,8 +55,8 @@ class CassetteloopsWidget(QtCore.QObject):
         self.cassette_loops = []
         unavailable_groups = []
         found_loops = []
-        batchlocations = self.parent.batchlocations
-        locationgroups = self.parent.locationgroups
+        batchlocations = self.parent.tools_widget.batchlocations
+        locationgroups = self.parent.tools_widget.locationgroups
 
         # find possible loops using every possible start position
         for search_start_position in range(len(locationgroups)-1):           
@@ -131,8 +131,8 @@ class CassetteloopsWidget(QtCore.QObject):
 
     def print_cassetteloop(self, num):
         
-        batchlocations = self.parent.batchlocations
-        locationgroups = self.parent.locationgroups
+        batchlocations = self.parent.tools_widget.batchlocations
+        locationgroups = self.parent.tools_widget.locationgroups
         
         if (num >= len(locationgroups)):
             return "Error"
@@ -181,6 +181,18 @@ class CassetteloopsWidget(QtCore.QObject):
         self.load_definition(False)
 
         self.statusbar.showMessage(self.tr("Cassette loop removed"))
+
+    def reset_cassetteloops(self, row):
+        # remove cassette loops whose tools no longer exist
+
+        if (len(self.cassette_loops) == 0):
+            return
+            
+        for i in range(len(self.cassette_loops)):
+            if (row >= self.cassette_loops[i][0]) and (row <= self.cassette_loops[i][1]):
+                del self.cassette_loops[i]                        
+            
+        self.load_definition(False)
     
     def edit_cassetteloop_view(self):
         if (not len(self.view.selectedIndexes())):

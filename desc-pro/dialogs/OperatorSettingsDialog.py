@@ -23,7 +23,7 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
         self.parent = parent
         self.view = self.parent.operators_view
         self.model = self.parent.operators_model
-        self.batchlocations = self.parent.batchlocations
+        self.batchlocations = self.parent.tools_widget.batchlocations
         self.operators = self.parent.operators_widget.operators
         self.statusbar = self.parent.statusBar()
         self.load_definition = self.parent.operators_widget.load_definition

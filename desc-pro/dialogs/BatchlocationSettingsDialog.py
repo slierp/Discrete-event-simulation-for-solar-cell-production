@@ -38,15 +38,21 @@ class BatchlocationSettingsDialog(QtWidgets.QDialog):
         # create dialog screen for each parameter in curr_params
         
         self.parent = _parent
+        self.batchlocations = self.parent.tools_widget.batchlocations
+        self.locationgroups = self.parent.tools_widget.locationgroups        
+        self.load_definition = self.parent.tools_widget.load_definition
+        self.view = self.parent.batchlocations_view           
+        self.model = self.parent.batchlocations_model
+        self.statusbar = self.parent.statusBar()        
 
         svg.setup(svg) # needed for pyinstaller
         roundedbox.setup(roundedbox) # needed for pyinstaller
 
         # find out which batchlocation was selected
-        self.row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row()
-        index = self.parent.batchlocations_view.selectedIndexes()[0].row()
-        self.modified_batchlocation_number = self.parent.locationgroups[self.row][index]       
-        batchlocation = self.parent.batchlocations[self.modified_batchlocation_number]
+        self.row = self.view.selectedIndexes()[0].parent().row()
+        index = self.view.selectedIndexes()[0].row()
+        self.modified_batchlocation_number = self.locationgroups[self.row][index]       
+        batchlocation = self.batchlocations[self.modified_batchlocation_number]
 
         env = dummy_env()
         curr_params = {}
@@ -210,7 +216,7 @@ class BatchlocationSettingsDialog(QtWidgets.QDialog):
             vbox.addStretch(1)
             generic_widget = QtWidgets.QWidget()
             generic_widget.setLayout(vbox)
-            tabwidget.addTab(generic_widget, setting_type_tabs[j]) #QtCore.QString(setting_type_tabs[j]))
+            tabwidget.addTab(generic_widget, setting_type_tabs[j])
         
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(tabwidget)        
@@ -241,12 +247,12 @@ class BatchlocationSettingsDialog(QtWidgets.QDialog):
         for i in self.doubles:
             new_params[str(i.objectName())] = float(i.text())
         
-        self.parent.batchlocations[self.modified_batchlocation_number][1].update(new_params)
-        self.parent.load_definition_batchlocations(False)
+        self.batchlocations[self.modified_batchlocation_number][1].update(new_params)
+        self.load_definition(False)
 
         if self.row: # expand row again after reloading definitions
-            index = self.parent.batchlocations_model.index(self.row, 0)
-            self.parent.batchlocations_view.setExpanded(index, True)
+            index = self.model.index(self.row, 0)
+            self.view.setExpanded(index, True)
         
-        self.parent.statusBar().showMessage(self.tr("Tool settings updated"))
+        self.statusbar.showMessage(self.tr("Tool settings updated"))
         self.accept()

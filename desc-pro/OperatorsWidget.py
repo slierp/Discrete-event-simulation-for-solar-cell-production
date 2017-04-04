@@ -38,7 +38,7 @@ class OperatorsWidget(QtCore.QObject):
 
     def print_batchlocation(self, num):
         
-        batchlocations = self.parent.batchlocations
+        batchlocations = self.parent.tools_widget.batchlocations
         
         if (num >= len(batchlocations)):
             return "Error"
@@ -47,8 +47,8 @@ class OperatorsWidget(QtCore.QObject):
 
     def print_batchconnection(self, num):
 
-        locationgroups = self.parent.locationgroups
-        batchconnections = self.parent.batchconnections        
+        locationgroups = self.parent.tools_widget.locationgroups
+        batchconnections = self.parent.tools_widget.batchconnections        
         
         if (num >= len(batchconnections)):
             return "Error"
@@ -61,8 +61,8 @@ class OperatorsWidget(QtCore.QObject):
     def generate_operators(self):
         # generate a default operators list from batchconnections list
 
-        locationgroups = self.parent.locationgroups
-        batchconnections = self.parent.batchconnections
+        locationgroups = self.parent.tools_widget.locationgroups
+        batchconnections = self.parent.tools_widget.batchconnections
         
         self.operators = []    
         for i in range(len(locationgroups)-1):
@@ -90,8 +90,10 @@ class OperatorsWidget(QtCore.QObject):
             self.add_operator_batchconnections()
             
     def add_operator(self, append_mode = False):
+        batchconnections = self.parent.tools_widget.batchconnections
+        
         if (append_mode):
-            if (len(self.parent.batchconnections) > 0):
+            if (len(batchconnections) > 0):
                 self.operators.append([[0],{'name' : 'new'}])
        
                 # reload definitions
@@ -171,6 +173,32 @@ class OperatorsWidget(QtCore.QObject):
             
             self.statusbar.showMessage("Operator connection removed") 
 
+    def reset_operators(self, row):
+        # reset connection list of operators whose connections have become invalid
+    
+        batchconnections = self.parent.tools_widget.batchconnections
+        batchlocations = self.parent.tools_widget.batchlocations    
+        
+        if (len(batchlocations) == 0):
+            return
+
+        reset_list = []
+        for i, value0 in enumerate(self.operators):
+            for j, value1 in enumerate(self.operators[i][0]):
+                if (self.operators[i][0][j] < (len(batchconnections)-1)):
+                    num = batchconnections[self.operators[i][0][j]]
+                    
+                    if (num[0][0] >= row) | (num[1][0] >= row):
+                        reset_list.append(i)
+            
+        for i in reset_list:
+            dict_copy = self.operators[i][1]
+            del self.operators[i]                        
+            self.operators.insert(i,[[],dict_copy])
+            self.operators[i][0].append(0)
+            
+        self.load_definition(False)
+
     def edit_operator_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
@@ -188,10 +216,12 @@ class OperatorsWidget(QtCore.QObject):
         batchlocation_dialog.show()        
 
     def edit_batchconnection(self):
+        batchconnections = self.parent.tools_widget.batchconnections        
+        
         # find out which connection was selected
         row = self.view.selectedIndexes()[0].parent().row()
         index = self.view.selectedIndexes()[0].row()       
-        batchconnection = self.parent.batchconnections[self.operators[row][0][index]]
+        batchconnection = batchconnections[self.operators[row][0][index]]
 
         # start dialog to enable user to change settings
         connection_dialog = ConnectionSettingsDialog(self.parent,batchconnection)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from blockdiag import parser, builder, drawer
-from PyQt5 import QtWidgets, QtCore, QtSvg, QtGui
+from PyQt5 import QtWidgets, QtSvg, QtGui
 from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
@@ -37,13 +37,19 @@ class LocationgroupSettingsDialog(QtWidgets.QDialog):
         # create dialog screen for each parameter in curr_params
         
         self.parent = _parent
+        self.batchlocations = self.parent.tools_widget.batchlocations
+        self.locationgroups = self.parent.tools_widget.locationgroups        
+        self.load_definition = self.parent.tools_widget.load_definition
+        self.view = self.parent.batchlocations_view           
+        self.model = self.parent.batchlocations_model
+        self.statusbar = self.parent.statusBar()
 
         svg.setup(svg) # needed for pyinstaller
         roundedbox.setup(roundedbox) # needed for pyinstaller
 
         # find out which batchlocation was selected
-        self.row = self.parent.batchlocations_view.selectedIndexes()[0].row()      
-        batchlocation = self.parent.batchlocations[self.parent.locationgroups[self.row][0]]
+        self.row = self.view.selectedIndexes()[0].row()      
+        batchlocation = self.batchlocations[self.locationgroups[self.row][0]]
 
         env = dummy_env()
         curr_params = {}
@@ -226,14 +232,14 @@ class LocationgroupSettingsDialog(QtWidgets.QDialog):
         for i in self.doubles:
             new_params[str(i.objectName())] = float(i.text())
         
-        for i in self.parent.locationgroups[self.row]:
-            self.parent.batchlocations[i][1].update(new_params)
+        for i in self.locationgroups[self.row]:
+            self.batchlocations[i][1].update(new_params)
         
-        self.parent.load_definition_batchlocations(False)
+        self.load_definition(False)
 
         if self.row: # expand row again after reloading definitions
-            index = self.parent.batchlocations_model.index(self.row, 0)
-            self.parent.batchlocations_view.setExpanded(index, True)
+            index = self.model.index(self.row, 0)
+            self.view.setExpanded(index, True)
         
-        self.parent.statusBar().showMessage(self.tr("Tool group settings updated"))
+        self.statusbar.showMessage(self.tr("Tool group settings updated"))
         self.accept()

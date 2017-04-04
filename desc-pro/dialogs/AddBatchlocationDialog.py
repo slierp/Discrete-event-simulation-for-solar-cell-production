@@ -8,22 +8,28 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         # create dialog screen for each parameter in curr_params
         
         self.parent = parent
+        self.view = self.parent.batchlocations_view        
+        self.model = self.parent.batchlocations_model
+        self.batchlocations = self.parent.tools_widget.batchlocations
+        self.locationgroups = self.parent.tools_widget.locationgroups
+        self.statusbar = self.parent.statusBar()        
+        
         self.append_mode = False
         parent_type = None
         self.child_item = False
         
-        if (not len(self.parent.batchlocations_view.selectedIndexes())):
+        if (not len(self.view.selectedIndexes())):
             # if nothing selected
             self.append_mode = True            
-        elif (self.parent.batchlocations_view.selectedIndexes()[0].parent().row() == -1):
+        elif (self.view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
-            self.row = self.parent.batchlocations_view.selectedIndexes()[0].row()
+            self.row = self.view.selectedIndexes()[0].row()
             self.index = None
-            parent_type = self.parent.batchlocations[self.parent.locationgroups[self.row][0]][0]
+            parent_type = self.batchlocations[self.locationgroups[self.row][0]][0]
         else:
-            self.row = self.parent.batchlocations_view.selectedIndexes()[0].parent().row()
-            self.index = self.parent.batchlocations_view.selectedIndexes()[0].row()
-            parent_type = self.parent.batchlocations[self.parent.locationgroups[self.row][self.index]][0]
+            self.row = self.view.selectedIndexes()[0].parent().row()
+            self.index = self.view.selectedIndexes()[0].row()
+            parent_type = self.batchlocations[self.locationgroups[self.row][self.index]][0]
             self.child_item = True
         
         self.setWindowTitle(self.tr("Add batch location"))
@@ -96,66 +102,48 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         self.setLayout(vbox)  
 
     def read(self):
+        
+        reindex_locationgroups = self.parent.tools_widget.reindex_locationgroups
+        load_definition = self.parent.tools_widget.load_definition
+        generate_locationgroups = self.parent.tools_widget.generate_locationgroups
+        reset_operators = self.parent.operators_widget.reset_operators
 
         if (self.append_mode): # if nothing was selected
-            self.selected_batchlocation_number = len(self.parent.batchlocations)
-            self.parent.locationgroups.append([0])
-            self.row = len(self.parent.locationgroups)-1
+            self.selected_batchlocation_number = len(self.batchlocations)
+            self.locationgroups.append([0])
+            self.row = len(self.locationgroups)-1
         elif (self.index == None): # if parent item was selected      
-            self.selected_batchlocation_number = self.parent.locationgroups[self.row][0]
-            self.parent.locationgroups.insert(self.row,[0])        
+            self.selected_batchlocation_number = self.locationgroups[self.row][0]
+            self.locationgroups.insert(self.row,[0])        
         else: # if child item was selected       
-            self.selected_batchlocation_number = self.parent.locationgroups[self.row][self.index]
-            self.parent.locationgroups[self.row].insert(self.index,0)        
+            self.selected_batchlocation_number = self.locationgroups[self.row][self.index]
+            self.locationgroups[self.row].insert(self.index,0)        
 
         new_dict = {}
         if (self.child_item): # copy previously selected batchlocation
             if (self.copy_checkbox.isChecked()): # if user selected this option
-                new_dict.update(self.parent.batchlocations[self.parent.locationgroups[self.row][self.index+1]][1])
+                new_dict.update(self.batchlocations[self.locationgroups[self.row][self.index+1]][1])
 
         # insert new batch location with selected name
         input_string = str(self.name_edit.text()) 
         new_dict.update({'name' : input_string})
-        self.parent.batchlocations.insert(self.selected_batchlocation_number,
+        self.batchlocations.insert(self.selected_batchlocation_number,
                                           [self.batchlocation_types_combo.currentText(), new_dict])
         
         # do a bit of housekeeping, now that batchlocations has changed
-        self.parent.reindex_locationgroups()
-        self.parent.load_definition_batchlocations(False)
-        self.parent.exec_locationgroups() # generate new connections list        
-        self.reset_operators(self.row)
+        reindex_locationgroups()
+        load_definition(False)
+        generate_locationgroups() # generate new connections list        
+        reset_operators(self.row)
 
         # re-expand parent item in view       
-        index = self.parent.batchlocations_model.index(self.row, 0)
-        self.parent.batchlocations_view.setExpanded(index, True)
+        index = self.model.index(self.row, 0)
+        self.view.setExpanded(index, True)
         
         if (self.child_item): # select newly created item in view
-            parent = self.parent.batchlocations_model.index(self.row, 0)
-            index = self.parent.batchlocations_model.index(self.index, 0, parent)
-            self.parent.batchlocations_view.setCurrentIndex(index)
+            parent = self.model.index(self.row, 0)
+            index = self.model.index(self.index, 0, parent)
+            self.view.setCurrentIndex(index)
         
-        self.parent.statusBar().showMessage(self.tr("Batch location added"))
+        self.statusbar.showMessage(self.tr("Batch location added"))
         self.accept()
-        
-    def reset_operators(self, row):
-        # reset connection list of operators whose connections have become invalid
-    
-        if (len(self.parent.batchlocations) == 0):
-            return
-
-        reset_list = []
-        for i, value0 in enumerate(self.parent.operators):
-            for j, value1 in enumerate(self.parent.operators[i][0]):
-                if (self.parent.operators[i][0][j] < (len(self.parent.batchconnections)-1)):
-                    num = self.parent.batchconnections[self.parent.operators[i][0][j]]
-                    
-                    if (num[0][0] >= row) | (num[1][0] >= row):
-                        reset_list.append(i)
-            
-        for i in reset_list:
-            dict_copy = self.parent.operators[i][1]
-            del self.parent.operators[i]                        
-            self.parent.operators.insert(i,[[],dict_copy])
-            self.parent.operators[i][0].append(0)
-            
-        self.parent.load_definition_operators(False)    

@@ -9,6 +9,8 @@ class LineDiagramDialog(QtWidgets.QDialog):
         super(QtWidgets.QDialog, self).__init__(parent)
         
         self.parent = parent
+        locationgroups = self.parent.tools_widget.locationgroups
+        batchlocations = self.parent.tools_widget.batchlocations
         
         self.clip = QtWidgets.QApplication.clipboard()
 
@@ -25,16 +27,16 @@ class LineDiagramDialog(QtWidgets.QDialog):
                        default_group_color = "#CCCCCC"
                        """
         
-        for i, value in enumerate(self.parent.batchlocations):
+        for i, value in enumerate(batchlocations):
             diagram += str(i) + " [label = " + str(value[0]) + "];\n"
             
-        for i in range(len(self.parent.locationgroups)-1):
+        for i in range(len(locationgroups)-1):
             if ((i+1) % 4):
-                diagram += str(self.parent.locationgroups[i][0]) + " -> " + str(self.parent.locationgroups[i+1][0]) + ";\n"
+                diagram += str(locationgroups[i][0]) + " -> " + str(locationgroups[i+1][0]) + ";\n"
             else:
-                diagram += str(self.parent.locationgroups[i][0]) + " -> " + str(self.parent.locationgroups[i+1][0]) + " [folded];\n"
+                diagram += str(locationgroups[i][0]) + " -> " + str(locationgroups[i+1][0]) + " [folded];\n"
           
-        for i, value in enumerate(self.parent.locationgroups):
+        for i, value in enumerate(locationgroups):
             if(len(value) > 1):
                 diagram += "group { "
                 for i in value:

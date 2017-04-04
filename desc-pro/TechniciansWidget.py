@@ -18,7 +18,7 @@ class TechniciansWidget(QtCore.QObject):
         if (default): # generate default technicians list based on batchlocationgroup
             self.generate_technicians()
 
-        batchlocations = self.parent.batchlocations
+        batchlocations = self.parent.tools_widget.batchlocations
 
         self.model.clear()
         self.model.setHorizontalHeaderLabels(['Technicians'])                       
@@ -40,7 +40,7 @@ class TechniciansWidget(QtCore.QObject):
         # generate a default technician list from batchlocations list
 
         self.technicians = []
-        batchlocations = self.parent.batchlocations
+        batchlocations = self.parent.tools_widget.batchlocations
         
         wet_chem_list = ['BatchClean','BatchTex','SingleSideEtch']
         backend_list = ['TubeFurnace','IonImplanter','WaferStacker','WaferUnstacker','PlasmaEtcher']
@@ -75,7 +75,7 @@ class TechniciansWidget(QtCore.QObject):
 
     def add_technician(self, append_mode = False):
 
-        batchlocations = self.parent.batchlocations
+        batchlocations = self.parent.tools_widget.batchlocations
         
         tools_list = ['BatchClean','BatchTex','SingleSideEtch','TubeFurnace','IonImplanter',\
                       'WaferStacker','WaferUnstacker','PlasmaEtcher','TubePECVD','InlinePECVD','PrintLine','SpatialALD']        

@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtWidgets, QtGui
 import ntpath
-from dialogs.AddBatchlocationView import AddBatchlocationView
-from dialogs.DelBatchlocationView import DelBatchlocationView
-from dialogs.EditBatchlocationView import EditBatchlocationView
-from dialogs.LineDiagramView import LineDiagramView
 from dialogs.HelpDialog import HelpDialog
+from ToolsWidget import ToolsWidget
 from CassetteloopsWidget import CassetteloopsWidget
 from OperatorsWidget import OperatorsWidget
 from TechniciansWidget import TechniciansWidget
@@ -121,40 +118,12 @@ class MainGui(QtWidgets.QMainWindow):
         # Batchlocations
         self.batchlocations_model = QtGui.QStandardItemModel()
         self.batchlocations_view = DeselectableTreeView()
-        self.batchlocations_view.doubleClicked.connect(self.edit_batchlocation_view)
+        self.tools_widget = ToolsWidget(self)
+        self.batchlocations_view.doubleClicked.connect(self.tools_widget.edit_batchlocation_view)
         self.batchlocations_view.setAlternatingRowColors(True)
         self.batch_filter = BatchlocationsViewKeyFilter()
         self.batchlocations_view.installEventFilter(self.batch_filter)
-        self.batch_filter.signal.connect(self.treeview_signals)        
-
-        self.batchlocations = [] #tool class name, dict with settings
-        self.batchlocations.append(["WaferSource", {'name' : '0'}])
-        self.batchlocations.append(["WaferUnstacker", {'name' : '0'}])
-        self.batchlocations.append(["BatchTex", {'name' : '0'}])
-        self.batchlocations.append(["TubeFurnace", {'name' : '0'}])
-        self.batchlocations.append(["SingleSideEtch", {'name' : '0'}])
-        self.batchlocations.append(["TubePECVD", {'name' : '0'}])
-        self.batchlocations.append(["PrintLine", {'name' : '0'}])
-                
-        self.locationgroups = [] 
-        self.batchconnections = []
-
-        self.group_names = {}
-        self.group_names['BatchClean'] = "Wet chemical clean"
-        self.group_names['BatchTex'] = "Alkaline texture"
-        self.group_names['Buffer'] = "Cassette buffer"
-        self.group_names['InlinePECVD'] = "PECVD"
-        self.group_names['IonImplanter'] = "Ion implantation"
-        self.group_names['PlasmaEtcher'] = "Plasma edge isolation"
-        self.group_names['PrintLine'] = "Printing/firing"
-        self.group_names['SingleSideEtch'] = "Inline wet etch/texture"
-        self.group_names['SpatialALD'] = "Atomic layer deposition"
-        self.group_names['TubeFurnace'] = "Diffusion"
-        self.group_names['TubePECVD'] = "PECVD"
-        self.group_names['WaferBin'] = "Bin"
-        self.group_names['WaferSource'] = "Source"
-        self.group_names['WaferStacker'] = "Wafer stacking"
-        self.group_names['WaferUnstacker'] = "Wafer unstacking"         
+        self.batch_filter.signal.connect(self.treeview_signals)         
 
         # Cassette loops
         self.cassetteloops_model = QtGui.QStandardItemModel()
@@ -193,7 +162,7 @@ class MainGui(QtWidgets.QMainWindow):
         
         self.create_menu()
         self.create_main_frame()
-        self.load_definition_batchlocations()
+        self.tools_widget.load_definition()
         self.cassetteloops_widget.load_definition()
         self.operators_widget.load_definition()
         self.technicians_widget.load_definition()        
@@ -201,9 +170,9 @@ class MainGui(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(str)
     def treeview_signals(self,signal):
         if signal == "del_batch_view":
-            self.del_batchlocation_view()
+            self.tools_widget.del_batchlocation_view()
         elif signal == "add_batch_view":
-            self.add_batchlocation_view()
+            self.tools_widget.add_batchlocation_view()
         elif signal == "add_operator_view":
             self.operators_widget.add_operator_view()
         elif signal == "del_operator_view":
@@ -230,14 +199,14 @@ class MainGui(QtWidgets.QMainWindow):
         
         try:
             with open(filename,'rb') as f:
-                self.batchlocations,self.locationgroups,self.cassetteloops_widget.cassette_loops,self.batchconnections,\
-                    self.operators_widget.operators,self.technicians_widget.technicians = pickle.load(f)
+                self.tools_widget.batchlocations,self.tools_widget.locationgroups,self.cassetteloops_widget.cassette_loops,\
+                    self.tools_widget.batchconnections,self.operators_widget.operators,self.technicians_widget.technicians = pickle.load(f)
         except:
             msg = self.tr("Could not read file \"" + ntpath.basename(filename) + "\"")
             QtWidgets.QMessageBox.about(self, self.tr("Warning"), msg) 
             return
         
-        self.load_definition_batchlocations(False)
+        self.tools_widget.load_definition(False)
         self.cassetteloops_widget.load_definition(False)
         self.operators_widget.load_definition(False)
         self.technicians_widget.load_definition(False)
@@ -251,8 +220,8 @@ class MainGui(QtWidgets.QMainWindow):
             return
         
         with open(self.prev_save_path, 'wb') as f:
-            pickle.dump([self.batchlocations,self.locationgroups,self.cassetteloops_widget.cassette_loops,self.batchconnections,\
-                             self.operators_widget.operators,self.technicians_widget.technicians], f)
+            pickle.dump([self.tools_widget.batchlocations,self.tools_widget.locationgroups,self.cassetteloops_widget.cassette_loops,\
+                             self.tools_widget.batchconnections,self.operators_widget.operators,self.technicians_widget.technicians], f)
             
         self.statusBar().showMessage(self.tr("File saved"))
 
@@ -270,125 +239,47 @@ class MainGui(QtWidgets.QMainWindow):
         self.prev_dir_path = ntpath.dirname(filename)
         
         with open(filename, 'wb') as f:        
-            pickle.dump([self.batchlocations,self.locationgroups,self.cassetteloops_widget.cassette_loops,self.batchconnections,\
-                             self.operators_widget.operators,self.technicians_widget.technicians], f)
+            pickle.dump([self.tools_widget.batchlocations,self.tools_widget.locationgroups,self.cassetteloops_widget.cassette_loops,\
+                             self.tools_widget.batchconnections,self.operators_widget.operators,self.technicians_widget.technicians], f)
             
-        self.statusBar().showMessage(self.tr("File saved"))            
-
-    def load_definition_batchlocations(self, default=True):
-
-        if (default): # generate default locationgroup arrangement by batchlocation contents        
-            self.generate_locationgroups()
-            self.generate_batchconnections()
-            
-        self.batchlocations_model.clear()
-        self.batchlocations_model.setHorizontalHeaderLabels(['Process flow'])           
-
-        for i, value in enumerate(self.locationgroups):
-            parent = QtGui.QStandardItem(self.group_names[self.batchlocations[self.locationgroups[i][0]][0]])
-
-            for j in self.locationgroups[i]:
-                child = QtGui.QStandardItem(self.batchlocations[j][0] + ' ' + self.batchlocations[j][1]['name'])
-                parent.appendRow(child)
-            self.batchlocations_model.appendRow(parent)
-            #self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)
-
-    def reindex_locationgroups(self):
-        # change it so that all indexes are consecutive, which should always be the case
-        num = 0
-        for i, value0 in enumerate(self.locationgroups):
-            for j, value1 in enumerate(self.locationgroups[i]):
-                self.locationgroups[i][j] = num
-                num += 1
-
-    def line_diagram_view(self):
-        LineDiagramView(self)
-
-    def add_batchlocation_view(self):
-        AddBatchlocationView(self)
-
-    def del_batchlocation_view(self):        
-        DelBatchlocationView(self)
-    
-    def edit_batchlocation_view(self):
-        EditBatchlocationView(self)
-
-    def trash_batchlocation_view(self):
-        msgBox = QtWidgets.QMessageBox(self)
-        msgBox.setWindowTitle(self.tr("Warning"))
-        msgBox.setIcon(QtWidgets.QMessageBox.Warning)
-        msgBox.setText(self.tr("This will remove all tools. Continue?"))
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-        msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        ret = msgBox.exec_()
-        
-        if (ret == QtWidgets.QMessageBox.Ok):
-            self.batchlocations = []
-            self.locationgroups = []
-            self.batchconnections = []
-            self.batchlocations_model.clear()
-            self.batchlocations_model.setHorizontalHeaderLabels(['Process flow']) 
-            self.statusBar().showMessage(self.tr("All tools were removed"))
-
-    def generate_locationgroups(self):
-        # generate a default locationgroups list from batchlocations
-
-        self.locationgroups = []
-        num = 0
-        for i, value in enumerate(self.batchlocations):
-            # generate new locationgroups
-            
-            if (i == 0):
-                self.locationgroups.insert(num,[0])
-                num += 1
-            elif (self.batchlocations[i][0] == self.batchlocations[i-1][0]):
-                self.locationgroups[num-1].append(i)
-            else:
-                self.locationgroups.insert(num,[i])
-                num += 1
-
-    def generate_batchconnections(self):
-        # generate a default batchconnections list from locationgroups        
-        self.batchconnections = []
-
-        transport_time = 60 # default duration for transport action
-        time_per_unit = 10 # default additional duration for each unit
-        min_units = 1 # default minimum number of units for transport
-        max_units = 99 # default maximum number of units for transport
-
-        for i in range(len(self.locationgroups)-1):
-            for j, value in enumerate(self.locationgroups[i]):
-                for k, value in enumerate(self.locationgroups[i+1]):
-                    self.batchconnections.append([[i,j],[i+1,k],transport_time,time_per_unit,min_units,max_units])
+        self.statusBar().showMessage(self.tr("File saved"))
 
     def run_simulation(self):
+
+        batchlocations = self.tools_widget.batchlocations
+        locationgroups = self.tools_widget.locationgroups
+        cassette_loops = self.cassetteloops_widget.cassette_loops
+        batchconnections = self.tools_widget.batchconnections
+        operators = self.operators_widget.operators
+        #technicians = self.technicians_widget.technicians
+        
         self.output_signal_counter = 0
 
         # reset selection in case definition changed
         # only include last locationgroup in plot       
-        self.plot_selection = self.locationgroups[len(self.locationgroups)-1] 
+        self.plot_selection = locationgroups[len(locationgroups)-1] 
 
-        if (len(self.batchlocations) < 2) | (len(self.locationgroups) < 2):
+        if (len(batchlocations) < 2) | (len(locationgroups) < 2):
             self.statusBar().showMessage(self.tr("Not enough batch locations found"))
             return
         
-        for i, value in enumerate(self.batchconnections):
+        for i, value in enumerate(batchconnections):
             # check if all batchconnections exist inside locationgroups
             # no separate check whether all batchlocations inside locationgroups exist
             # since GUI should not allow for any errors to appear
-            if (self.batchconnections[i][0][0] > (len(self.locationgroups)-1)) | \
-                    (self.batchconnections[i][1][0] > (len(self.locationgroups)-1)):
+            if (batchconnections[i][0][0] > (len(locationgroups)-1)) | \
+                    (batchconnections[i][1][0] > (len(locationgroups)-1)):
                 self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
                 return
-            elif (self.batchconnections[i][0][1] > (len(self.locationgroups[self.batchconnections[i][0][0]])-1)) | \
-                    (self.batchconnections[i][1][1] > (len(self.locationgroups[self.batchconnections[i][1][0]])-1)):
+            elif (batchconnections[i][0][1] > (len(locationgroups[self.batchconnections[i][0][0]])-1)) | \
+                    (batchconnections[i][1][1] > (len(locationgroups[self.batchconnections[i][1][0]])-1)):
                 self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
                 return
 
-        for i, value in enumerate(self.operators):
+        for i, value in enumerate(operators):
             # check if all batchconnection numbers inside self.operators exist inside self.batchconnections
-            for j in self.operators[i][0]:
-                if (j > len(self.batchconnections)):
+            for j in operators[i][0]:
+                if (j > len(batchconnections)):
                     self.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"))
                     return
         
@@ -403,11 +294,12 @@ class MainGui(QtWidgets.QMainWindow):
             self.edit.clear()
             
             # send production line definition to simulation thread using deep copy
-            self.simulation_thread.batchlocations = deepcopy(self.batchlocations)
-            self.simulation_thread.locationgroups = deepcopy(self.locationgroups)
-            self.simulation_thread.batchconnections = deepcopy(self.batchconnections)
-            self.simulation_thread.operators = deepcopy(self.operators)
-            self.simulation_thread.cassette_loops = deepcopy(self.cassette_loops)
+            self.simulation_thread.batchlocations = deepcopy(batchlocations)
+            self.simulation_thread.locationgroups = deepcopy(locationgroups)
+            self.simulation_thread.batchconnections = deepcopy(batchconnections)
+            self.simulation_thread.operators = deepcopy(operators)
+            self.simulation_thread.cassette_loops = deepcopy(cassette_loops)
+            #self.simulation_thread.technicians = deepcopy(technicians)
             
             self.simulation_thread.params = {}
             self.simulation_thread.params.update(self.params)
@@ -572,31 +464,31 @@ class MainGui(QtWidgets.QMainWindow):
         self.batchlocations_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         line_diagram_button = QtWidgets.QPushButton()
-        line_diagram_button.clicked.connect(self.line_diagram_view)
+        line_diagram_button.clicked.connect(self.tools_widget.line_diagram_view)
         line_diagram_button.setIcon(QtGui.QIcon(":eye.png"))
         line_diagram_button.setToolTip(self.tr("View production line"))
         line_diagram_button.setStatusTip(self.tr("View production line"))
         
         add_batchlocation_button = QtWidgets.QPushButton()
-        add_batchlocation_button.clicked.connect(self.add_batchlocation_view)
+        add_batchlocation_button.clicked.connect(self.tools_widget.add_batchlocation_view)
         add_batchlocation_button.setIcon(QtGui.QIcon(":plus.png"))
         add_batchlocation_button.setToolTip(self.tr("Add [A]"))
         add_batchlocation_button.setStatusTip(self.tr("Add [A]"))
         
         del_batchlocation_button = QtWidgets.QPushButton()
-        del_batchlocation_button.clicked.connect(self.del_batchlocation_view)
+        del_batchlocation_button.clicked.connect(self.tools_widget.del_batchlocation_view)
         del_batchlocation_button.setIcon(QtGui.QIcon(":minus.png"))
         del_batchlocation_button.setToolTip(self.tr("Remove [Del]"))
         del_batchlocation_button.setStatusTip(self.tr("Remove [Del]"))
         
         edit_batchlocation_button = QtWidgets.QPushButton()
-        edit_batchlocation_button.clicked.connect(self.edit_batchlocation_view)        
+        edit_batchlocation_button.clicked.connect(self.tools_widget.edit_batchlocation_view)        
         edit_batchlocation_button.setIcon(QtGui.QIcon(":gear.png"))
         edit_batchlocation_button.setToolTip(self.tr("Edit settings"))
         edit_batchlocation_button.setStatusTip(self.tr("Edit settings"))        
 
         empty_batchlocation_view_button = QtWidgets.QPushButton()
-        empty_batchlocation_view_button.clicked.connect(self.trash_batchlocation_view)        
+        empty_batchlocation_view_button.clicked.connect(self.tools_widget.trash_batchlocation_view)        
         empty_batchlocation_view_button.setIcon(QtGui.QIcon(":trash.png"))
         empty_batchlocation_view_button.setToolTip(self.tr("Remove all"))
         empty_batchlocation_view_button.setStatusTip(self.tr("Remove all")) 

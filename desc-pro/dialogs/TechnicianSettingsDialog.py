@@ -23,7 +23,7 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         self.parent = parent
         self.view = self.parent.technicians_view
         self.model = self.parent.technicians_model
-        self.batchlocations = self.parent.batchlocations
+        self.batchlocations = self.parent.tools_widget.batchlocations
         self.technicians = self.parent.technicians_widget.technicians
         self.statusbar = self.parent.statusBar()
         self.load_definition = self.parent.technicians_widget.load_definition       
