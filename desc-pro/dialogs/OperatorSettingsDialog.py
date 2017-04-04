@@ -15,15 +15,21 @@ class dummy_env(object):
         pass
 
 class OperatorSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, _parent):
+    def __init__(self, parent):
 
-        super(QtWidgets.QDialog, self).__init__(_parent)
+        super(QtWidgets.QDialog, self).__init__(parent)
         # create dialog screen for each parameter in curr_params
         
-        self.parent = _parent
+        self.parent = parent
+        self.view = self.parent.operators_view
+        self.model = self.parent.operators_model
+        self.batchlocations = self.parent.batchlocations
+        self.operators = self.parent.operators_widget.operators
+        self.statusbar = self.parent.statusBar()
+        self.load_definition = self.parent.operators_widget.load_definition
 
         # find out which operator was selected
-        self.row = self.parent.operators_view.selectedIndexes()[0].row()
+        self.row = self.view.selectedIndexes()[0].row()
 
         env = dummy_env()
         curr_params = {}
@@ -31,7 +37,7 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
         curr_params = Operator(env).params
 
         # update default settings list with currently stored settings
-        curr_params.update(self.parent.operators[self.row][1])
+        curr_params.update(self.operators[self.row][1])
 
         self.setWindowTitle(self.tr("Operator settings"))
 
@@ -155,11 +161,11 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
         for i in self.booleans:
             new_params[str(i.objectName())] = i.isChecked()
         
-        self.parent.operators[self.row][1].update(new_params)
-        self.parent.load_definition_operators(False)
+        self.operators[self.row][1].update(new_params)
+        self.load_definition(False)
 
         # select row again after reloading operator definitions
-        index = self.parent.operators_model.index(self.row, 0)
-        self.parent.operators_view.setCurrentIndex(index)
-        self.parent.statusBar().showMessage(self.tr("Operator settings updated"))
+        index = self.model.index(self.row, 0)
+        self.view.setCurrentIndex(index)
+        self.statusbar.showMessage(self.tr("Operator settings updated"))
         self.accept()

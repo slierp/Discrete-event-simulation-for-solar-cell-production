@@ -11,13 +11,14 @@ class TechniciansWidget(QtCore.QObject):
         self.technicians = []
         self.view = self.parent.technicians_view        
         self.model = self.parent.technicians_model
-        self.batchlocations = self.parent.batchlocations
         self.statusbar = self.parent.statusBar()        
 
-    def load_definition_technicians(self, default=True):
+    def load_definition(self, default=True):
 
         if (default): # generate default technicians list based on batchlocationgroup
             self.generate_technicians()
+
+        batchlocations = self.parent.batchlocations
 
         self.model.clear()
         self.model.setHorizontalHeaderLabels(['Technicians'])                       
@@ -26,19 +27,20 @@ class TechniciansWidget(QtCore.QObject):
             parent = QtGui.QStandardItem('Technician ' + self.technicians[i][1]['name'])
 
             for j, value in enumerate(self.technicians[i][0]):
-                item = self.batchlocations[value][0] + " " + self.batchlocations[value][1]['name']
+                item = batchlocations[value][0] + " " + batchlocations[value][1]['name']
                 child = QtGui.QStandardItem(item)
                 parent.appendRow(child)
             self.model.appendRow(parent)
 
     def import_batchlocations_tech(self):
-        self.load_definition_technicians() # default technicians list
+        self.load_definition() # default technicians list
         self.statusbar.showMessage(self.tr("Technicians automatically generated"))
 
     def generate_technicians(self):
         # generate a default technician list from batchlocations list
 
         self.technicians = []
+        batchlocations = self.parent.batchlocations
         
         wet_chem_list = ['BatchClean','BatchTex','SingleSideEtch']
         backend_list = ['TubeFurnace','IonImplanter','WaferStacker','WaferUnstacker','PlasmaEtcher']
@@ -49,7 +51,7 @@ class TechniciansWidget(QtCore.QObject):
         self.technicians.append([[],{'name' : 'back'}])
         self.technicians.append([[],{'name' : 'front'}])
         
-        for i, value in enumerate(self.parent.batchlocations):
+        for i, value in enumerate(batchlocations):
             
             if value[0] in wet_chem_list:
                 self.technicians[0][0].append(i)
@@ -73,11 +75,13 @@ class TechniciansWidget(QtCore.QObject):
 
     def add_technician(self, append_mode = False):
 
+        batchlocations = self.parent.batchlocations
+        
         tools_list = ['BatchClean','BatchTex','SingleSideEtch','TubeFurnace','IonImplanter',\
                       'WaferStacker','WaferUnstacker','PlasmaEtcher','TubePECVD','InlinePECVD','PrintLine','SpatialALD']        
         
         tool = -1 # find first suitable tool for new technician
-        for i, value in enumerate(self.batchlocations):
+        for i, value in enumerate(batchlocations):
             if value[0] in tools_list:
                 tool = i
                 break
@@ -91,7 +95,7 @@ class TechniciansWidget(QtCore.QObject):
             self.technicians.append([[tool],{'name' : 'new'}])
        
             # reload definitions
-            self.load_definition_technicians(False)
+            self.load_definition(False)
         
             index = self.model.index(len(self.technicians), 0)
             self.view.setCurrentIndex(index)
@@ -105,7 +109,7 @@ class TechniciansWidget(QtCore.QObject):
             self.technicians[row][1].update({'name' : 'new'})
         
             # reload definitions
-            self.load_definition_technicians(False)
+            self.load_definition(False)
         
             index = self.model.index(row, 0)
             self.view.setCurrentIndex(index)
@@ -136,7 +140,7 @@ class TechniciansWidget(QtCore.QObject):
         del self.technicians[row]
         
         # reload definitions
-        self.load_definition_technicians(False)        
+        self.load_definition(False)        
         
         self.statusbar.showMessage(self.tr("Technician removed"))
             
@@ -150,14 +154,14 @@ class TechniciansWidget(QtCore.QObject):
             del self.technicians[row]
             
             # reload definition into view
-            self.load_definition_technicians(False) 
+            self.load_definition(False) 
             
             self.statusbar.showMessage("Last tool and technician removed")            
         else:
             del self.technicians[row][0][index]            
             
             # reload definition into view
-            self.load_definition_technicians(False)
+            self.load_definition(False)
 
             # re-expand the operator parent item
             index = self.model.index(row, 0)

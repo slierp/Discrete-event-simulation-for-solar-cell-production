@@ -8,6 +8,17 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         super(QtWidgets.QDialog, self).__init__(_parent)
 
         self.parent = _parent
+        self.cassette_loops = self.parent.cassetteloops_widget.cassette_loops
+        self.input_types = self.parent.cassetteloops_widget.input_types
+        self.output_types = self.parent.cassetteloops_widget.output_types
+        self.load_definition = self.parent.cassetteloops_widget.load_definition
+        self.locationgroups = self.parent.locationgroups
+        self.batchlocations = self.parent.batchlocations
+        self.view = self.parent.cassetteloops_view        
+        self.model = self.parent.cassetteloops_model
+        self.group_names = self.parent.group_names
+        self.statusbar = self.parent.statusBar()        
+        
         self.setWindowTitle(self.tr("Add cassette loop"))
         vbox = QtWidgets.QVBoxLayout()
 
@@ -18,19 +29,19 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         # remove groups already allocated in other cassette loops
         unavailable_groups = []
 
-        for i in range(len(self.parent.cassette_loops)):
-            for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]):
+        for i in range(len(self.cassette_loops)):
+            for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]):
                 unavailable_groups.append(j)
 
         # find locationgroups where all tools have a dual cassette output buffer
         self.begin_positions = []
 
-        for i in range(len(self.parent.locationgroups)-1):
+        for i in range(len(self.locationgroups)-1):
             suitable = True
-            for j in range(len(self.parent.locationgroups[i])):
-                name = self.parent.batchlocations[self.parent.locationgroups[i][j]][0]
+            for j in range(len(self.locationgroups[i])):
+                name = self.batchlocations[self.locationgroups[i][j]][0]
                     
-                if not 3 in self.parent.output_types[name]:
+                if not 3 in self.output_types[name]:
                     suitable = False
                     
             if suitable and not i in unavailable_groups:
@@ -39,7 +50,7 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         self.combo_begin = QtWidgets.QComboBox(self)
         
         for i in self.begin_positions:
-            name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
+            name = self.group_names[self.batchlocations[self.locationgroups[i][0]][0]]
             self.combo_begin.addItem(name)
 
         self.combo_begin.currentIndexChanged.connect(self.find_end_positions)
@@ -81,24 +92,24 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         # remove groups already allocated in other cassette loops
         unavailable_groups = []
 
-        for i in range(len(self.parent.cassette_loops)):
-            for j in range(self.parent.cassette_loops[i][0],self.parent.cassette_loops[i][1]):
+        for i in range(len(self.cassette_loops)):
+            for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]):
                 if j > begin:
-                    for k in range(j+1,len(self.parent.locationgroups)):
+                    for k in range(j+1,len(self.locationgroups)):
                         unavailable_groups.append(k)
 
         # find suitable end groups
-        for i in range(begin+1,len(self.parent.locationgroups)):
+        for i in range(begin+1,len(self.locationgroups)):
 
             suitable = True
             stop_search = False
-            for j in range(len(self.parent.locationgroups[i])):
-                name = self.parent.batchlocations[self.parent.locationgroups[i][j]][0]
+            for j in range(len(self.locationgroups[i])):
+                name = self.batchlocations[self.locationgroups[i][j]][0]
                 
-                if not 3 in self.parent.input_types[name]:
+                if not 3 in self.input_types[name]:
                     suitable = False
                 
-                if not 2 in self.parent.input_types[name] or 1 in self.parent.input_types[name]:
+                if not 2 in self.input_types[name] or 1 in self.input_types[name]:
                     stop_search = True
             
             if suitable and not i in unavailable_groups:
@@ -108,7 +119,7 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
                 break
 
         for i in self.end_positions:
-            name = self.parent.group_names[self.parent.batchlocations[self.parent.locationgroups[i][0]][0]]
+            name = self.group_names[self.batchlocations[self.locationgroups[i][0]][0]]
             self.combo_end.addItem(name)
 
     def read(self):
@@ -118,7 +129,7 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         end = self.combo_end.currentIndex()
     
         if end == -1:
-            self.parent.statusBar().showMessage(self.tr("Cassette loop could not be added"))
+            self.statusbar.showMessage(self.tr("Cassette loop could not be added"))
             self.accept()
             return
         
@@ -129,8 +140,8 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         min_units = 1 # default minimum number of cassettes for return transport
         max_units = 99 # default maximum number of cassettes for return transport
 
-        self.parent.cassette_loops.append([begin,end,50,100,transport_time,time_per_unit,min_units,max_units])
-        self.parent.load_definition_cassetteloops(False)
+        self.cassette_loops.append([begin,end,50,100,transport_time,time_per_unit,min_units,max_units])
+        self.load_definition(False)
 
-        self.parent.statusBar().showMessage(self.tr("Cassette loop added"))                
+        self.statusbar.showMessage(self.tr("Cassette loop added"))                
         self.accept()

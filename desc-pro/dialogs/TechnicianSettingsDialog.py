@@ -26,7 +26,7 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         self.batchlocations = self.parent.batchlocations
         self.technicians = self.parent.technicians_widget.technicians
         self.statusbar = self.parent.statusBar()
-        self.load_definition = self.parent.technicians_widget.load_definition_technicians        
+        self.load_definition = self.parent.technicians_widget.load_definition       
 
         # find out which operator was selected
         self.row = self.view.selectedIndexes()[0].row()

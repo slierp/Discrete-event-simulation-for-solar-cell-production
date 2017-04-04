@@ -8,6 +8,9 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         super(QtWidgets.QDialog, self).__init__(_parent)
 
         self.parent = _parent
+        self.cassette_loops = self.parent.cassetteloops_widget.cassette_loops
+        self.statusbar = self.parent.statusBar()          
+        
         self.row = _row
         self.setWindowTitle(self.tr("Cassette loop settings"))
         vbox = QtWidgets.QVBoxLayout()            
@@ -19,7 +22,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox0.setAccelerated(True)
         self.spinbox0.setMaximum(999)
         self.spinbox0.setMinimum(1)
-        self.spinbox0.setValue(self.parent.cassette_loops[self.row][2])
+        self.spinbox0.setValue(self.cassette_loops[self.row][2])
         label.setToolTip(text)
         self.spinbox0.setToolTip(text)
         hbox.addWidget(self.spinbox0)  
@@ -34,7 +37,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox1.setAccelerated(True)
         self.spinbox1.setMaximum(999)
         self.spinbox1.setMinimum(1)
-        self.spinbox1.setValue(self.parent.cassette_loops[self.row][3])
+        self.spinbox1.setValue(self.cassette_loops[self.row][3])
         label.setToolTip(text)
         self.spinbox1.setToolTip(text)
         hbox.addWidget(self.spinbox1)  
@@ -49,7 +52,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox2.setAccelerated(True)
         self.spinbox2.setMaximum(999)
         self.spinbox2.setMinimum(1)
-        self.spinbox2.setValue(self.parent.cassette_loops[self.row][4])
+        self.spinbox2.setValue(self.cassette_loops[self.row][4])
         label.setToolTip(text)
         self.spinbox2.setToolTip(text)
         hbox.addWidget(self.spinbox2)  
@@ -64,7 +67,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox3.setAccelerated(True)
         self.spinbox3.setMaximum(999)
         self.spinbox3.setMinimum(0)
-        self.spinbox3.setValue(self.parent.cassette_loops[self.row][5])
+        self.spinbox3.setValue(self.cassette_loops[self.row][5])
         label.setToolTip(text)
         self.spinbox3.setToolTip(text)
         hbox.addWidget(self.spinbox3)  
@@ -79,7 +82,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox4.setAccelerated(True)
         self.spinbox4.setMaximum(99)
         self.spinbox4.setMinimum(1)
-        self.spinbox4.setValue(self.parent.cassette_loops[self.row][6])
+        self.spinbox4.setValue(self.cassette_loops[self.row][6])
         label.setToolTip(text)
         self.spinbox4.setToolTip(text)
         hbox.addWidget(self.spinbox4)  
@@ -95,7 +98,7 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         self.spinbox5.setAccelerated(True)
         self.spinbox5.setMaximum(99)
         self.spinbox5.setMinimum(1)
-        self.spinbox5.setValue(self.parent.cassette_loops[self.row][7])
+        self.spinbox5.setValue(self.cassette_loops[self.row][7])
         label.setToolTip(text)
         self.spinbox5.setToolTip(text)
         hbox.addWidget(self.spinbox5)  
@@ -134,20 +137,20 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         
         # read contents of each widget
         if self.boolean.isChecked():
-            for i in range(len(self.parent.cassette_loops)):
-                self.parent.cassette_loops[i][2] = int(self.spinbox0.text())
-                self.parent.cassette_loops[i][3] = int(self.spinbox1.text())
-                self.parent.cassette_loops[i][4] = int(self.spinbox2.text())
-                self.parent.cassette_loops[i][5] = int(self.spinbox3.text())
-                self.parent.cassette_loops[i][6] = int(self.spinbox4.text())
-                self.parent.cassette_loops[i][7] = int(self.spinbox5.text())
+            for i in range(len(self.cassette_loops)):
+                self.cassette_loops[i][2] = int(self.spinbox0.text())
+                self.cassette_loops[i][3] = int(self.spinbox1.text())
+                self.cassette_loops[i][4] = int(self.spinbox2.text())
+                self.cassette_loops[i][5] = int(self.spinbox3.text())
+                self.cassette_loops[i][6] = int(self.spinbox4.text())
+                self.cassette_loops[i][7] = int(self.spinbox5.text())
         else:
-            self.parent.cassette_loops[self.row][2] = int(self.spinbox0.text())
-            self.parent.cassette_loops[self.row][3] = int(self.spinbox1.text())
-            self.parent.cassette_loops[self.row][4] = int(self.spinbox2.text())
-            self.parent.cassette_loops[self.row][5] = int(self.spinbox3.text())
-            self.parent.cassette_loops[self.row][6] = int(self.spinbox4.text())
-            self.parent.cassette_loops[self.row][7] = int(self.spinbox5.text())
+            self.cassette_loops[self.row][2] = int(self.spinbox0.text())
+            self.cassette_loops[self.row][3] = int(self.spinbox1.text())
+            self.cassette_loops[self.row][4] = int(self.spinbox2.text())
+            self.cassette_loops[self.row][5] = int(self.spinbox3.text())
+            self.cassette_loops[self.row][6] = int(self.spinbox4.text())
+            self.cassette_loops[self.row][7] = int(self.spinbox5.text())
 
-        self.parent.statusBar().showMessage(self.tr("Cassette loop settings updated"))                
+        self.statusbar.showMessage(self.tr("Cassette loop settings updated"))                
         self.accept()
