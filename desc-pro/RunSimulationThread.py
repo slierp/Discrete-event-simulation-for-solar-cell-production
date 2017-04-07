@@ -18,7 +18,7 @@ from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
 from PyQt5 import QtCore
 import pandas as pd
-from random import shuffle
+#from random import shuffle
 import time
 
 class StringSignal(QtCore.QObject):

@@ -105,8 +105,12 @@ If none of the tool connections allowed for a transport event, then the operator
             for i in range(no_connections):
                 transport_time = self.batchconnections[i][2]
                 time_per_unit = self.batchconnections[i][3]
-                min_units = self.batchconnections[i][4]
+                min_units = self.batchconnections[i][4]               
                 max_units = self.batchconnections[i][5]
+
+                hard_min_limit = False
+                if (min_units % 1) > 0:
+                    hard_min_limit = True
 
                 if len(self.batchconnections[i]) == 6: # forward transport of cassette or stack 
                     origin = self.batchconnections[i][0].output
@@ -148,12 +152,13 @@ If none of the tool connections allowed for a transport event, then the operator
                 else:
                     continue_action = False
 
-                # do not perform transport if it is below minimum threshold
-                # unless the destination buffer has less room than the threshold
+                # do not perform transport if it is below minimum threshold except
+                # if not a hard minimum threshold and destination buffer has less room
+                # than the threshold
                 if continue_action and (no_batches_for_transport < min_units):
                     continue_action = False
                     
-                    if space_available < min_units:
+                    if (not hard_min_limit) and space_available < min_units:
                         continue_action = True                
 
                 # go to next connection

@@ -107,6 +107,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         reindex_locationgroups = self.parent.tools_widget.reindex_locationgroups
         load_definition = self.parent.tools_widget.load_definition
         generate_locationgroups = self.parent.tools_widget.generate_locationgroups
+        generate_batchconnections = self.parent.tools_widget.generate_batchconnections
         reset_cassetteloops = self.parent.cassetteloops_widget.reset_cassetteloops
         reset_operators = self.parent.operators_widget.reset_operators
 
@@ -135,7 +136,8 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         # do a bit of housekeeping, now that batchlocations has changed
         reindex_locationgroups()
         load_definition(False)
-        generate_locationgroups() # generate new connections list
+        generate_locationgroups() # generate new locationgroups list
+        generate_batchconnections() # generate new connections list
         
         if self.row:
             reset_cassetteloops(self.row)

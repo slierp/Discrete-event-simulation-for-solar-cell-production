@@ -10,8 +10,8 @@ class AddOperatorConnectionDialog(QtWidgets.QDialog):
         self.parent = parent
         self.view = self.parent.operators_view
         self.model = self.parent.operators_model
-        self.batchlocations = self.parent.batchlocations
-        self.batchconnections = self.parent.batchconnections
+        self.batchlocations = self.parent.tools_widget.batchlocations
+        self.batchconnections = self.parent.tools_widget.batchconnections
         self.operators = self.parent.operators_widget.operators
         self.print_batchconnection = self.parent.operators_widget.print_batchconnection        
         self.statusbar = self.parent.statusBar()

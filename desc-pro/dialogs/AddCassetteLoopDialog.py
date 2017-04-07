@@ -12,11 +12,11 @@ class AddCassetteLoopDialog(QtWidgets.QDialog):
         self.input_types = self.parent.cassetteloops_widget.input_types
         self.output_types = self.parent.cassetteloops_widget.output_types
         self.load_definition = self.parent.cassetteloops_widget.load_definition
-        self.locationgroups = self.parent.locationgroups
-        self.batchlocations = self.parent.batchlocations
+        self.locationgroups = self.parent.tools_widget.locationgroups
+        self.batchlocations = self.parent.tools_widget.batchlocations
         self.view = self.parent.cassetteloops_view        
         self.model = self.parent.cassetteloops_model
-        self.group_names = self.parent.group_names
+        self.group_names = self.parent.tools_widget.group_names
         self.statusbar = self.parent.statusBar()        
         
         self.setWindowTitle(self.tr("Add cassette loop"))

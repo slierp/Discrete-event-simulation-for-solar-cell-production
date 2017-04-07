@@ -2,7 +2,7 @@
 from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
-import collections
+import collections, random
 
 class WaferUnstacker(QtCore.QObject):
         
@@ -76,6 +76,10 @@ The second loop consists of the following steps:
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
 
+        self.params['reject_percentage'] = 0
+        self.params['reject_percentage_desc'] = "Percentage of randomly rejected wafers (%)"
+        self.params['reject_percentage_type'] = "downtime"
+
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
 
@@ -95,6 +99,9 @@ The second loop consists of the following steps:
         self.input = BatchContainer(self.env,"stack_in",self.params['stack_size'],self.params['max_stack_no'])
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'])
+
+        if self.params['reject_percentage'] > 0:
+            random.seed(42)
 
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())
@@ -146,6 +153,7 @@ The second loop consists of the following steps:
         time_new_cassette = self.params['time_new_cassette']
         time_step = self.params['time_step']
         cassette_size = self.params['cassette_size']
+        reject_percentage = self.params['reject_percentage']
         
         cassette = yield self.output.input.get() # receive first empty cassette
 
@@ -156,10 +164,14 @@ The second loop consists of the following steps:
                 self.belt.rotate(1)
                 yield self.env.timeout(time_step)                
                 current_load += 1              
+
+                # remove wafer again if it falls within random reject range
+                if reject_percentage and (random.randint(0,100) <= reject_percentage):
+                    current_load -= 1
                 
 #                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
-            
+                                          
             elif (not self.belt[-1]):
                 # move belt if no wafer available
                 self.belt.rotate(1)

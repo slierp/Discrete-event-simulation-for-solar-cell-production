@@ -34,7 +34,11 @@ class TechniciansWidget(QtCore.QObject):
 
     def import_batchlocations_tech(self):
         self.load_definition() # default technicians list
-        self.statusbar.showMessage(self.tr("Technicians automatically generated"))
+        
+        if len(self.technicians) > 0:
+            self.statusbar.showMessage(self.tr("Technicians automatically generated"))
+        else:
+            self.statusbar.showMessage(self.tr("No technicians could be automatically generated"))
 
     def generate_technicians(self):
         # generate a default technician list from batchlocations list
@@ -44,23 +48,29 @@ class TechniciansWidget(QtCore.QObject):
         
         wet_chem_list = ['BatchClean','BatchTex','SingleSideEtch']
         backend_list = ['TubeFurnace','IonImplanter','WaferStacker','WaferUnstacker','PlasmaEtcher']
-        frontend_list = ['TubePECVD','InlinePECVD','PrintLine','SpatialALD']
+        frontend_list = ['TubePECVD','InlinePECVD','PrintLine','SpatialALD']        
         
-        # make three technicians by default
-        self.technicians.append([[],{'name' : 'chem'}])
-        self.technicians.append([[],{'name' : 'back'}])
-        self.technicians.append([[],{'name' : 'front'}])
+        list0,list1,list2 = [],[],[]
         
         for i, value in enumerate(batchlocations):
             
             if value[0] in wet_chem_list:
-                self.technicians[0][0].append(i)
+                list0.append(i)
 
             if value[0] in backend_list:
-                self.technicians[1][0].append(i)
+                list1.append(i)
 
             if value[0] in frontend_list:
-                self.technicians[2][0].append(i)
+                list2.append(i)
+
+        if len(list0):
+            self.technicians.append([list0,{'name' : 'chem'}])
+        
+        if len(list1):
+            self.technicians.append([list1,{'name' : 'back'}])
+            
+        if len(list2):
+            self.technicians.append([list2,{'name' : 'front'}])
 
     def add_technician_view(self):
         

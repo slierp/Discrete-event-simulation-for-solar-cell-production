@@ -65,6 +65,24 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
+        hard_limit_check = False
+        # if not integer then it is a hard transport limit
+        if (self.batchconnection[4] % 1) > 0:
+            hard_limit_check = True
+
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Apply minimum transport limit irrespective of space at destination"
+        label = QtWidgets.QLabel(text)
+        self.hard_limit_boolean = QtWidgets.QCheckBox()
+        self.hard_limit_boolean.setChecked(hard_limit_check)
+        label.setToolTip(text)
+        self.hard_limit_boolean.setToolTip(text)        
+        label.mouseReleaseEvent = self.switch_hard_limit       
+        hbox.addWidget(self.hard_limit_boolean)
+        hbox.addWidget(label)
+        hbox.addStretch(1)                 
+        vbox.addLayout(hbox)
+
         hbox = QtWidgets.QHBoxLayout()
         text = "Maximum number of cassettes or stacks for one transport run"
         label = QtWidgets.QLabel(text)
@@ -107,21 +125,31 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         # function for making QLabel near checkbox clickable
         self.boolean.setChecked(not self.boolean.isChecked())
 
+    def switch_hard_limit(self, event):
+        # function for making QLabel near checkbox clickable
+        self.hard_limit_boolean.setChecked(not self.hard_limit_boolean.isChecked())
+
     def read(self):
         # read contents of each widget
         # update settings in batchconnection(s)
+
+        if self.hard_limit_boolean:        
+            transport_min_limit = int(self.spinbox2.text()) + 0.1
+        else:
+            transport_min_limit = int(self.spinbox2.text())        
+        
         if self.boolean.isChecked():
-            for i in range(len(self.parent.batchconnections)):
-                self.parent.batchconnections[i][2] = int(self.spinbox0.text())
-                self.parent.batchconnections[i][3] = int(self.spinbox1.text())
-                self.parent.batchconnections[i][4] = int(self.spinbox2.text())
-                self.parent.batchconnections[i][5] = int(self.spinbox3.text())
+            for i in range(len(self.parent.tools_widget.batchconnections)):
+                self.parent.tools_widget.batchconnections[i][2] = int(self.spinbox0.text())
+                self.parent.tools_widget.batchconnections[i][3] = int(self.spinbox1.text())
+                self.parent.tools_widget.batchconnections[i][4] = transport_min_limit
+                self.parent.tools_widget.batchconnections[i][5] = int(self.spinbox3.text())
             
             self.parent.statusBar().showMessage(self.tr("All connection settings updated"))
         else:
             self.batchconnection[2] = int(self.spinbox0.text())
             self.batchconnection[3] = int(self.spinbox1.text())
-            self.batchconnection[4] = int(self.spinbox2.text())
+            self.batchconnection[4] = transport_min_limit
             self.batchconnection[5] = int(self.spinbox3.text())
             self.parent.statusBar().showMessage(self.tr("Connection settings updated"))
         

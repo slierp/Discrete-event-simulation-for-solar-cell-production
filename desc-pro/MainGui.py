@@ -251,7 +251,7 @@ class MainGui(QtWidgets.QMainWindow):
         cassette_loops = self.cassetteloops_widget.cassette_loops
         batchconnections = self.tools_widget.batchconnections
         operators = self.operators_widget.operators
-        #technicians = self.technicians_widget.technicians
+        technicians = self.technicians_widget.technicians
         
         self.output_signal_counter = 0
 
@@ -271,8 +271,8 @@ class MainGui(QtWidgets.QMainWindow):
                     (batchconnections[i][1][0] > (len(locationgroups)-1)):
                 self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
                 return
-            elif (batchconnections[i][0][1] > (len(locationgroups[self.batchconnections[i][0][0]])-1)) | \
-                    (batchconnections[i][1][1] > (len(locationgroups[self.batchconnections[i][1][0]])-1)):
+            elif (batchconnections[i][0][1] > (len(locationgroups[batchconnections[i][0][0]])-1)) | \
+                    (batchconnections[i][1][1] > (len(locationgroups[batchconnections[i][1][0]])-1)):
                 self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
                 return
 
@@ -299,7 +299,7 @@ class MainGui(QtWidgets.QMainWindow):
             self.simulation_thread.batchconnections = deepcopy(batchconnections)
             self.simulation_thread.operators = deepcopy(operators)
             self.simulation_thread.cassette_loops = deepcopy(cassette_loops)
-            #self.simulation_thread.technicians = deepcopy(technicians)
+            self.simulation_thread.technicians = deepcopy(technicians)
             
             self.simulation_thread.params = {}
             self.simulation_thread.params.update(self.params)

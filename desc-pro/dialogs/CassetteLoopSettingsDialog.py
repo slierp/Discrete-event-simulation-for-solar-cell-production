@@ -90,6 +90,23 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
+        hard_limit_check = False
+        # if not integer then it is a hard transport limit
+        if (self.cassette_loops[self.row][6] % 1) > 0:
+            hard_limit_check = True
+
+        hbox = QtWidgets.QHBoxLayout()
+        text = "Apply minimum transport limit irrespective of space at destination"
+        label = QtWidgets.QLabel(text)
+        self.hard_limit_boolean = QtWidgets.QCheckBox()
+        self.hard_limit_boolean.setChecked(hard_limit_check)
+        label.setToolTip(text)
+        self.hard_limit_boolean.setToolTip(text)        
+        label.mouseReleaseEvent = self.switch_hard_limit       
+        hbox.addWidget(self.hard_limit_boolean)
+        hbox.addWidget(label)
+        hbox.addStretch(1)                 
+        vbox.addLayout(hbox)
 
         hbox = QtWidgets.QHBoxLayout()
         text = "Maximum number of cassettes for one transport run"
@@ -133,7 +150,16 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
         # function for making QLabel near checkbox clickable
         self.boolean.setChecked(not self.boolean.isChecked())
 
+    def switch_hard_limit(self, event):
+        # function for making QLabel near checkbox clickable
+        self.hard_limit_boolean.setChecked(not self.hard_limit_boolean.isChecked())
+
     def read(self):
+
+        if self.hard_limit_boolean:        
+            transport_min_limit = int(self.spinbox4.text()) + 0.1
+        else:
+            transport_min_limit = int(self.spinbox4.text())
         
         # read contents of each widget
         if self.boolean.isChecked():
@@ -141,15 +167,15 @@ class CassetteLoopSettingsDialog(QtWidgets.QDialog):
                 self.cassette_loops[i][2] = int(self.spinbox0.text())
                 self.cassette_loops[i][3] = int(self.spinbox1.text())
                 self.cassette_loops[i][4] = int(self.spinbox2.text())
-                self.cassette_loops[i][5] = int(self.spinbox3.text())
-                self.cassette_loops[i][6] = int(self.spinbox4.text())
+                self.cassette_loops[i][5] = int(self.spinbox3.text())                
+                self.cassette_loops[i][6] = transport_min_limit
                 self.cassette_loops[i][7] = int(self.spinbox5.text())
         else:
             self.cassette_loops[self.row][2] = int(self.spinbox0.text())
             self.cassette_loops[self.row][3] = int(self.spinbox1.text())
             self.cassette_loops[self.row][4] = int(self.spinbox2.text())
             self.cassette_loops[self.row][5] = int(self.spinbox3.text())
-            self.cassette_loops[self.row][6] = int(self.spinbox4.text())
+            self.cassette_loops[self.row][6] = transport_min_limit
             self.cassette_loops[self.row][7] = int(self.spinbox5.text())
 
         self.statusbar.showMessage(self.tr("Cassette loop settings updated"))                
