@@ -3,6 +3,7 @@ from batchlocations.WaferSource import WaferSource
 from batchlocations.WaferStacker import WaferStacker
 from batchlocations.WaferUnstacker import WaferUnstacker
 from batchlocations.Operator import Operator
+from batchlocations.Technician import Technician
 from batchlocations.WaferBin import WaferBin
 from batchlocations.BatchTex import BatchTex
 from batchlocations.BatchClean import BatchClean
@@ -95,6 +96,16 @@ class RunSimulationThread(QtCore.QObject):
 
             self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
 
+        for i, value in enumerate(self.technicians):
+            # replace tool number indicators for references to real class instances
+            # also replace technician list elements for new class instances
+            tmp_tools = {}
+        
+            for j in range(len(self.technicians[i][0])):
+                tmp_tools[j] = self.batchlocations[self.technicians[i][0][j]]
+
+            self.technicians[i] = Technician(self.env,tmp_tools,self.output,self.technicians[i][1])
+
         # Add all the cassettes to the source batchlocations
         source_group = len(self.locationgroups)-1
         
@@ -106,6 +117,7 @@ class RunSimulationThread(QtCore.QObject):
 #        print(self.locationgroups)
 #        print(self.batchconnections)
 #        print(self.operators)
+#        print(self.technicians)
 #        print(self.cassette_loops)
 
     def add_cassette_loops(self):
@@ -175,6 +187,7 @@ class RunSimulationThread(QtCore.QObject):
 
 #        print(self.batchconnections)
 #        print(self.operators)
+#        print(self.technicians)
 
     def sanity_check(self):
         
@@ -327,6 +340,9 @@ class RunSimulationThread(QtCore.QObject):
         for i, value in enumerate(self.operators):
             self.operators[i].report()
 
+        for i, value in enumerate(self.technicians):
+            self.technicians[i].report()
+
         ### Generate utilization output for special tab ###
         utilization_list = []
         for i, value in enumerate(self.batchlocations):
@@ -336,6 +352,10 @@ class RunSimulationThread(QtCore.QObject):
         for i, value in enumerate(self.operators):
             if len(self.operators[i].utilization):
                 utilization_list.append(self.operators[i].utilization)
+
+        for i, value in enumerate(self.technicians):
+            if len(self.technicians[i].utilization):
+                utilization_list.append(self.technicians[i].utilization)
                 
         self.util.sig.emit(utilization_list)
 

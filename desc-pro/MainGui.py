@@ -421,11 +421,21 @@ class MainGui(QtWidgets.QMainWindow):
         self.table_widget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         
         for i, value in enumerate(utilization):
+            overall_util = utilization[i][3]
             item0 = QtWidgets.QTableWidgetItem(utilization[i][0]) # Type
             item1 = QtWidgets.QTableWidgetItem(utilization[i][1]) # Tool name
             item2 = QtWidgets.QTableWidgetItem(str(utilization[i][2])) # Nominal throughput
-            item3 = QtWidgets.QTableWidgetItem(str(utilization[i][3]) + "%") # Overall utilization
+            item3 = QtWidgets.QTableWidgetItem(str(overall_util) + "%") # Overall utilization                                                          
             item4 = QtWidgets.QTableWidgetItem(str(utilization[i][4])) # Total volume
+
+            if overall_util > 90:
+                color = QtGui.QColor(192,80,77)
+            elif overall_util < 10:
+                color = QtGui.QColor(79,129,189)                
+            else:
+                color = QtGui.QColor(255,255,255)                
+            item3.setBackground(color)
+                                                          
             self.table_widget.setItem(i, 0, item0)
             self.table_widget.setItem(i, 1, item1)
             self.table_widget.setItem(i, 2, item2)
@@ -433,7 +443,16 @@ class MainGui(QtWidgets.QMainWindow):
             self.table_widget.setItem(i, 4, item4) 
             
             for j in range(5,len(utilization[i])):
-                item = QtWidgets.QTableWidgetItem(str(utilization[i][j][0]) + ": " + str(utilization[i][j][1]) + "%")
+                part_name = utilization[i][j][0]
+                part_util = utilization[i][j][1]
+                item = QtWidgets.QTableWidgetItem(str(part_name) + ": " + str(part_util) + "%")
+                if part_util > 90:
+                    color = QtGui.QColor(192,80,77)
+                elif part_util < 10:
+                    color = QtGui.QColor(79,129,189)                
+                else:
+                    color = QtGui.QColor(255,255,255)                
+                item.setBackground(color)
                 self.table_widget.setItem(i, j, item)
 
     @QtCore.pyqtSlot(str)

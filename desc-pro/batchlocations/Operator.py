@@ -111,6 +111,7 @@ If none of the tool connections allowed for a transport event, then the operator
                 hard_min_limit = False
                 if (min_units % 1) > 0:
                     hard_min_limit = True
+                    min_units = int(min_units)
 
                 if len(self.batchconnections[i]) == 6: # forward transport of cassette or stack 
                     origin = self.batchconnections[i][0].output
