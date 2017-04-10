@@ -103,6 +103,8 @@ The second loop consists of the following steps:
         if self.params['reject_percentage'] > 0:
             random.seed(42)
 
+        self.maintenance_needed = False
+
         self.env.process(self.run_pick_and_place())
         self.env.process(self.run_cassette_loader())
 

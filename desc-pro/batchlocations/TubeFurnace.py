@@ -2,6 +2,7 @@
 from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
+import simpy, random
 
 class TubeFurnace(QtCore.QObject):
         
@@ -78,6 +79,13 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['downtime_duration'] = 60
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
         self.params['downtime_duration_type'] = "downtime"
+
+        self.params['mtbf'] = 1000
+        self.params['mtbf_desc'] = "Mean time between failures (hours) (0 to disable function)"
+        self.params['mtbf_type'] = "downtime"
+        self.params['mttr'] = 60
+        self.params['mttr_desc'] = "Mean time to repair (minutes) (0 to disable function)"
+        self.params['mttr_type'] = "downtime"
         
         self.params['no_of_processes'] = 5
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
@@ -211,6 +219,17 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                 
                 if not no_boats:
                     break
+
+        self.downtime_finished = None
+        self.technician_resource = simpy.Resource(self.env,1)
+        self.downtime_duration =  60*self.params['downtime_duration']
+        self.maintenance_needed = False
+        
+        random.seed(42)
+        self.mtbf_enable = False
+        if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
+            self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
+            self.mtbf_enable = True
         
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())
@@ -276,7 +295,11 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         no_of_cooldowns = self.params['no_of_cooldowns']
         runs_before_boatclean = self.params['runs_before_boatclean']
         downtime_runs = self.params['downtime_runs']
-        downtime_duration = 60*self.params['downtime_duration']        
+        downtime_duration = self.params['downtime_duration']
+        mtbf_enable = self.mtbf_enable
+        if mtbf_enable:
+            mtbf = 1/(3600*self.params['mtbf'])
+            mttr = 1/(self.params['mttr'])
         wait_time = self.params['wait_time']
         idle_boat_timeout = self.params['idle_boat_timeout']
         idle_boat = 0
@@ -285,8 +308,22 @@ The process batch size therefore needs to be a multiple of the automation loadsi
             
             if (downtime_runs > 0) and (self.process_counter >= downtime_runs) and (self.batches_loaded == 0):
                     # if downtime is needed and all batches have been unloaded, enter downtime
-                    yield self.env.timeout(downtime_duration) # stop automation during downtime
+                    #print(str(self.env.now) + "- [" + self.params['type'] + "] Run limit reached - Maintenance needed")
+                    self.downtime = downtime_duration
+                    self.downtime_finished = self.env.event()
+                    self.maintenance_needed = True                    
+                    yield self.downtime_finished
+                    #print(str(self.env.now) + "- [" + self.params['type'] + "] Run limit reached - Maintenance finished")
                     self.process_counter = 0 # reset total number of process runs
+            
+            if mtbf_enable and self.env.now >= self.next_failure:
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed")
+                self.downtime = self.env.now + random.expovariate(mttr)
+                self.downtime_finished = self.env.event()
+                self.maintenance_needed = True                    
+                yield self.downtime_finished
+                self.next_failure = self.env.now + random.expovariate(mtbf)
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance finished")
             
             ### MOVE FROM FURNACE TO COOLDOWN ###
             for i in range(no_of_processes): # first check if we can move a full boat from tube to cooldown
@@ -324,7 +361,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                         yield self.env.timeout(transfer2_time) # wait for transfer
                         self.loadstation = boat # enter boat into loadstation
 
-                        #print(str(self.env.now) + "- [" + self.params['type'] + "]Ask for load-out for boat " + str(self.loadstation))                        
+                        #print(str(self.env.now) + "- [" + self.params['type'] + "] Ask for load-out for boat " + str(self.loadstation))                        
                         self.loadstation_status = 1 # set status as busy
                         yield self.load_out_start.succeed() # ask for load-out
                         self.load_out_start = self.env.event() # create new event

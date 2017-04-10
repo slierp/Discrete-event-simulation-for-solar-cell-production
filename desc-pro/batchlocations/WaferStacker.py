@@ -97,6 +97,8 @@ The second loop consists of the following steps:
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['stack_size'],self.params['max_stack_no'])
 
+        self.maintenance_needed = False
+
         self.env.process(self.run_load_in_conveyor())
         self.env.process(self.run_pick_and_place())
 

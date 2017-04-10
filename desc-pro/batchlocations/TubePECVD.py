@@ -3,12 +3,7 @@ from PyQt5 import QtCore
 from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
 from batchlocations.TubeFurnace import TubeFurnace
-
-"""
-
-TODO
-
-"""
+import simpy, random
 
 class TubePECVD(TubeFurnace):
         
@@ -86,6 +81,13 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['downtime_duration'] = 60
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
         self.params['downtime_duration_type'] = "downtime"
+
+        self.params['mtbf'] = 1000
+        self.params['mtbf_desc'] = "Mean time between failures (hours) (0 to disable function)"
+        self.params['mtbf_type'] = "downtime"
+        self.params['mttr'] = 60
+        self.params['mttr_desc'] = "Mean time to repair (minutes)"
+        self.params['mttr_type'] = "downtime"
         
         self.params['no_of_processes'] = 5
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
@@ -235,6 +237,17 @@ The process batch size therefore needs to be a multiple of the automation loadsi
                 
                 if not no_boats:
                     break
+
+        self.downtime_finished = None
+        self.technician_resource = simpy.Resource(self.env,1)
+        self.downtime_duration =  60*self.params['downtime_duration']
+        self.maintenance_needed = False
+        
+        random.seed(42)
+        self.mtbf_enable = False
+        if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
+            self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
+            self.mtbf_enable = True        
      
         self.env.process(self.run_load_in())
         self.env.process(self.run_load_out())

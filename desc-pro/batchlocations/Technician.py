@@ -22,9 +22,7 @@ There is one loop that describes the functionality of the technician.
 The first step in this loop is to go over all the tools assigned to this technician and do the following:
 <ol>
 <li>Check if the tool is requesting a technician</li>
-<li>If so, start the downtime procedure of the tool</li>
-<li>Check periodically if the same tool requires additional downtime and start up that procedure if necessary</li>
-<li>At the end of the downtime go back to checking other tools</li>
+<li>If so, wait as long as the prescribed downtime duration and then restart the tool</li>
 </ol>
 \n
         """
@@ -58,17 +56,37 @@ The first step in this loop is to go over all the tools assigned to this technic
 
         wait_time = self.params['wait_time']        
         start_time_set = False
+        continue_loop = False
 
         no_tools = len(self.tools)
 
         # Main loop to find tools that require maintenance
         while True:
-#            for i in range(no_tools):
-#                pass
+            
+            for i in range(no_tools):
+                
+                if self.tools[i].maintenance_needed:
+                    
+                    if self.tools[i].technician_resource.count:
+                        continue
 
-            if not start_time_set:
-                self.start_time = self.env.now
-                start_time_set = True
+                    if not start_time_set:
+                        self.start_time = self.env.now
+                        start_time_set = True
+
+                    continue_loop = True
+                    
+                    with self.tools[i].technician_resource.request() as request:
+                        yield request
+
+                        self.tools[i].maintenance_needed = False                                        
+                        yield self.env.timeout(self.tools[i].downtime_duration)
+                        yield self.tools[i].downtime_finished.succeed()
+
+            # if something useful was done then continue checking connections
+            if (continue_loop):
+                continue_loop = False
+                continue
         
             yield self.env.timeout(wait_time)
             self.idle_time += wait_time        

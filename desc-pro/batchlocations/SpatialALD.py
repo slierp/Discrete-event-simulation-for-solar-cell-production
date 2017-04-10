@@ -187,6 +187,8 @@ After the process the wafer is placed on the output conveyor of the deposition u
             self.first_run.append(True)
             self.start_time.append(0)
 
+        self.maintenance_needed = False
+
         ### Start SimPy processes ###
         self.env.process(self.run_conveyor())      
         self.env.process(self.run_load_in())

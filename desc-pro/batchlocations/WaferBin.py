@@ -59,6 +59,8 @@ There is one simple loop that consists of two steps:
       
         self.input = CassetteContainer(self.env,"input",self.params['max_batch_no'])
         self.output = InfiniteContainer(self.env,"output")
+
+        self.maintenance_needed = False
         
         self.env.process(self.run())
 

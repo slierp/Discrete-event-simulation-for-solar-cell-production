@@ -148,6 +148,8 @@ During this time the wafer load-in is paused.\n
         transport_params = self.params.copy()
         transport_params['name'] = "ii1"      
         self.transport1 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
+        
+        self.maintenance_needed = False        
 
     def report(self):
         self.utilization.append(self.params['type'])

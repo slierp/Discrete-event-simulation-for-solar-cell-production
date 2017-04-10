@@ -100,6 +100,8 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.idle_time = 0
                                      
+        self.maintenance_needed = False        
+        
         self.env.process(self.run_cassette_load_out())
         self.env.process(self.run_lane_load_out())
         self.env.process(self.run_lanes())

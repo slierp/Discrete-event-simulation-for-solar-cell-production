@@ -156,6 +156,8 @@ After a drying step the wafer is placed on the input belt of the next printer an
             self.first_run.append(True)
             self.start_time.append(0)
 
+        self.maintenance_needed = False
+
         self.next_step = self.env.event() # triggers load-in from cassette
         # start belt before printers; otherwise next_step will be triggered already
         # and a different one will be created

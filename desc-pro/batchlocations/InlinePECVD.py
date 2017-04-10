@@ -147,6 +147,8 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         ### Output ###
         self.output = BatchContainer(self.env,"output",self.params['cassette_size'],self.params['max_cassette_no'])
 
+        self.maintenance_needed = False
+
         ### Start processes ###
         self.env.process(self.run_load_in_conveyor())
         self.env.process(self.run_load_out_conveyor())        

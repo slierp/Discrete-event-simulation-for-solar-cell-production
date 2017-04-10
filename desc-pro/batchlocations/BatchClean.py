@@ -290,6 +290,8 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params['cassette_size'] = self.params['cassette_size']
         self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
 
+        self.maintenance_needed = False        
+
     def report(self):
         self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])

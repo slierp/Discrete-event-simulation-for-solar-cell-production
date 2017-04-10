@@ -44,6 +44,8 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         self.production_volume = 0
         self.start_time = -1
         self.start = self.env.event()
+
+        self.maintenance_needed = False
         
         self.env.process(self.run())        
 

@@ -53,6 +53,8 @@ There is one simple loop that consists of three steps:
         self.batch_size = self.params['batch_size']
         self.process_counter = 0
 
+        self.maintenance_needed = False
+
         self.output = BatchContainer(self.env,"output",self.batch_size,1)
         self.env.process(self.run())        
 
