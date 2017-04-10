@@ -110,16 +110,26 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         generate_batchconnections = self.parent.tools_widget.generate_batchconnections
         reset_cassetteloops = self.parent.cassetteloops_widget.reset_cassetteloops
         reset_operators = self.parent.operators_widget.reset_operators
+        reset_technicians = self.parent.technicians_widget.reset_technicians
 
         if (self.append_mode): # if nothing was selected
             self.selected_batchlocation_number = len(self.batchlocations)
+            reset_cassetteloops(self.selected_batchlocation_number)
+            reset_operators(self.selected_batchlocation_number)
+            reset_technicians(self.selected_batchlocation_number)            
             self.locationgroups.append([0])
             self.row = len(self.locationgroups)-1
         elif (self.index == None): # if parent item was selected      
             self.selected_batchlocation_number = self.locationgroups[self.row][0]
+            reset_cassetteloops(self.selected_batchlocation_number)
+            reset_operators(self.selected_batchlocation_number)
+            reset_technicians(self.selected_batchlocation_number)            
             self.locationgroups.insert(self.row,[0])        
         else: # if child item was selected       
             self.selected_batchlocation_number = self.locationgroups[self.row][self.index]
+            reset_cassetteloops(self.selected_batchlocation_number)
+            reset_operators(self.selected_batchlocation_number)
+            reset_technicians(self.selected_batchlocation_number)            
             self.locationgroups[self.row].insert(self.index,0)        
 
         new_dict = {}
@@ -138,10 +148,6 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         load_definition(False)
         generate_locationgroups() # generate new locationgroups list
         generate_batchconnections() # generate new connections list
-        
-        if self.row:
-            reset_cassetteloops(self.row)
-            reset_operators(self.row)
 
         # re-expand parent item in view       
         index = self.model.index(self.row, 0)

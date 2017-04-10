@@ -31,6 +31,8 @@ class OperatorsWidget(QtCore.QObject):
                 parent.appendRow(child)
             self.model.appendRow(parent)
             #self.view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True) 
+            index = self.model.index(i, 0)
+            self.view.setExpanded(index, True)            
 
     def import_batchlocations(self):
         self.load_definition() # default operators list
@@ -173,29 +175,40 @@ class OperatorsWidget(QtCore.QObject):
             
             self.statusbar.showMessage("Operator connection removed") 
 
-    def reset_operators(self, row):
+    def reset_operators(self, tool_number):
         # reset connection list of operators whose connections have become invalid
+        # tool_number is batchlocations list location that was changed
     
         batchconnections = self.parent.tools_widget.batchconnections
         batchlocations = self.parent.tools_widget.batchlocations    
-        
-        if (len(batchlocations) == 0):
-            return
+        locationgroups = self.parent.tools_widget.locationgroups
 
-        reset_list = []
-        for i, value0 in enumerate(self.operators):
-            for j, value1 in enumerate(self.operators[i][0]):
-                if (self.operators[i][0][j] < (len(batchconnections)-1)):
-                    num = batchconnections[self.operators[i][0][j]]
-                    
-                    if (num[0][0] >= row) | (num[1][0] >= row):
-                        reset_list.append(i)
+        if not len(batchlocations):
+            return
+        
+        # find first batchconnection that refers to changed tool
+        changed_connection = -1
+        for i in range(len(batchconnections)):
+            origin = batchconnections[i][0]
+            destination = batchconnections[i][1]
+            origin_toolnumber = locationgroups[origin[0]][origin[1]]
+            destination_toolnumber = locationgroups[destination[0]][destination[1]]
             
-        for i in reset_list:
-            dict_copy = self.operators[i][1]
-            del self.operators[i]                        
-            self.operators.insert(i,[[],dict_copy])
-            self.operators[i][0].append(0)
+            if origin_toolnumber == tool_number or destination_toolnumber == tool_number:
+                changed_connection = i
+                break
+
+        if changed_connection == -1:
+            return
+        
+        for i in range(len(self.operators)):
+            reset_list = []
+            for j, value in enumerate(self.operators[i][0]): # all connections                    
+                if value >= changed_connection:
+                    reset_list.append(j)
+            
+            for k in sorted(reset_list, reverse=True):
+                del self.operators[i][0][k]
             
         self.load_definition(False)
 
@@ -229,6 +242,10 @@ class OperatorsWidget(QtCore.QObject):
         connection_dialog.show()  
 
     def trash_operator_view(self):
+        
+        if not len(self.operators):
+            return
+        
         msgBox = QtWidgets.QMessageBox(self.parent)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)

@@ -61,6 +61,8 @@ class ToolsWidget(QtCore.QObject):
                 parent.appendRow(child)
             self.model.appendRow(parent)
             #self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)
+            index = self.model.index(i, 0)
+            self.view.setExpanded(index, True)
 
     def reindex_locationgroups(self):
         # change it so that all indexes are consecutive, which should always be the case
@@ -91,6 +93,7 @@ class ToolsWidget(QtCore.QObject):
     def del_batchlocation_view(self):        
         reset_operators = self.parent.operators_widget.reset_operators
         reset_cassetteloops = self.parent.cassetteloops_widget.reset_cassetteloops        
+        reset_technicians = self.parent.technicians_widget.reset_technicians    
         
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
@@ -103,8 +106,9 @@ class ToolsWidget(QtCore.QObject):
             # if parent item, remove all batchlocation children and row in locationgroups
         
             row = self.view.selectedIndexes()[0].row() # selected row in locationgroups
-            reset_operators(row)            
-            reset_cassetteloops(row)
+            reset_operators(self.locationgroups[row][0])            
+            reset_cassetteloops(self.locationgroups[row][0])
+            reset_technicians(self.locationgroups[row][0])
             
             start = self.locationgroups[row][0]
             finish = self.locationgroups[row][len(self.locationgroups[row])-1]+1                
@@ -116,11 +120,21 @@ class ToolsWidget(QtCore.QObject):
             
             if (len(self.locationgroups[row]) == 1):
                 # if last child item, remove batchlocation and whole row in locationgroups
+                
+                reset_operators(self.locationgroups[row][0])            
+                reset_cassetteloops(self.locationgroups[row][0])
+                reset_technicians(self.locationgroups[row][0])
+                
                 del self.batchlocations[self.locationgroups[row][0]]
                 del self.locationgroups[row]
             else:
                 # if not last child item, remove batchlocation and element in locationgroup row
                 index = self.view.selectedIndexes()[0].row()
+                
+                reset_operators(self.locationgroups[row][index])            
+                reset_cassetteloops(self.locationgroups[row][index])
+                reset_technicians(self.locationgroups[row][index])
+                
                 del self.batchlocations[self.locationgroups[row][index]]
                 del self.locationgroups[row][index]
                 child_item = True
@@ -163,25 +177,29 @@ class ToolsWidget(QtCore.QObject):
             batchlocation_dialog.show() 
 
     def trash_batchlocation_view(self):
-        trash_cassetteloops = self.parent.cassetteloops_widget.trash_cassetteloops
-        trash_operators = self.parent.operators_widget.trash_operators
-        trash_technicians = self.parent.technicians_widget.trash_technicians
+
+        if not len(self.batchlocations):
+            return          
+        
+        reset_operators = self.parent.operators_widget.reset_operators
+        reset_cassetteloops = self.parent.cassetteloops_widget.reset_cassetteloops
+        reset_technicians = self.parent.technicians_widget.reset_technicians
 
         msgBox = QtWidgets.QMessageBox(self.parent)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
-        msgBox.setText(self.tr("This will remove all tools, cassette loops, operators and technicians. Continue?"))
+        msgBox.setText(self.tr("This will remove all tools. Continue?"))
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
         ret = msgBox.exec_()
         
         if (ret == QtWidgets.QMessageBox.Ok):
+            reset_operators(0)            
+            reset_cassetteloops(0)
+            reset_technicians(0)            
             self.batchlocations = []
             self.locationgroups = []
             self.batchconnections = []
-            trash_cassetteloops()
-            trash_operators()
-            trash_technicians()
             self.model.clear()
             self.model.setHorizontalHeaderLabels(['Process flow']) 
             self.statusbar.showMessage(self.tr("All tools were removed"))

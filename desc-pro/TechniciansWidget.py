@@ -31,6 +31,8 @@ class TechniciansWidget(QtCore.QObject):
                 child = QtGui.QStandardItem(item)
                 parent.appendRow(child)
             self.model.appendRow(parent)
+            index = self.model.index(i, 0)
+            self.view.setExpanded(index, True)            
 
     def import_batchlocations_tech(self):
         self.load_definition() # default technicians list
@@ -179,6 +181,23 @@ class TechniciansWidget(QtCore.QObject):
             
             self.statusbar.showMessage("Technician tool removed")
 
+    def reset_technicians(self, tool_number):
+        # empty technician tool lists that are affected by a tool list change
+
+        if (len(self.technicians) == 0):
+            return
+
+        for i in range(len(self.technicians)):
+            reset_list = []
+            for j in range(len(self.technicians[i][0])):
+                if tool_number <= self.technicians[i][0][j]:
+                    reset_list.append(j)
+            
+            for k in sorted(reset_list, reverse=True):
+                del self.technicians[i][0][k]
+            
+        self.load_definition(False)
+
     def edit_technician_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
@@ -196,6 +215,10 @@ class TechniciansWidget(QtCore.QObject):
         batchlocation_dialog.show() 
 
     def trash_technician_view(self):
+        
+        if not len(self.technicians):
+            return        
+        
         msgBox = QtWidgets.QMessageBox(self.parent)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)

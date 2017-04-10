@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtWidgets, QtGui
-from dialogs.AddCassetteLoopDialog import AddCassetteLoopDialog
 from dialogs.CassetteLoopSettingsDialog import CassetteLoopSettingsDialog
 
 class CassetteloopsWidget(QtCore.QObject):
@@ -151,10 +150,14 @@ class CassetteloopsWidget(QtCore.QObject):
         for i, value in enumerate(self.cassette_loops):
             parent = QtGui.QStandardItem('Loop ' + str(i))
 
-            for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
-                child = QtGui.QStandardItem(self.print_cassetteloop(j))
-                child.setEnabled(False)
-                parent.appendRow(child)
+            if (not len(self.cassette_loops[i])):
+                continue
+
+            if not (self.cassette_loops[i][0] == -1):
+                for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
+                    child = QtGui.QStandardItem(self.print_cassetteloop(j))
+                    child.setEnabled(False)
+                    parent.appendRow(child)
 
             self.model.appendRow(parent)
             index = self.model.index(i, 0)
@@ -165,7 +168,7 @@ class CassetteloopsWidget(QtCore.QObject):
         self.statusbar.showMessage(self.tr("Cassette loops generated"))
     
     def add_cassetteloop_view(self):
-        cassetteloops_dialog = AddCassetteLoopDialog(self.parent)
+        cassetteloops_dialog = CassetteLoopSettingsDialog(self.parent)
         cassetteloops_dialog.setModal(True)
         cassetteloops_dialog.show()       
     
@@ -182,21 +185,31 @@ class CassetteloopsWidget(QtCore.QObject):
 
         self.statusbar.showMessage(self.tr("Cassette loop removed"))
 
-    def reset_cassetteloops(self, row):
-        # remove cassette loops whose tools no longer exist
+    def reset_cassetteloops(self, tool_number):
+        # empty cassette loops that are affected by a tool list change
+    
+        locationgroups = self.parent.tools_widget.locationgroups
 
         if (len(self.cassette_loops) == 0):
             return
-    
-        reset_list = []
-        for i in range(len(self.cassette_loops)):
-            if (row >= self.cassette_loops[i][0]) and (row <= self.cassette_loops[i][1]):
-                reset_list.append(i)
-        
-        reset_list = list(set(reset_list)) # make unique
 
-        for i in reset_list:
-            del self.cassette_loops[i]                        
+        # find first locationgroup that refers to changed tool
+        changed_group = -1
+        for i in range(len(locationgroups)):
+            
+            if tool_number in locationgroups[i]:
+                changed_group = i
+                break
+
+        if changed_group == -1:
+            return
+
+        # empty loops where the tools were changed
+        for i in range(len(self.cassette_loops)):           
+            for j in range(self.cassette_loops[i][0],self.cassette_loops[i][1]+1):
+                if j >= changed_group:
+                    self.cassette_loops[i][0] = -1
+                    self.cassette_loops[i][1] = -1
             
         self.load_definition(False)
     
@@ -205,14 +218,16 @@ class CassetteloopsWidget(QtCore.QObject):
             # if nothing selected
             self.statusbar.showMessage(self.tr("Please select a cassette loop"))
             return
-                
-        row = self.view.selectedIndexes()[0].row()
         
-        cassetteloops_dialog = CassetteLoopSettingsDialog(self.parent,row)
+        cassetteloops_dialog = CassetteLoopSettingsDialog(self.parent)
         cassetteloops_dialog.setModal(True)
         cassetteloops_dialog.show()   
     
     def trash_cassetteloops_view(self):
+
+        if not len(self.cassette_loops):
+            return           
+        
         msgBox = QtWidgets.QMessageBox(self.parent)
         msgBox.setWindowTitle(self.tr("Warning"))
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
