@@ -44,18 +44,14 @@ The first step in this loop is to go over all the tools assigned to this technic
         self.utilization.append(self.params['name'])
         self.utilization.append("n/a")
         
-        if self.start_time >= 0:
-            util = 100-(100*self.idle_time/(self.env.now-self.start_time))
-            self.utilization.append(round(util,1))
-        else:
-            self.utilization.append(0)
+        util = 100-(100*self.idle_time/self.env.now)
+        self.utilization.append(round(util,1))
             
         self.utilization.append(self.transport_counter)
     
     def run(self):
 
-        wait_time = self.params['wait_time']        
-        start_time_set = False
+        wait_time = self.params['wait_time']
         continue_loop = False
 
         no_tools = len(self.tools)
@@ -70,18 +66,19 @@ The first step in this loop is to go over all the tools assigned to this technic
                     if self.tools[i].technician_resource.count:
                         continue
 
-                    if not start_time_set:
-                        self.start_time = self.env.now
-                        start_time_set = True
-
                     continue_loop = True
                     
                     with self.tools[i].technician_resource.request() as request:
                         yield request
 
-                        self.tools[i].maintenance_needed = False                                        
+                        self.tools[i].maintenance_needed = False
                         yield self.env.timeout(self.tools[i].downtime_duration)
                         yield self.tools[i].downtime_finished.succeed()
+                        self.transport_counter += 1
+                        
+                        string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Maintenance event duration: "
+                        string += str(round(self.tools[i].downtime_duration/60)) + " minutes"
+                        #self.output_text.sig.emit(string)
 
             # if something useful was done then continue checking connections
             if (continue_loop):

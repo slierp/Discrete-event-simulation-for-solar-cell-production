@@ -143,6 +143,13 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.params['transfer3_time'] = 60
         self.params['transfer3_time_desc'] = "Time for single transfer by transporter 3 (seconds)"
         self.params['transfer3_time_type'] = "automation"
+
+        self.params['mtbf'] = 1000
+        self.params['mtbf_desc'] = "Mean time between failures (hours) (0 to disable function)"
+        self.params['mtbf_type'] = "downtime"
+        self.params['mttr'] = 60
+        self.params['mttr_desc'] = "Mean time to repair (minutes) (0 to disable function)"
+        self.params['mttr_type'] = "downtime"
         
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
@@ -235,7 +242,13 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params['name'] = "cl0"
         transport_params['batch_size'] = self.params['batch_size']      
         transport_params['cassette_size'] = self.params['cassette_size']
-        self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)
+        transport_params['mtbf'] = self.params['mtbf']
+        transport_params['mttr'] = self.params['mttr']
+        self.downtime_finished = None
+        self.technician_resource = None
+        self.downtime_duration = 0
+        self.maintenance_needed = False       
+        self.transport0 = BatchTransport(self.env,batchconnections,self.output_text,transport_params,self)
 
         ### Batch transporter between first rinse, chemical oxidation and second rinse ###
         # First check whether batch can be brought to rinse/output, because that has priority
@@ -288,9 +301,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params['name'] = "cl3"
         transport_params['batch_size'] = self.params['batch_size']
         transport_params['cassette_size'] = self.params['cassette_size']
-        self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)        
-
-        self.maintenance_needed = False        
+        self.transport3 = BatchTransport(self.env,batchconnections,self.output_text,transport_params)       
 
     def report(self):
         self.utilization.append(self.params['type'])

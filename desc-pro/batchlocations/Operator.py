@@ -44,7 +44,6 @@ If none of the tool connections allowed for a transport event, then the operator
         self.params.update(_params)
         
         self.transport_counter = 0
-        self.start_time = -1
         self.idle_time = 0
             
         self.env.process(self.run())        
@@ -53,7 +52,6 @@ If none of the tool connections allowed for a transport event, then the operator
 
         continue_loop = False
         wait_time = self.params['wait_time']
-        start_time_set = False
         dummy_resource_origin = simpy.Resource(self.env,1)
         dummy_resource_destination = simpy.Resource(self.env,1)
 
@@ -185,10 +183,6 @@ If none of the tool connections allowed for a transport event, then the operator
                 if origin_resource.count or destination_resource.count:                  
                     continue                 
                     
-                if not start_time_set:
-                    self.start_time = self.env.now
-                    start_time_set = True
-                    
                 request_time  = self.env.now
                 with origin_resource.request() as request_input, \
                     destination_resource.request() as request_output:
@@ -200,8 +194,7 @@ If none of the tool connections allowed for a transport event, then the operator
                     if (current_time > request_time):
                         # if requests were not immediately granted, we cannot be sure if the source and destination
                         # have not changed, so go to next connection
-                        if start_time_set:
-                            self.idle_time += (current_time-request_time) 
+                        self.idle_time += (current_time-request_time) 
                         continue
                         
                     if cassette_transport:
@@ -241,19 +234,14 @@ If none of the tool connections allowed for a transport event, then the operator
                 continue            
                 
             yield self.env.timeout(wait_time)
-
-            if start_time_set:
-                self.idle_time += wait_time        
+            self.idle_time += wait_time        
 
     def report(self):        
         self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append("n/a")
         
-        if self.start_time >= 0:
-            util = 100-(100*self.idle_time/(self.env.now-self.start_time))
-            self.utilization.append(round(util,1))
-        else:
-            self.utilization.append(0)
+        util = 100-(100*self.idle_time/self.env.now)
+        self.utilization.append(round(util,1))
             
         self.utilization.append(self.transport_counter)

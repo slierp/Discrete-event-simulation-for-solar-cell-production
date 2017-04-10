@@ -299,7 +299,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         mtbf_enable = self.mtbf_enable
         if mtbf_enable:
             mtbf = 1/(3600*self.params['mtbf'])
-            mttr = 1/(self.params['mttr'])
+            mttr = 1/(60*self.params['mttr'])
         wait_time = self.params['wait_time']
         idle_boat_timeout = self.params['idle_boat_timeout']
         idle_boat = 0
@@ -307,23 +307,23 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         while True:
             
             if (downtime_runs > 0) and (self.process_counter >= downtime_runs) and (self.batches_loaded == 0):
-                    # if downtime is needed and all batches have been unloaded, enter downtime
-                    #print(str(self.env.now) + "- [" + self.params['type'] + "] Run limit reached - Maintenance needed")
-                    self.downtime = downtime_duration
-                    self.downtime_finished = self.env.event()
-                    self.maintenance_needed = True                    
-                    yield self.downtime_finished
-                    #print(str(self.env.now) + "- [" + self.params['type'] + "] Run limit reached - Maintenance finished")
-                    self.process_counter = 0 # reset total number of process runs
+                # if downtime is needed and all batches have been unloaded, enter downtime
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] Run limit reached - Maintenance needed")
+                self.downtime_duration = downtime_duration
+                self.downtime_finished = self.env.event()
+                self.maintenance_needed = True                    
+                yield self.downtime_finished
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] Run limit reached - Maintenance finished")
+                self.process_counter = 0 # reset total number of process runs
             
             if mtbf_enable and self.env.now >= self.next_failure:
-                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed")
-                self.downtime = self.env.now + random.expovariate(mttr)
+                self.downtime_duration = random.expovariate(mttr)
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
                 self.downtime_finished = self.env.event()
                 self.maintenance_needed = True                    
                 yield self.downtime_finished
                 self.next_failure = self.env.now + random.expovariate(mtbf)
-                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance finished")
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")
             
             ### MOVE FROM FURNACE TO COOLDOWN ###
             for i in range(no_of_processes): # first check if we can move a full boat from tube to cooldown

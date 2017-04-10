@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.CassetteContainer import CassetteContainer
-import simpy
-import collections
+import collections, random, simpy
 
 """
 Current implementation highly optimized for speed
@@ -114,6 +113,13 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params['unit_distance'] = 2/10
         self.params['unit_distance_desc'] = "Minimal distance between wafers on firing furnace (meters)"
         self.params['unit_distance_type'] = "configuration"
+
+        self.params['mtbf'] = 1000
+        self.params['mtbf_desc'] = "Mean time between failures (hours) (0 to disable function)"
+        self.params['mtbf_type'] = "downtime"
+        self.params['mttr'] = 60
+        self.params['mttr_desc'] = "Mean time to repair (minutes) (0 to disable function)"
+        self.params['mttr_type'] = "downtime"
         
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
@@ -156,7 +162,16 @@ After a drying step the wafer is placed on the input belt of the next printer an
             self.first_run.append(True)
             self.start_time.append(0)
 
+        self.downtime_finished = None
+        self.technician_resource = simpy.Resource(self.env,1)
+        self.downtime_duration =  0
         self.maintenance_needed = False
+        
+        random.seed(42)
+        self.mtbf_enable = False
+        if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
+            self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
+            self.mtbf_enable = True
 
         self.next_step = self.env.event() # triggers load-in from cassette
         # start belt before printers; otherwise next_step will be triggered already
@@ -197,7 +212,22 @@ After a drying step the wafer is placed on the input belt of the next printer an
         cassette = yield self.input.input.get() # receive first cassette
         wafer_counter = cassette_size
 
+        mtbf_enable = self.mtbf_enable
+        if mtbf_enable:
+            mtbf = 1/(3600*self.params['mtbf'])
+            mttr = 1/(60*self.params['mttr'])
+
         while True:
+
+            if mtbf_enable and self.env.now >= self.next_failure:
+                self.downtime_duration = random.expovariate(mttr)
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
+                self.downtime_finished = self.env.event()
+                self.maintenance_needed = True                    
+                yield self.downtime_finished
+                self.next_failure = self.env.now + random.expovariate(mtbf)
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")             
+            
             yield self.next_step
 
             if not wafer_counter:

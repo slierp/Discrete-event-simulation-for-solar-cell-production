@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from batchlocations.BatchProcess import BatchProcess
-#from batchlocations.BatchContainer import BatchContainer
 from batchlocations.CassetteContainer import CassetteContainer
+import random, simpy
 
 class BatchTransport(QtCore.QObject):
     # For simple one-way transports
 
-    def __init__(self,  _env, _batchconnections, _output=None, _params = {}):      
-        QtCore.QObject.__init__(self)
+    def __init__(self,  _env, _batchconnections, _output=None, _params = {}, _parent=None):      
+        #QtCore.QObject.__init__(self)
+        super(BatchTransport, self).__init__(_parent)
         self.env = _env
         self.batchconnections = _batchconnections        
         self.output_text = _output     
@@ -23,6 +24,18 @@ class BatchTransport(QtCore.QObject):
 
         self.name = self.params['name'] # for backward compatibility / to be removed
         self.transport_counter = 0     
+
+        if _parent:
+            self.parent = _parent
+            self.parent.technician_resource = simpy.Resource(self.env,1)
+            self.parent.maintenance_needed = False
+        
+        random.seed(42)
+        self.mtbf_enable = False
+        if ('mtbf' in self.params) and ('mttr' in self.params):
+            if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
+                self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
+                self.mtbf_enable = True
             
         self.env.process(self.run())
     
@@ -31,9 +44,24 @@ class BatchTransport(QtCore.QObject):
         cassette_size = self.params['cassette_size']
         wait_time = self.params['wait_time']
         continue_loop = False        
+
+        mtbf_enable = self.mtbf_enable
+        if mtbf_enable:
+            mtbf = 1/(3600*self.params['mtbf'])
+            mttr = 1/(60*self.params['mttr'])
         
         while True:
             for i in range(len(self.batchconnections)):
+
+                if mtbf_enable and self.env.now >= self.next_failure:
+                    self.parent.downtime_duration = random.expovariate(mttr)
+                    #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.parent.downtime_duration/60)) + " minutes")
+                    self.parent.downtime_finished = self.env.event()
+                    self.parent.maintenance_needed = True                    
+                    yield self.parent.downtime_finished
+                    self.next_failure = self.env.now + random.expovariate(mtbf)
+                    #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")                   
+                
                 if isinstance(self.batchconnections[i][0],CassetteContainer):
                     # load-in from CassetteContainer to BatchProcess
                     if (len(self.batchconnections[i][0].output.items) >= batch_size) & \
