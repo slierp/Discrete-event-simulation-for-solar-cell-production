@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtWidgets, QtGui
 from copy import deepcopy
-from dialogs.AddOperatorConnectionDialog import AddOperatorConnectionDialog
 from dialogs.OperatorSettingsDialog import OperatorSettingsDialog
 from dialogs.ConnectionSettingsDialog import ConnectionSettingsDialog
 
@@ -36,7 +35,7 @@ class OperatorsWidget(QtCore.QObject):
 
     def import_batchlocations(self):
         self.load_definition() # default operators list
-        self.statusbar.showMessage(self.tr("Operators automatically generated"))
+        self.statusbar.showMessage(self.tr("Operators automatically generated"),3000)
 
     def print_batchlocation(self, num):
         
@@ -85,11 +84,8 @@ class OperatorsWidget(QtCore.QObject):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
             self.add_operator(True)
-        elif (self.view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
+        else:
             self.add_operator()
-        else: # if child row is selected
-            self.add_operator_batchconnections()
             
     def add_operator(self, append_mode = False):
         batchconnections = self.parent.tools_widget.batchconnections
@@ -104,7 +100,7 @@ class OperatorsWidget(QtCore.QObject):
                 index = self.model.index(len(self.operators), 0)
                 self.view.setCurrentIndex(index)
             else:
-                self.statusbar.showMessage(self.tr("No batch connections available for new operator"))
+                self.statusbar.showMessage(self.tr("No batch connections available for new operator"),3000)
                 return
         else:                      
             # find out which operator was selected
@@ -120,18 +116,12 @@ class OperatorsWidget(QtCore.QObject):
             index = self.model.index(row, 0)
             self.view.setCurrentIndex(index)
         
-        self.statusbar.showMessage(self.tr("Operator added"))
-
-    def add_operator_batchconnections(self):        
-        # start dialog to enable user to add operator
-        connection_dialog = AddOperatorConnectionDialog(self.parent)
-        connection_dialog.setModal(True)
-        connection_dialog.show()   
+        self.statusbar.showMessage(self.tr("Operator added"),3000)   
 
     def del_operator_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select position"))
+            self.statusbar.showMessage(self.tr("Please select position"),3000)
         elif (self.view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
             self.del_operator()
@@ -146,34 +136,25 @@ class OperatorsWidget(QtCore.QObject):
         del self.operators[row]
         
         # reload definitions
-        self.parent.load_definition_operators(False)        
+        self.load_definition(False)        
         
-        self.statusbar.showMessage(self.tr("Operator removed"))
+        self.statusbar.showMessage(self.tr("Operator removed"),3000)
             
     def del_operator_batchconnections(self):
         # find out which connection was selected
         row = self.view.selectedIndexes()[0].parent().row()
         index = self.view.selectedIndexes()[0].row()
 
-        if (len(self.operators[row][0]) == 1):
-            # if last child item, remove the operator
-            del self.operators[row]
-            
-            # reload definition into view
-            self.load_definition(False) 
-            
-            self.statusbar.showMessage("Last operator connection and operator removed")            
-        else:
-            del self.operators[row][0][index]
-            
-            # reload definition into view
-            self.load_definition(False)
+        del self.operators[row][0][index]
+        
+        # reload definition into view
+        self.load_definition(False)
 
-            # re-expand the operator parent item
-            index = self.model.index(row, 0)
-            self.view.setExpanded(index, True) 
-            
-            self.statusbar.showMessage("Operator connection removed") 
+        # re-expand the operator parent item
+        index = self.model.index(row, 0)
+        self.view.setExpanded(index, True) 
+        
+        self.statusbar.showMessage(self.tr("Operator connection removed"),3000)
 
     def reset_operators(self, tool_number):
         # reset connection list of operators whose connections have become invalid
@@ -215,7 +196,7 @@ class OperatorsWidget(QtCore.QObject):
     def edit_operator_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select position"))
+            self.statusbar.showMessage(self.tr("Please select position"),3000)
         elif (self.view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
             self.edit_operator()
@@ -261,4 +242,4 @@ class OperatorsWidget(QtCore.QObject):
         self.operators = []
         self.model.clear()
         self.model.setHorizontalHeaderLabels(['Operators']) 
-        self.statusbar.showMessage(self.tr("All operators were removed"))
+        self.statusbar.showMessage(self.tr("All operators were removed"),3000)

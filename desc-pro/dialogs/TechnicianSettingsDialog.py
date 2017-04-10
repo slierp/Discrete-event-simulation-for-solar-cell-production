@@ -42,21 +42,43 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         self.setWindowTitle(self.tr("Technician settings"))
 
         tabwidget = QtWidgets.QTabWidget()
-        
-        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements        
-       
-        ### Add specification text ###
-        hbox = QtWidgets.QHBoxLayout()           
-        browser = QtWidgets.QTextBrowser()
-        browser.insertHtml(curr_params['specification'])
-        browser.moveCursor(QtGui.QTextCursor.Start)        
-        hbox.addWidget(browser)
-        vbox_description.addLayout(hbox)
 
-        generic_widget_description = QtWidgets.QWidget()
-        generic_widget_description.setLayout(vbox_description)
-        tabwidget.addTab(generic_widget_description, "Description")
+        ### Tools tab ###
+        vbox = QtWidgets.QVBoxLayout() 
 
+        title_label = QtWidgets.QLabel(self.tr("Available tools:"))
+        vbox.addWidget(title_label)
+
+        self.tools_list = ['BatchClean','BatchTex','SingleSideEtch','TubeFurnace','IonImplanter',\
+                      'WaferStacker','WaferUnstacker','PlasmaEtcher','TubePECVD','InlinePECVD','PrintLine','SpatialALD']
+
+        self.dataset_cb = []
+        self.dataset_tools = []
+        for i, value in enumerate(self.batchlocations):
+            if value[0] in self.tools_list:
+                item = value[0] + " " + value[1]['name']
+                self.dataset_cb.append(QtWidgets.QCheckBox(item))
+                self.dataset_tools.append(i)
+                if i in self.technicians[self.row][0]:
+                    self.dataset_cb[-1].setChecked(True)
+
+        scroll_area = QtWidgets.QScrollArea()
+        checkbox_widget = QtWidgets.QWidget()
+        checkbox_vbox = QtWidgets.QVBoxLayout()
+
+        for i in range(len(self.dataset_cb)):
+            self.dataset_cb[i].setMinimumWidth(400) # prevent obscured text
+            checkbox_vbox.addWidget(self.dataset_cb[i])
+
+        checkbox_widget.setLayout(checkbox_vbox)
+        scroll_area.setWidget(checkbox_widget)
+        vbox.addWidget(scroll_area)
+
+        generic_widget_tools = QtWidgets.QWidget()
+        generic_widget_tools.setLayout(vbox)
+        tabwidget.addTab(generic_widget_tools, "Tools")
+
+        ### Settings tab ###
         vbox = QtWidgets.QVBoxLayout() # vbox for all settings  
          
         self.strings = []
@@ -132,6 +154,20 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         generic_widget_settings.setLayout(vbox)
         tabwidget.addTab(generic_widget_settings, "Settings")
 
+        ### Description tab ###        
+        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements        
+       
+        hbox = QtWidgets.QHBoxLayout()           
+        browser = QtWidgets.QTextBrowser()
+        browser.insertHtml(curr_params['specification'])
+        browser.moveCursor(QtGui.QTextCursor.Start)        
+        hbox.addWidget(browser)
+        vbox_description.addLayout(hbox)
+
+        generic_widget_description = QtWidgets.QWidget()
+        generic_widget_description.setLayout(vbox_description)
+        tabwidget.addTab(generic_widget_description, "Description")
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(tabwidget) 
 
@@ -146,7 +182,19 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         self.setMinimumWidth(800)
 
     def read(self):
-        # read contents of each widget
+        
+        # Add tools to technician
+        self.technicians[self.row][0] = []
+        
+        j = 0
+        for i, value in enumerate(self.batchlocations):
+            if value[0] in self.tools_list:
+                if self.dataset_cb[j].isChecked():
+                    self.technicians[self.row][0].append(self.dataset_tools[j])
+                j += 1
+        
+        self.technicians[self.row][0].sort()        
+        
         # update settings in self.operators[self.row] of parent
         new_params = {}
         for i in self.strings:
@@ -167,5 +215,5 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         # select row again after reloading operator definitions
         index = self.model.index(self.row, 0)
         self.view.setCurrentIndex(index)
-        self.statusbar.showMessage(self.tr("Technician settings updated"))
+        self.statusbar.showMessage(self.tr("Technician settings updated"),3000)
         self.accept()

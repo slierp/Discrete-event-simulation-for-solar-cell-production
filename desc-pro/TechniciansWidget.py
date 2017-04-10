@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtWidgets, QtGui
-from dialogs.AddTechnicianToolDialog import AddTechnicianToolDialog
 from dialogs.TechnicianSettingsDialog import TechnicianSettingsDialog
 from copy import deepcopy
 
@@ -38,9 +37,9 @@ class TechniciansWidget(QtCore.QObject):
         self.load_definition() # default technicians list
         
         if len(self.technicians) > 0:
-            self.statusbar.showMessage(self.tr("Technicians automatically generated"))
+            self.statusbar.showMessage(self.tr("Technicians automatically generated"),3000)
         else:
-            self.statusbar.showMessage(self.tr("No technicians could be automatically generated"))
+            self.statusbar.showMessage(self.tr("No technicians could be automatically generated"),3000)
 
     def generate_technicians(self):
         # generate a default technician list from batchlocations list
@@ -79,11 +78,8 @@ class TechniciansWidget(QtCore.QObject):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
             self.add_technician(True)
-        elif (self.view.selectedIndexes()[0].parent().row() == -1):
-            # if parent row is selected
+        else:
             self.add_technician()
-        else: # if child row is selected
-            self.add_technician_tool()  
 
     def add_technician(self, append_mode = False):
 
@@ -99,7 +95,7 @@ class TechniciansWidget(QtCore.QObject):
                 break
             
         if tool == -1:
-            self.statusbar.showMessage(self.tr("No tools available for new technician"))
+            self.statusbar.showMessage(self.tr("No tools available for new technician"),3000)
             return            
         
         if (append_mode):
@@ -126,23 +122,17 @@ class TechniciansWidget(QtCore.QObject):
             index = self.model.index(row, 0)
             self.view.setCurrentIndex(index)
         
-        self.statusbar.showMessage(self.tr("Technician added"))
-
-    def add_technician_tool(self):        
-        # start dialog to enable user to add tools for technician        
-        connection_dialog = AddTechnicianToolDialog(self.parent)
-        connection_dialog.setModal(True)
-        connection_dialog.show()
+        self.statusbar.showMessage(self.tr("Technician added"),3000)
 
     def del_technician_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select position"))
+            self.statusbar.showMessage(self.tr("Please select position"),3000)
         elif (self.view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
             self.del_technician()
         else: # if child row is selected
-            self.del_technician_batchlocations()
+            self.del_technician_tool()
 
     def del_technician(self):
         # find out which operator was selected
@@ -154,32 +144,23 @@ class TechniciansWidget(QtCore.QObject):
         # reload definitions
         self.load_definition(False)        
         
-        self.statusbar.showMessage(self.tr("Technician removed"))
+        self.statusbar.showMessage(self.tr("Technician removed"),3000)
             
-    def del_technician_batchlocations(self):
+    def del_technician_tool(self):
         # find out which connection was selected
         row = self.view.selectedIndexes()[0].parent().row()
         index = self.view.selectedIndexes()[0].row()
 
-        if (len(self.technicians[row][0]) == 1):
-            # if last child item, remove the operator
-            del self.technicians[row]
-            
-            # reload definition into view
-            self.load_definition(False) 
-            
-            self.statusbar.showMessage("Last tool and technician removed")            
-        else:
-            del self.technicians[row][0][index]            
-            
-            # reload definition into view
-            self.load_definition(False)
+        del self.technicians[row][0][index]            
+        
+        # reload definition into view
+        self.load_definition(False)
 
-            # re-expand the operator parent item
-            index = self.model.index(row, 0)
-            self.view.setExpanded(index, True) 
-            
-            self.statusbar.showMessage("Technician tool removed")
+        # re-expand the operator parent item
+        index = self.model.index(row, 0)
+        self.view.setExpanded(index, True) 
+        
+        self.statusbar.showMessage(self.tr("Technician tool removed"),3000)
 
     def reset_technicians(self, tool_number):
         # empty technician tool lists that are affected by a tool list change
@@ -201,12 +182,12 @@ class TechniciansWidget(QtCore.QObject):
     def edit_technician_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select position"))
+            self.statusbar.showMessage(self.tr("Please select position"),3000)
         elif (self.view.selectedIndexes()[0].parent().row() == -1):
             # if parent row is selected
             self.edit_technician()
         else: # if child row is selected
-            self.statusbar.showMessage(self.tr("No tool settings available"))
+            self.statusbar.showMessage(self.tr("No tool settings available"),3000)
 
     def edit_technician(self):
         # start dialog to enable user to change settings        
@@ -234,4 +215,4 @@ class TechniciansWidget(QtCore.QObject):
         self.technicians = []
         self.model.clear()
         self.model.setHorizontalHeaderLabels(['Technicians']) 
-        self.statusbar.showMessage(self.tr("All technicians were removed"))
+        self.statusbar.showMessage(self.tr("All technicians were removed"),3000)

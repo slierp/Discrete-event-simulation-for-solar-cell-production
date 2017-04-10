@@ -241,5 +241,5 @@ class LocationgroupSettingsDialog(QtWidgets.QDialog):
             index = self.model.index(self.row, 0)
             self.view.setExpanded(index, True)
         
-        self.statusbar.showMessage(self.tr("Tool group settings updated"))
+        self.statusbar.showMessage(self.tr("Tool group settings updated"),3000)
         self.accept()

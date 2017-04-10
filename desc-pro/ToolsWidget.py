@@ -97,7 +97,7 @@ class ToolsWidget(QtCore.QObject):
         
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select position"))
+            self.statusbar.showMessage(self.tr("Please select position"),3000)
             return
         
         child_item = False
@@ -148,12 +148,12 @@ class ToolsWidget(QtCore.QObject):
             index = self.model.index(row, 0)
             self.view.setExpanded(index, True)        
         
-        self.statusbar.showMessage(self.tr("Batch location(s) removed"))
+        self.statusbar.showMessage(self.tr("Batch location(s) removed"),3000)
     
     def edit_batchlocation_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select position"))
+            self.statusbar.showMessage(self.tr("Please select position"),3000)
             return
         
         if (self.view.selectedIndexes()[0].parent().row() == -1):
@@ -165,7 +165,7 @@ class ToolsWidget(QtCore.QObject):
             for i, value in enumerate(self.locationgroups[row]):
                 to_be_tested = self.batchlocations[self.locationgroups[row][i]][0]        
                 if not (reference == to_be_tested):
-                    self.statusbar.showMessage(self.tr("Not all batch locations in this group are of the same kind"))
+                    self.statusbar.showMessage(self.tr("Not all batch locations in this group are of the same kind"),3000)
                     return
                     
             locationgroup_dialog = LocationgroupSettingsDialog(self.parent)
@@ -202,7 +202,7 @@ class ToolsWidget(QtCore.QObject):
             self.batchconnections = []
             self.model.clear()
             self.model.setHorizontalHeaderLabels(['Process flow']) 
-            self.statusbar.showMessage(self.tr("All tools were removed"))
+            self.statusbar.showMessage(self.tr("All tools were removed"),3000)
 
     def generate_locationgroups(self):
         # generate a default locationgroups list from batchlocations

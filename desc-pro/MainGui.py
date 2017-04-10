@@ -212,7 +212,7 @@ class MainGui(QtWidgets.QMainWindow):
         self.operators_widget.load_definition(False)
         self.technicians_widget.load_definition(False)
             
-        self.statusBar().showMessage(self.tr("New description loaded"))
+        self.statusBar().showMessage(self.tr("New description loaded"),3000)
 
     def save_to_file(self):
 
@@ -224,7 +224,7 @@ class MainGui(QtWidgets.QMainWindow):
             pickle.dump([self.tools_widget.batchlocations,self.tools_widget.locationgroups,self.cassetteloops_widget.cassette_loops,\
                              self.tools_widget.batchconnections,self.operators_widget.operators,self.technicians_widget.technicians], f)
             
-        self.statusBar().showMessage(self.tr("File saved"))
+        self.statusBar().showMessage(self.tr("File saved"),3000)
 
     def save_to_file_as(self):
 
@@ -243,7 +243,7 @@ class MainGui(QtWidgets.QMainWindow):
             pickle.dump([self.tools_widget.batchlocations,self.tools_widget.locationgroups,self.cassetteloops_widget.cassette_loops,\
                              self.tools_widget.batchconnections,self.operators_widget.operators,self.technicians_widget.technicians], f)
             
-        self.statusBar().showMessage(self.tr("File saved"))
+        self.statusBar().showMessage(self.tr("File saved"),3000)
 
     def run_simulation(self):
 
@@ -256,13 +256,13 @@ class MainGui(QtWidgets.QMainWindow):
         
         self.output_signal_counter = 0
 
+        if (len(batchlocations) < 2) | (len(locationgroups) < 2):
+            self.statusBar().showMessage(self.tr("Not enough batch locations found"),3000)
+            return
+
         # reset selection in case definition changed
         # only include last locationgroup in plot       
         self.plot_selection = locationgroups[len(locationgroups)-1] 
-
-        if (len(batchlocations) < 2) | (len(locationgroups) < 2):
-            self.statusBar().showMessage(self.tr("Not enough batch locations found"))
-            return
         
         for i, value in enumerate(batchconnections):
             # check if all batchconnections exist inside locationgroups
@@ -270,18 +270,18 @@ class MainGui(QtWidgets.QMainWindow):
             # since GUI should not allow for any errors to appear
             if (batchconnections[i][0][0] > (len(locationgroups)-1)) | \
                     (batchconnections[i][1][0] > (len(locationgroups)-1)):
-                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
+                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"),3000)
                 return
             elif (batchconnections[i][0][1] > (len(locationgroups[batchconnections[i][0][0]])-1)) | \
                     (batchconnections[i][1][1] > (len(locationgroups[batchconnections[i][1][0]])-1)):
-                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"))
+                self.statusBar().showMessage(self.tr("Invalid batch location found inside batch connection definitions"),3000)
                 return
 
         for i, value in enumerate(operators):
             # check if all batchconnection numbers inside self.operators exist inside self.batchconnections
             for j in operators[i][0]:
                 if (j > len(batchconnections)):
-                    self.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"))
+                    self.statusBar().showMessage(self.tr("Invalid batch connection found inside operator definitions"),3000)
                     return
         
         time_limits = [60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]
@@ -321,29 +321,29 @@ class MainGui(QtWidgets.QMainWindow):
             self.table_widget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
             
             self.qt_thread.start() # Start separate thread and automatically start simulation also
-            self.statusBar().showMessage(self.tr("Simulation started"))
+            self.statusBar().showMessage(self.tr("Simulation started"),3000)
             self.bottom_tabwidget.setCurrentIndex(0)            
 
 
     def stop_simulation(self):
         self.simulation_thread.stop_simulation = True # sending signal does not work since simulationthread run function will not be interrupted
-        self.statusBar().showMessage(self.tr("Simulation stop signal was sent"))
+        self.statusBar().showMessage(self.tr("Simulation stop signal was sent"),3000)
 
     def switch_profiling_mode(self):
         
         if (self.params['profiling_mode']):
             self.params['profiling_mode'] = False
-            self.statusBar().showMessage(self.tr("Profiling mode has been turned off"))
+            self.statusBar().showMessage(self.tr("Profiling mode has been turned off"),3000)
         else:
             self.params['profiling_mode'] = True
-            self.statusBar().showMessage(self.tr("Profiling mode has been turned on"))
+            self.statusBar().showMessage(self.tr("Profiling mode has been turned on"),3000)
 
     def plot_production_rates(self):
         
         if len(self.simulation_thread.prod_rates_df):
-             self.statusBar().showMessage(self.tr("Creating plot window..."))
+             self.statusBar().showMessage(self.tr("Creating plot window..."),3000)
         else:
-            self.statusBar().showMessage(self.tr("Please run a simulation first"))
+            self.statusBar().showMessage(self.tr("Please run a simulation first"),3000)
             return     
         
         #if (self.wid):
@@ -355,7 +355,7 @@ class MainGui(QtWidgets.QMainWindow):
                         
         self.wid.show() 
         
-        self.statusBar().showMessage(self.tr("Ready"))
+        self.statusBar().showMessage(self.tr("Ready"),3000)
 
     def keyPressEvent(self, e):
         if (e.modifiers() & QtCore.Qt.ControlModifier): # Ctrl
@@ -460,7 +460,7 @@ class MainGui(QtWidgets.QMainWindow):
     def simulation_end_signal(self):
         self.run_sim_button.setEnabled(True)
         self.stop_sim_button.setEnabled(False)
-        self.statusBar().showMessage(self.tr("Simulation has ended"))
+        self.statusBar().showMessage(self.tr("Simulation has ended"),3000)
 
     def open_help_dialog(self):
         help_dialog = HelpDialog(self)
@@ -757,7 +757,7 @@ class MainGui(QtWidgets.QMainWindow):
 
         self.status_text = QtWidgets.QLabel("")     
         self.statusBar().addWidget(self.status_text,1)
-        self.statusBar().showMessage(self.tr("Ready"))
+        self.statusBar().showMessage(self.tr("Ready"),3000)
 
     def create_menu(self):        
         self.file_menu = self.menuBar().addMenu(self.tr("File"))

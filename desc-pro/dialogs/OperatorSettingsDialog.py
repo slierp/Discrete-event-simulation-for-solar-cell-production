@@ -28,6 +28,9 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
         self.statusbar = self.parent.statusBar()
         self.load_definition = self.parent.operators_widget.load_definition
 
+        self.batchconnections = self.parent.tools_widget.batchconnections
+        self.print_batchconnection = self.parent.operators_widget.print_batchconnection
+
         # find out which operator was selected
         self.row = self.view.selectedIndexes()[0].row()
 
@@ -42,21 +45,36 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
         self.setWindowTitle(self.tr("Operator settings"))
 
         tabwidget = QtWidgets.QTabWidget()
-        
-        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements        
-       
-        ### Add specification text ###
-        hbox = QtWidgets.QHBoxLayout()           
-        browser = QtWidgets.QTextBrowser()
-        browser.insertHtml(curr_params['specification'])
-        browser.moveCursor(QtGui.QTextCursor.Start)        
-        hbox.addWidget(browser)
-        vbox_description.addLayout(hbox)
 
-        generic_widget_description = QtWidgets.QWidget()
-        generic_widget_description.setLayout(vbox_description)
-        tabwidget.addTab(generic_widget_description, "Description")
+        ### Connections tab ###
+        vbox = QtWidgets.QVBoxLayout() # vbox for all connections
 
+        title_label = QtWidgets.QLabel(self.tr("Available connections:"))
+        vbox.addWidget(title_label)
+
+        self.dataset_cb = []
+        for i, value in enumerate(self.batchconnections):
+            self.dataset_cb.append(QtWidgets.QCheckBox(self.print_batchconnection(i)))
+            if i in self.operators[self.row][0]:
+                self.dataset_cb[i].setChecked(True)
+
+        scroll_area = QtWidgets.QScrollArea()
+        checkbox_widget = QtWidgets.QWidget()
+        checkbox_vbox = QtWidgets.QVBoxLayout()
+
+        for i in range(len(self.dataset_cb)):
+            self.dataset_cb[i].setMinimumWidth(400) # prevent obscured text
+            checkbox_vbox.addWidget(self.dataset_cb[i])
+
+        checkbox_widget.setLayout(checkbox_vbox)
+        scroll_area.setWidget(checkbox_widget)
+        vbox.addWidget(scroll_area)
+
+        generic_widget_connections = QtWidgets.QWidget()
+        generic_widget_connections.setLayout(vbox)
+        tabwidget.addTab(generic_widget_connections, "Connections")
+
+        ### Settings tab ###
         vbox = QtWidgets.QVBoxLayout() # vbox for all settings  
          
         self.strings = []
@@ -132,6 +150,20 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
         generic_widget_settings.setLayout(vbox)
         tabwidget.addTab(generic_widget_settings, "Settings")
 
+        ### Description tab ###
+        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements        
+       
+        hbox = QtWidgets.QHBoxLayout()           
+        browser = QtWidgets.QTextBrowser()
+        browser.insertHtml(curr_params['specification'])
+        browser.moveCursor(QtGui.QTextCursor.Start)        
+        hbox.addWidget(browser)
+        vbox_description.addLayout(hbox)
+
+        generic_widget_description = QtWidgets.QWidget()
+        generic_widget_description.setLayout(vbox_description)
+        tabwidget.addTab(generic_widget_description, "Description")
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(tabwidget) 
 
@@ -162,10 +194,19 @@ class OperatorSettingsDialog(QtWidgets.QDialog):
             new_params[str(i.objectName())] = i.isChecked()
         
         self.operators[self.row][1].update(new_params)
+        
+        # Add connections to operator
+        self.operators[self.row][0] = []
+        for i in range(len(self.dataset_cb)):
+            if self.dataset_cb[i].isChecked():
+                self.operators[self.row][0].append(i)
+        
+        self.operators[self.row][0].sort()
+        
         self.load_definition(False)
 
         # select row again after reloading operator definitions
         index = self.model.index(self.row, 0)
         self.view.setCurrentIndex(index)
-        self.statusbar.showMessage(self.tr("Operator settings updated"))
+        self.statusbar.showMessage(self.tr("Operator settings updated"),3000)
         self.accept()

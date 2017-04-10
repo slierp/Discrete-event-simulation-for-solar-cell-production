@@ -165,7 +165,7 @@ class CassetteloopsWidget(QtCore.QObject):
 
     def import_locationgroups(self):
         self.load_definition() # generate default loops and load it into interface
-        self.statusbar.showMessage(self.tr("Cassette loops generated"))
+        self.statusbar.showMessage(self.tr("Cassette loops generated"),3000)
     
     def add_cassetteloop_view(self):
         cassetteloops_dialog = CassetteLoopSettingsDialog(self.parent)
@@ -175,7 +175,7 @@ class CassetteloopsWidget(QtCore.QObject):
     def del_cassetteloop_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select a cassette loop"))
+            self.statusbar.showMessage(self.tr("Please select a cassette loop"),3000)
             return
                 
         row = self.view.selectedIndexes()[0].row()
@@ -183,7 +183,7 @@ class CassetteloopsWidget(QtCore.QObject):
 
         self.load_definition(False)
 
-        self.statusbar.showMessage(self.tr("Cassette loop removed"))
+        self.statusbar.showMessage(self.tr("Cassette loop removed"),3000)
 
     def reset_cassetteloops(self, tool_number):
         # empty cassette loops that are affected by a tool list change
@@ -216,7 +216,7 @@ class CassetteloopsWidget(QtCore.QObject):
     def edit_cassetteloop_view(self):
         if (not len(self.view.selectedIndexes())):
             # if nothing selected
-            self.statusbar.showMessage(self.tr("Please select a cassette loop"))
+            self.statusbar.showMessage(self.tr("Please select a cassette loop"),3000)
             return
         
         cassetteloops_dialog = CassetteLoopSettingsDialog(self.parent)
@@ -243,4 +243,4 @@ class CassetteloopsWidget(QtCore.QObject):
         self.cassette_loops = []
         self.model.clear()
         self.model.setHorizontalHeaderLabels(['Cassette loops']) 
-        self.statusbar.showMessage(self.tr("All cassette loops were removed"))
+        self.statusbar.showMessage(self.tr("All cassette loops were removed"),3000)

@@ -345,7 +345,7 @@ so it cannot serve as a begin or end position of a cassette loop.
             begin_index = self.combo_begin.currentIndex()
             
             if begin_index == -1:
-                self.statusbar.showMessage(self.tr("Cassette loop could not be added"))
+                self.statusbar.showMessage(self.tr("Cassette loop could not be added"),3000)
                 self.accept()
                 return                
             
@@ -354,7 +354,7 @@ so it cannot serve as a begin or end position of a cassette loop.
             end = self.combo_end.currentIndex()
     
             if end == -1:
-                self.statusbar.showMessage(self.tr("Cassette loop could not be added"))
+                self.statusbar.showMessage(self.tr("Cassette loop could not be added"),3000)
                 self.accept()
                 return
         
@@ -386,7 +386,7 @@ so it cannot serve as a begin or end position of a cassette loop.
             
             self.load_definition(False)
             
-            self.statusbar.showMessage(message)                
+            self.statusbar.showMessage(message,3000)                
             self.accept()
         
         else:
@@ -410,5 +410,5 @@ so it cannot serve as a begin or end position of a cassette loop.
                 self.cassette_loops[self.row][7] = max_units
                 message = self.tr("Cassette loop settings updated")
     
-            self.statusbar.showMessage(message)                
+            self.statusbar.showMessage(message,3000)                
             self.accept()

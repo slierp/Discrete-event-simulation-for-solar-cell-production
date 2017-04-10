@@ -158,5 +158,5 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
             index = self.model.index(self.index, 0, parent)
             self.view.setCurrentIndex(index)
         
-        self.statusbar.showMessage(self.tr("Batch location added"))
+        self.statusbar.showMessage(self.tr("Batch location added"),3000)
         self.accept()

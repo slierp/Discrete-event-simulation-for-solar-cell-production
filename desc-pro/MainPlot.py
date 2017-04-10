@@ -98,7 +98,7 @@ class MultiPlot(QtWidgets.QMainWindow):
 
         self.prev_dir_path = ntpath.dirname(filename[0])
         self.prod_rates_df.to_csv(filename)        
-        self.statusBar().showMessage("File saved")
+        self.statusBar().showMessage(self.tr("File saved"),3000)
 
     def plot_settings_view(self):
         settings_dialog = PlotSettingsDialog(self)
