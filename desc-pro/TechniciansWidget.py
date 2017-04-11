@@ -28,6 +28,7 @@ class TechniciansWidget(QtCore.QObject):
             for j, value in enumerate(self.technicians[i][0]):
                 item = batchlocations[value][0] + " " + batchlocations[value][1]['name']
                 child = QtGui.QStandardItem(item)
+                child.setEnabled(False)
                 parent.appendRow(child)
             self.model.appendRow(parent)
             index = self.model.index(i, 0)

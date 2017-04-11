@@ -133,7 +133,7 @@ class ConnectionSettingsDialog(QtWidgets.QDialog):
         # read contents of each widget
         # update settings in batchconnection(s)
 
-        if self.hard_limit_boolean:        
+        if self.hard_limit_boolean.isChecked():        
             transport_min_limit = int(self.spinbox2.text()) + 0.1
         else:
             transport_min_limit = int(self.spinbox2.text())        

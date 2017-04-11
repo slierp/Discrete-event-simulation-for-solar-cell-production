@@ -334,8 +334,8 @@ so it cannot serve as a begin or end position of a cassette loop.
         no_wafers = int(self.spinbox1.text())
         transport_time = int(self.spinbox2.text())
         time_per_unit = int(self.spinbox3.text())
-        min_units = int(self.spinbox4.text())
-        if self.hard_limit_boolean: # change value slightly to convey hard limit setting      
+        min_units = int(self.spinbox4.text())        
+        if self.hard_limit_boolean.isChecked(): # change value slightly to convey hard limit setting      
             min_units += 0.1       
         max_units = int(self.spinbox5.text())
         

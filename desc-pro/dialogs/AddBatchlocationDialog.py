@@ -28,12 +28,8 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
             self.index = None
             parent_type = self.batchlocations[self.locationgroups[self.row][0]][0]
         else:
-            print(self.batchlocations)
-            print(self.locationgroups)
             self.row = self.view.selectedIndexes()[0].parent().row()
-            print(self.row)
             self.index = self.view.selectedIndexes()[0].row()
-            print(self.index)
             parent_type = self.batchlocations[self.locationgroups[self.row][self.index]][0]
             self.child_item = True
         
