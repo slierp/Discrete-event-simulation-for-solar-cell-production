@@ -49,10 +49,10 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.params['tool_length'] = 8
         self.params['tool_length_desc'] = "Travel distance for wafers between input and output (meters)"
         self.params['tool_length_type'] = "configuration"
-        self.params['belt_speed'] = 18/10
+        self.params['belt_speed'] = 1.8
         self.params['belt_speed_desc'] = "Speed at which all units travel (meters per minute)"
         self.params['belt_speed_type'] = "process"
-        self.params['unit_distance'] = 2/10
+        self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers (meters)"
         self.params['unit_distance_type'] = "configuration"
         self.params['max_cassette_no'] = 8
@@ -97,8 +97,9 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         ### Array of zeroes represents lanes ###
         self.lanes = []
-        for i in  range(self.params['no_of_lanes']):            
-            self.lanes.append(collections.deque([False for rows in range(int(self.params['tool_length']//self.params['unit_distance']))]))            
+        for i in  range(self.params['no_of_lanes']):
+            no_positions = int(self.params['tool_length']//self.params['unit_distance'])
+            self.lanes.append(collections.deque([False for rows in range(no_positions)]))            
 
         ### Output ###
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'])

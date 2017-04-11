@@ -63,7 +63,7 @@ The second loop consists of the following steps:
         self.params['units_on_belt_desc'] = "Number of wafers that fit on the belt"
         self.params['units_on_belt_type'] = "configuration"
         
-        self.params['time_step'] = 1/1
+        self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one position on belt or into cassette (seconds) (0.1 sec minimum)"
         self.params['time_step_type'] = "automation"
         self.params['time_new_cassette'] = 10
@@ -72,7 +72,7 @@ The second loop consists of the following steps:
         self.params['time_new_stack'] = 10
         self.params['time_new_stack_desc'] = "Time for putting a new stack into the wafer unloading position (seconds)"
         self.params['time_new_stack_type'] = "automation"
-        self.params['time_pick_and_place'] = 1/1
+        self.params['time_pick_and_place'] = 1.0
         self.params['time_pick_and_place_desc'] = "Time for putting a single unit on the belt (seconds) (0.1 sec minimum)"
         self.params['time_pick_and_place_type'] = "automation"
 
@@ -145,6 +145,7 @@ The second loop consists of the following steps:
             mttr = 1/(60*self.params['mttr'])
         
         while True:
+            
             if mtbf_enable and self.env.now >= self.next_failure:
                 self.downtime_duration = random.expovariate(mttr)
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
@@ -152,7 +153,7 @@ The second loop consists of the following steps:
                 self.maintenance_needed = True                    
                 yield self.downtime_finished
                 self.next_failure = self.env.now + random.expovariate(mtbf)
-                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")             
+                #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")
             
             if (not wafer_available):
                 # if pick and place robot does not already have a wafer try to get one

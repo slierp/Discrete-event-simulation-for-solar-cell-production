@@ -82,14 +82,14 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         self.params['tray_load_unload_time_desc'] = "Time for loading/unloading one tray row (seconds)"
         self.params['tray_load_unload_time_type'] = "automation"
         
-        self.params['time_step'] = 1/1
+        self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one unit distance on input/output conveyor (seconds)"
         self.params['time_step_type'] = "automation"
   
-        self.params['process_chamber_length'] = 6/1
+        self.params['process_chamber_length'] = 6.0
         self.params['process_chamber_length_desc'] = "Tray transport distance in the process chamber (meters)" 
         self.params['process_chamber_length_type'] = "configuration"
-        self.params['process_chamber_speed'] = 5/1
+        self.params['process_chamber_speed'] = 5.0
         self.params['process_chamber_speed_desc'] = "Tray speed in process chamber (meters per minute)" 
         self.params['process_chamber_speed_type'] = "process"
         
@@ -97,10 +97,10 @@ The downtime cycle interval countdown starts once the first wafers are loaded in
         self.params['time_loadlock_desc'] = "Time for load-in/out and evacuation/venting procedures in both load-locks (seconds)"
         self.params['time_loadlock_type'] = "process"
 
-        self.params['tray_return_speed'] = 10/1
+        self.params['tray_return_speed'] = 10.0
         self.params['tray_return_speed_desc'] = "Tray speed during transport back to load-in position (meters per minute)"
         self.params['tray_return_speed_type'] = "automation"
-        self.params['tray_return_distance'] = 8/1
+        self.params['tray_return_distance'] = 8.0
         self.params['tray_return_distance_desc'] = "Tray transport distance for return to load-in position (meters)"
         self.params['tray_return_distance_type'] = "automation"
 

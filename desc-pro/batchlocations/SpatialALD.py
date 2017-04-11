@@ -90,24 +90,24 @@ After the process the wafer is placed on the output conveyor of the deposition u
         self.params['time_new_cassette_desc'] = "Time for putting an empty cassette into a loading position (seconds)"
         self.params['time_new_cassette_type'] = "automation"
         
-        self.params['time_step'] = 1/1
+        self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one unit distance on main conveyor (seconds)"
         self.params['time_step_type'] = "automation"
-        self.params['time_preheat'] = 3/1
+        self.params['time_preheat'] = 3.0
         self.params['time_preheat_desc'] = "Time to preheat one wafer before deposition (seconds)"        
         self.params['time_preheat_type'] = "process"
-        self.params['time_process'] = 5/1
+        self.params['time_process'] = 5.0
         self.params['time_process_desc'] = "Time for one deposition process on one wafer (seconds)"
         self.params['time_process_type'] = "process"
         
         self.params['no_deposition_units'] = 3
         self.params['no_deposition_units_desc'] = "Number of deposition units along the main conveyor"
         self.params['no_deposition_units_type'] = "configuration"
-        self.params['deposition_unit_length'] = 1/1
+        self.params['deposition_unit_length'] = 1.0
         self.params['deposition_unit_length_desc'] = "Distance between input and output position on main conveyor (meters)"
         self.params['deposition_unit_length_type'] = "configuration"
 
-        self.params['unit_distance'] = 2/10
+        self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers on belts (meters)"
         self.params['unit_distance_type'] = "configuration"
         

@@ -88,10 +88,10 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params['units_on_belt_input_desc'] = "Number of units that fit on the belt between wafer source and printer"
         self.params['units_on_belt_input_type'] = "configuration"
         
-        self.params['time_step'] = 1/1
+        self.params['time_step'] = 1.0
         self.params['time_step_desc'] = "Time for one wafer to progress one position on belts (seconds)"
         self.params['time_step_type'] = "automation"
-        self.params['time_print'] = 25/10
+        self.params['time_print'] = 2.5
         self.params['time_print_desc'] = "Time to print one wafer (seconds)"
         self.params['time_print_type'] = "process"
         self.params['time_dry'] = 90
@@ -103,14 +103,14 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params['no_print_steps_desc'] = "Number of print and dry stations"
         self.params['no_print_steps_type'] = "configuration"
         
-        self.params['firing_tool_length'] = 10/1
+        self.params['firing_tool_length'] = 10.0
         self.params['firing_tool_length_desc'] = "Travel distance for wafers in the last dryer and firing furnace (meters)"
         self.params['firing_tool_length_type'] = "configuration"
-        self.params['firing_belt_speed'] = 5/1 # 5 is roughly 200 ipm
+        self.params['firing_belt_speed'] = 5.0 # 5 is roughly 200 ipm
         self.params['firing_belt_speed_desc'] = "Belt speed of last dryer and firing furnace (meters per minute)"
         self.params['firing_belt_speed_type'] = "process"
 
-        self.params['unit_distance'] = 2/10
+        self.params['unit_distance'] = 0.2
         self.params['unit_distance_desc'] = "Minimal distance between wafers on firing furnace (meters)"
         self.params['unit_distance_type'] = "configuration"
 
