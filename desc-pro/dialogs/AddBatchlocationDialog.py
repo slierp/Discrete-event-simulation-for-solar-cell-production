@@ -28,8 +28,12 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
             self.index = None
             parent_type = self.batchlocations[self.locationgroups[self.row][0]][0]
         else:
+            print(self.batchlocations)
+            print(self.locationgroups)
             self.row = self.view.selectedIndexes()[0].parent().row()
+            print(self.row)
             self.index = self.view.selectedIndexes()[0].row()
+            print(self.index)
             parent_type = self.batchlocations[self.locationgroups[self.row][self.index]][0]
             self.child_item = True
         
@@ -106,7 +110,6 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         
         reindex_locationgroups = self.parent.tools_widget.reindex_locationgroups
         load_definition = self.parent.tools_widget.load_definition
-        generate_locationgroups = self.parent.tools_widget.generate_locationgroups
         generate_batchconnections = self.parent.tools_widget.generate_batchconnections
         reset_cassetteloops = self.parent.cassetteloops_widget.reset_cassetteloops
         reset_operators = self.parent.operators_widget.reset_operators
@@ -146,7 +149,6 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         # do a bit of housekeeping, now that batchlocations has changed
         reindex_locationgroups()
         load_definition(False)
-        generate_locationgroups() # generate new locationgroups list
         generate_batchconnections() # generate new connections list
 
         # re-expand parent item in view       

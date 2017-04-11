@@ -92,6 +92,8 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.process_counter = 0
         self.time_step = 60*self.params['unit_distance']/self.params['belt_speed']
         
+        #self.incoming_wafers = 0 # for checking number of incoming wafers
+        
         ### Input ###
         self.input = CassetteContainer(self.env,"input",self.params['max_cassette_no'])
 
@@ -124,6 +126,8 @@ The time increment is determined by the belt speed and unit distance.</li>
         self.env.process(self.run_cassette_load_in())
 
     def report(self):
+        #print(self.incoming_wafers)
+
         self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
@@ -205,13 +209,10 @@ The time increment is determined by the belt speed and unit distance.</li>
                 
             for i in range(no_of_lanes):
                 self.lanes[i][0] = True
-
-#                if ((self.process_counter % self.params['cassette_size']) == 0): #DEBUG      
-#                    string = str(round(self.env.now,1)) + " [" + self.params['type'] + "][" + self.params['name'] + "] " #DEBUG
-#                    string += "Loaded " + str(self.params['cassette_size']) + " units in lane " + str(lane_number) #DEBUG
-#                    self.output_text.sig.emit(string) #DEBUG
             
             self.process_counter += no_of_lanes              
+            
+            #self.incoming_wafers += no_of_lanes
             
             yield self.env.timeout(time_step)
 
