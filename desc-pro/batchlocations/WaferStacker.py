@@ -10,7 +10,6 @@ class WaferStacker(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.idle_times = []
         self.utilization = []        
         self.next_step = self.env.event()
         self.diagram = """blockdiag {       
@@ -104,8 +103,7 @@ The second loop consists of the following steps:
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['stack_size'],self.params['max_stack_no'])
 
-        self.start_time = -1
-        self.idle_time = 0
+        self.start_time = self.env.now
 
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
@@ -136,12 +134,6 @@ The second loop consists of the following steps:
 
         self.utilization.append(self.output.process_counter)
 
-        if not self.start_time == -1:
-            idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
-            self.utilization.append(["Lane ",round(idle_time,1)])
-        else:
-            self.utilization.append(["Lane ",0])
-
     def prod_volume(self):
         return self.output.process_counter
 
@@ -163,29 +155,23 @@ The second loop consists of the following steps:
 
             if mtbf_enable and self.env.now >= self.next_failure:
                 self.downtime_duration = random.expovariate(mttr)
-                start = self.env.now
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
                 self.downtime_finished = self.env.event()
                 self.maintenance_needed = True                    
                 yield self.downtime_finished
-                self.idle_time += self.env.now - start
                 self.next_failure = self.env.now + random.expovariate(mtbf)
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")  
             
             if (not self.belt[0]):                 
                 self.belt[0] = True
                 wafer_counter -= 1
-            else:
-                self.idle_time += time_step
                 
 #                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from cassette onto conveyor" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
 
             if not wafer_counter:
-                start = self.env.now
                 yield self.input.output.put(cassette) # return empty cassette
-                cassette = yield self.input.input.get() # receive new cassette
-                self.idle_time += self.env.now - start                
+                cassette = yield self.input.input.get() # receive new cassette               
                 wafer_counter = cassette_size
                 yield self.env.timeout(time_new_cassette)
                 continue

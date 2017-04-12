@@ -105,8 +105,6 @@ The time increment is determined by the belt speed and unit distance.</li>
         ### Output ###
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'])
         self.wafer_out = simpy.Container(self.env)
-
-        self.idle_time = 0
                                      
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
@@ -141,12 +139,6 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.utilization.append(self.transport_counter)
 
-        if not self.start_time == -1:
-            idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
-            self.utilization.append(["Lanes ",round(idle_time,1)])
-        else:
-            self.utilization.append(["Lanes ",0])
-
     def prod_volume(self):
         return self.transport_counter
 
@@ -174,34 +166,28 @@ The time increment is determined by the belt speed and unit distance.</li>
 
             if mtbf_enable and self.env.now >= self.next_failure:
                 self.downtime_duration = random.expovariate(mttr)
-                start = self.env.now
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
                 self.downtime_finished = self.env.event()
                 self.maintenance_needed = True                    
                 yield self.downtime_finished
-                self.idle_time += self.env.now - start
                 self.next_failure = self.env.now + random.expovariate(mtbf)
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")            
             
             if wafer_counter < cassette_size:
                 # if not enough wafers available get new full cassette
-                start = self.env.now
                 yield self.input.output.put(cassette) # return empty cassette
                 cassette = yield self.input.input.get() # receive full cassette
                 wafer_counter += cassette_size
-                self.idle_time += self.env.now - start
 
             if (downtime_volume > 0) & (self.process_counter >= downtime_volume):
                 yield self.env.timeout(downtime_volume_duration)
-                self.idle_time += downtime_volume_duration
                 self.process_counter = 0
 
             # skip load-in if empty cassette buffer too low, full cassette buffer too full or not enough wafers
             space_input = len(self.output.input.items)
             space_output = (max_cassette_no - len(self.output.output.items))
             if (space_input < min_output_cass) or (space_output < min_output_cass) or (wafer_counter < no_of_lanes):
-                yield self.env.timeout(time_step)
-                self.idle_time += time_step                
+                yield self.env.timeout(time_step)               
                 continue
             
             wafer_counter -= no_of_lanes

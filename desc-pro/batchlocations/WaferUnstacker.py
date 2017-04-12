@@ -10,7 +10,6 @@ class WaferUnstacker(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.env = _env
         self.output_text = _output
-        self.idle_times = []
         self.utilization = []        
         self.next_step = self.env.event()
         self.diagram = """blockdiag {       
@@ -110,8 +109,7 @@ The second loop consists of the following steps:
         if self.params['reject_percentage'] > 0:
             random.seed(42)
 
-        self.start_time = -1
-        self.idle_time = 0
+        self.start_time = self.env.now
         
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
@@ -141,12 +139,6 @@ The second loop consists of the following steps:
             self.utilization.append(0)            
 
         self.utilization.append(self.output.process_counter)
-
-        if not self.start_time == -1:
-            idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
-            self.utilization.append(["Lane ",round(idle_time,1)])
-        else:
-            self.utilization.append(["Lane ",0])
 
     def prod_volume(self):
         return self.output.process_counter
@@ -227,7 +219,6 @@ The second loop consists of the following steps:
                 # remove wafer again if it falls within random reject range
                 if reject_percentage and (random.randint(0,100) <= reject_percentage):
                     current_load -= 1
-                    self.idle_time += time_step
                 
 #                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
@@ -236,15 +227,12 @@ The second loop consists of the following steps:
                 # move belt if no wafer available
                 self.belt.rotate(1)
                 yield self.env.timeout(time_step)
-                self.idle_time += time_step
             
             if (current_load == cassette_size):            
                 # if load is full, fill cassette and replace it for empty cassette
-                start = self.env.now
                 yield self.output.output.put(cassette) # return full cassette
                 self.output.process_counter += cassette_size
                 cassette = yield self.output.input.get() # receive empty cassette
-                self.idle_time = self.env.now - start
                 
                 current_load = 0
                 yield self.env.timeout(time_new_cassette) # time for loading new cassette                
