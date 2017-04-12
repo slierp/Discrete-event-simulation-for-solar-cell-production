@@ -104,6 +104,9 @@ The second loop consists of the following steps:
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = BatchContainer(self.env,"output",self.params['stack_size'],self.params['max_stack_no'])
 
+        self.start_time = -1
+        self.idle_time = 0
+
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
         self.downtime_duration =  0
@@ -119,7 +122,25 @@ The second loop consists of the following steps:
         self.env.process(self.run_pick_and_place())
 
     def report(self):
-        return
+        self.utilization.append(self.params['type'])
+        self.utilization.append(self.params['name'])
+        self.utilization.append(int(self.nominal_throughput()))
+        production_volume = self.output.process_counter
+        production_hours = (self.env.now - self.start_time)/3600
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0):
+            util = 100*(production_volume/production_hours)/self.nominal_throughput()
+            self.utilization.append(round(util,1))
+        else:
+            self.utilization.append(0)            
+
+        self.utilization.append(self.output.process_counter)
+
+        if not self.start_time == -1:
+            idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
+            self.utilization.append(["Lane ",round(idle_time,1)])
+        else:
+            self.utilization.append(["Lane ",0])
 
     def prod_volume(self):
         return self.output.process_counter
@@ -131,6 +152,7 @@ The second loop consists of the following steps:
         
         cassette = yield self.input.input.get() # receive first cassette
         wafer_counter = cassette_size
+        self.start_time = self.env.now
 
         mtbf_enable = self.mtbf_enable
         if mtbf_enable:
@@ -141,23 +163,29 @@ The second loop consists of the following steps:
 
             if mtbf_enable and self.env.now >= self.next_failure:
                 self.downtime_duration = random.expovariate(mttr)
+                start = self.env.now
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
                 self.downtime_finished = self.env.event()
                 self.maintenance_needed = True                    
                 yield self.downtime_finished
+                self.idle_time += self.env.now - start
                 self.next_failure = self.env.now + random.expovariate(mtbf)
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")  
             
             if (not self.belt[0]):                 
                 self.belt[0] = True
                 wafer_counter -= 1
+            else:
+                self.idle_time += time_step
                 
 #                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from cassette onto conveyor" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
 
             if not wafer_counter:
+                start = self.env.now
                 yield self.input.output.put(cassette) # return empty cassette
                 cassette = yield self.input.input.get() # receive new cassette
+                self.idle_time += self.env.now - start                
                 wafer_counter = cassette_size
                 yield self.env.timeout(time_new_cassette)
                 continue
@@ -186,7 +214,7 @@ The second loop consists of the following steps:
                 unit_counter += 1
                 
             if (wafer_available):
-                # if pick and place robot does not already have a wafer try to get one
+                # if pick and place robot has a wafer then put it on stack
                 yield self.output.container.put(1)
                 wafer_available = False
                     
@@ -196,7 +224,11 @@ The second loop consists of the following steps:
             if (unit_counter == stack_size):
                 # if current stack is empty and there are more stacks available, delay to load a new stack                
                 unit_counter = 0            
-                restart = True 
+                restart = True
+                self.output.process_counter += stack_size
 
             self.belt.rotate(1)                    
             yield self.env.timeout(time_step)
+            
+    def nominal_throughput(self):
+        return 3600/(self.params['time_pick_and_place'] + self.params['time_step'])       

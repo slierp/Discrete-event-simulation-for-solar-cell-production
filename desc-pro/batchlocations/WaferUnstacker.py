@@ -110,6 +110,9 @@ The second loop consists of the following steps:
         if self.params['reject_percentage'] > 0:
             random.seed(42)
 
+        self.start_time = -1
+        self.idle_time = 0
+        
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
         self.downtime_duration =  0
@@ -125,12 +128,32 @@ The second loop consists of the following steps:
         self.env.process(self.run_cassette_loader())
 
     def report(self):
-        return
+        self.utilization.append(self.params['type'])
+        self.utilization.append(self.params['name'])
+        self.utilization.append(int(self.nominal_throughput()))
+        production_volume = self.output.process_counter
+        production_hours = (self.env.now - self.start_time)/3600
+        
+        if (self.nominal_throughput() > 0) & (production_hours > 0):
+            util = 100*(production_volume/production_hours)/self.nominal_throughput()
+            self.utilization.append(round(util,1))
+        else:
+            self.utilization.append(0)            
+
+        self.utilization.append(self.output.process_counter)
+
+        if not self.start_time == -1:
+            idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
+            self.utilization.append(["Lane ",round(idle_time,1)])
+        else:
+            self.utilization.append(["Lane ",0])
 
     def prod_volume(self):
         return self.output.process_counter
 
     def run_pick_and_place(self):
+        # pick and place only places wafers on the belt
+        
         unit_counter = 0
         restart = True
         time_new_stack = self.params['time_new_stack']
@@ -182,6 +205,8 @@ The second loop consists of the following steps:
             yield self.env.timeout(time_step)                    
             
     def run_cassette_loader(self):
+        # cassette loader is the only one who moves the belt
+        
         current_load = 0
         time_new_cassette = self.params['time_new_cassette']
         time_step = self.params['time_step']
@@ -189,6 +214,7 @@ The second loop consists of the following steps:
         reject_percentage = self.params['reject_percentage']
         
         cassette = yield self.output.input.get() # receive first empty cassette
+        self.start_time = self.env.now        
 
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):
@@ -196,11 +222,12 @@ The second loop consists of the following steps:
                 self.belt[-1] = False
                 self.belt.rotate(1)
                 yield self.env.timeout(time_step)                
-                current_load += 1              
+                current_load += 1
 
                 # remove wafer again if it falls within random reject range
                 if reject_percentage and (random.randint(0,100) <= reject_percentage):
                     current_load -= 1
+                    self.idle_time += time_step
                 
 #                string = str(self.env.now) + " [" + self.params['type'] + "][" + self.params['name'] + "] Put wafer from belt into cassette" #DEBUG
 #                self.output_text.sig.emit(string) #DEBUG
@@ -208,13 +235,19 @@ The second loop consists of the following steps:
             elif (not self.belt[-1]):
                 # move belt if no wafer available
                 self.belt.rotate(1)
-                yield self.env.timeout(time_step)                
+                yield self.env.timeout(time_step)
+                self.idle_time += time_step
             
             if (current_load == cassette_size):            
                 # if load is full, fill cassette and replace it for empty cassette
+                start = self.env.now
                 yield self.output.output.put(cassette) # return full cassette
                 self.output.process_counter += cassette_size
                 cassette = yield self.output.input.get() # receive empty cassette
+                self.idle_time = self.env.now - start
                 
                 current_load = 0
                 yield self.env.timeout(time_new_cassette) # time for loading new cassette                
+
+    def nominal_throughput(self):       
+        return 3600/(self.params['time_pick_and_place'] + self.params['time_step'])

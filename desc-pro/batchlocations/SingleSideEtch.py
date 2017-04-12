@@ -87,8 +87,7 @@ The time increment is determined by the belt speed and unit distance.</li>
             self.params['cassette_size'] = 100
         
         self.transport_counter = 0
-        self.start_time = self.env.now
-        self.first_run = True
+        self.start_time = -1
         self.process_counter = 0
         self.time_step = 60*self.params['unit_distance']/self.params['belt_speed']
         
@@ -142,7 +141,7 @@ The time increment is determined by the belt speed and unit distance.</li>
 
         self.utilization.append(self.transport_counter)
 
-        if not self.first_run:
+        if not self.start_time == -1:
             idle_time = 100-100*self.idle_time/(self.env.now-self.start_time)
             self.utilization.append(["Lanes ",round(idle_time,1)])
         else:
@@ -160,10 +159,11 @@ The time increment is determined by the belt speed and unit distance.</li>
         min_output_cass = 1+max_volume/self.params['cassette_size']
         min_output_cass = min(max_cassette_no,min_output_cass)
         downtime_volume = 1000*self.params['downtime_volume']
-        downtime_duration = 60*self.params['downtime_duration']
+        downtime_volume_duration = 60*self.params['downtime_duration']
         
         cassette = yield self.input.input.get() # receive first full cassette        
         wafer_counter = cassette_size
+        self.start_time = self.env.now
 
         mtbf_enable = self.mtbf_enable
         if mtbf_enable:
@@ -174,40 +174,39 @@ The time increment is determined by the belt speed and unit distance.</li>
 
             if mtbf_enable and self.env.now >= self.next_failure:
                 self.downtime_duration = random.expovariate(mttr)
+                start = self.env.now
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
                 self.downtime_finished = self.env.event()
                 self.maintenance_needed = True                    
                 yield self.downtime_finished
+                self.idle_time += self.env.now - start
                 self.next_failure = self.env.now + random.expovariate(mtbf)
                 #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")            
             
             if wafer_counter < cassette_size:
                 # if not enough wafers available get new full cassette
+                start = self.env.now
                 yield self.input.output.put(cassette) # return empty cassette
                 cassette = yield self.input.input.get() # receive full cassette
                 wafer_counter += cassette_size
+                self.idle_time += self.env.now - start
 
             if (downtime_volume > 0) & (self.process_counter >= downtime_volume):
-                yield self.env.timeout(downtime_duration)
-                self.idle_time += downtime_duration
+                yield self.env.timeout(downtime_volume_duration)
+                self.idle_time += downtime_volume_duration
                 self.process_counter = 0
 
             # skip load-in if empty cassette buffer too low, full cassette buffer too full or not enough wafers
             space_input = len(self.output.input.items)
             space_output = (max_cassette_no - len(self.output.output.items))
             if (space_input < min_output_cass) or (space_output < min_output_cass) or (wafer_counter < no_of_lanes):
-                if not self.first_run:
-                    self.idle_time += time_step
                 yield self.env.timeout(time_step)
+                self.idle_time += time_step                
                 continue
-            
-            if self.first_run:
-                self.start_time = self.env.now
-                self.first_run = False
             
             wafer_counter -= no_of_lanes
                 
-            for i in range(no_of_lanes):
+            for i in range(no_of_lanes): # load-in wafers
                 self.lanes[i][0] = True
             
             self.process_counter += no_of_lanes              
