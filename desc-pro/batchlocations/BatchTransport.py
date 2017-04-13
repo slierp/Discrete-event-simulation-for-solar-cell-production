@@ -27,19 +27,26 @@ class BatchTransport(QtCore.QObject):
         self.name = self.params['name'] # for backward compatibility / to be removed
         self.transport_counter = 0     
 
+        self.mtbf_enable = False
+        self.downtime_enable = False
+        
         if _parent:
             self.parent = _parent
             self.parent.technician_resource = simpy.Resource(self.env,1)
             self.parent.maintenance_needed = False
-        
-        random.seed(self.params['random_seed'])
-        
-        self.mtbf_enable = False
-        if ('mtbf' in self.params) and ('mttr' in self.params):
-            if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
-                self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
-                self.mtbf_enable = True
+
+            random.seed(self.params['random_seed'])
             
+            if ('mtbf' in self.params) and ('mttr' in self.params):
+                if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
+                    self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
+                    self.mtbf_enable = True
+                    
+            if ('downtime_interval' in self.params) and ('downtime_duration' in self.params):
+                if (self.params['downtime_interval'] > 0) and (self.params['downtime_duration'] > 0):
+                    self.next_downtime = 3600*self.params['downtime_interval']
+                    self.downtime_enable = True                    
+        
         self.env.process(self.run())
     
     def run(self):
@@ -49,9 +56,16 @@ class BatchTransport(QtCore.QObject):
         continue_loop = False        
 
         mtbf_enable = self.mtbf_enable
+
         if mtbf_enable:
             mtbf = 1/(3600*self.params['mtbf'])
             mttr = 1/(60*self.params['mttr'])
+
+        downtime_enable = self.downtime_enable
+        
+        if downtime_enable:
+            downtime_interval = 3600*self.params['downtime_interval']
+            downtime_duration = 60*self.params['downtime_duration']
         
         while True:
             for i in range(len(self.batchconnections)):
@@ -64,6 +78,15 @@ class BatchTransport(QtCore.QObject):
                     yield self.parent.downtime_finished
                     self.next_failure = self.env.now + random.expovariate(mtbf)
                     #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")                   
+
+                if downtime_enable and self.env.now >= self.next_downtime:
+                    self.parent.downtime_duration = downtime_duration
+                    #print(str(self.env.now) + "- [" + self.params['type'] + "] Planned downtime - maintenance needed for " + str(round(self.parent.downtime_duration/60)) + " minutes")
+                    self.parent.downtime_finished = self.env.event()
+                    self.parent.maintenance_needed = True                    
+                    yield self.parent.downtime_finished
+                    self.next_downtime = self.env.now + downtime_interval
+                    #print(str(self.env.now) + "- [" + self.params['type'] + "] Planned downtime finished - next maintenance in " + str(round(downtime_interval/3600)) + " hours")
                 
                 if isinstance(self.batchconnections[i][0],CassetteContainer):
                     # load-in from CassetteContainer to BatchProcess

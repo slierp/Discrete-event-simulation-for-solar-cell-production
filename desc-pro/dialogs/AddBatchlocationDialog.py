@@ -46,7 +46,7 @@ class AddBatchlocationDialog(QtWidgets.QDialog):
         batchlocation_types.append("BatchTex")
         batchlocation_types.append("Buffer")        
         #batchlocation_types.append("InlinePECVD")
-        #batchlocation_types.append("IonImplanter")        
+        batchlocation_types.append("IonImplanter")        
         batchlocation_types.append("PlasmaEtcher")
         batchlocation_types.append("PrintLine")         
         batchlocation_types.append("SingleSideEtch")    
