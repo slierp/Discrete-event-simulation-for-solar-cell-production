@@ -193,14 +193,10 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         ### Add furnaces ###
         self.furnace = []
         self.furnace_status = []
-        self.furnace_first_run = []
-        self.furnace_start_time = []
         self.furnace_runs = []
         for i in range(self.params['no_of_processes']):
             self.furnace.append(-1) # -1 is empty; 0 and onwards is boat number
             self.furnace_status.append(0) # 0 is free; 1 is busy
-            self.furnace_first_run.append(True) # keep track of first run
-            self.furnace_start_time.append(0) # keep track of when first run started
             self.furnace_runs.append(0) # keep track of the number of runs performed in the furnace
 
         ### Add cooldowns ###

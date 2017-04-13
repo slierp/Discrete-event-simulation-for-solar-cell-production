@@ -53,7 +53,6 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         self.output = self.input
         
         self.production_volume = 0
-        self.start_time = -1
         self.start = self.env.event()
 
         self.downtime_finished = None
@@ -74,10 +73,10 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         self.utilization.append(self.params['type'])
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
-        production_hours = (self.env.now - self.start_time)/3600
+        production_hours = self.env.now/3600
         
-        if (self.nominal_throughput() > 0) & (production_hours > 0): 
-            self.utilization.append(round(100*(self.production_volume/production_hours)/self.nominal_throughput(),1))
+        if (self.nominal_throughput() > 0): 
+            self.utilization.append(round(100*(self.production_volume/production_hours)/self.nominal_throughput()))
         else:
             self.utilization.append(0)
 
@@ -96,7 +95,6 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
     def run(self):
         process_time = self.params['process_time']
         stack_size = self.params['stack_size']
-        first_run = True
 
         mtbf_enable = self.mtbf_enable
         if mtbf_enable:
@@ -117,10 +115,6 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
                     #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")  
             
             yield self.start
-
-            if first_run:
-                self.start_time = self.env.now
-                first_run = False
             
             with self.input.oper_resource.request() as request:
                 yield request

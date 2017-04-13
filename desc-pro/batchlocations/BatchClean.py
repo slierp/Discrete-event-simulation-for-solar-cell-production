@@ -311,17 +311,17 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport3.transport_counter
-        production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
+        production_hours = self.env.now/3600
 
-        if (self.nominal_throughput() > 0) & (production_hours > 0):        
-            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        if (self.nominal_throughput() > 0):        
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput()))
         else:
             self.utilization.append(0)
 
         self.utilization.append(self.transport3.transport_counter)
         
         for i in range(len(self.batchprocesses)):
-            self.utilization.append([self.batchprocesses[i].name,round(100-self.batchprocesses[i].idle_time(),1)])
+            self.utilization.append([self.batchprocesses[i].name,round(100-self.batchprocesses[i].idle_time())])
 
     def prod_volume(self):
         return self.transport3.transport_counter

@@ -175,14 +175,10 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         ### Add furnaces ###
         self.furnace = []
         self.furnace_status = []
-        self.furnace_first_run = []
-        self.furnace_start_time = []
         self.furnace_runs = []
         for i in range(self.params['no_of_processes']):
             self.furnace.append(-1) # -1 is empty; 0 and onwards is boat number
             self.furnace_status.append(0) # 0 is free; 1 is busy
-            self.furnace_first_run.append(True) # keep track of first run
-            self.furnace_start_time.append(0) # keep track of when first run started
             self.furnace_runs.append(0) # keep track of the number of runs performed in the furnace
 
         ### Add cooldowns ###
@@ -243,21 +239,18 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport_counter
-        production_hours = (self.env.now - self.furnace_start_time[0])/3600
+        production_hours = self.env.now/3600
         
         if (self.nominal_throughput() > 0) and (production_hours > 0):
-            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))        
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput()))        
         else:
             self.utilization.append(0)            
 
         self.utilization.append(self.transport_counter)
         
         for i in range(self.params['no_of_processes']):
-            if ((self.env.now - self.furnace_start_time[0]) > 0):
-                util = 100*(self.furnace_runs[i]*60*self.params['process_time'])/(self.env.now - self.furnace_start_time[0])
-            else:
-                util = 0
-            self.utilization.append(["Tube " + str(i),round(util,1)])
+            util = 100*(self.furnace_runs[i]*60*self.params['process_time'])/self.env.now
+            self.utilization.append(["Tube " + str(i),round(util)])
 
     def prod_volume(self):
         return self.transport_counter
@@ -271,10 +264,6 @@ The process batch size therefore needs to be a multiple of the automation loadsi
 
     def run_process(self,num,normal_process=True):
         #print(str(self.env.now) + "- [" + self.params['type'] + "] Process " + str(num) + " started on boat " + str(self.furnace[num]))
-
-        if self.furnace_first_run[num]:
-            self.furnace_start_time[num] = self.env.now
-            self.furnace_first_run[num] = False
 
         if normal_process:
             yield self.env.timeout(60*self.params['process_time'])

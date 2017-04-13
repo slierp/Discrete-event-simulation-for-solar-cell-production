@@ -242,6 +242,6 @@ If none of the tool connections allowed for a transport event, then the operator
         self.utilization.append("n/a")
         
         util = 100-(100*self.idle_time/self.env.now)
-        self.utilization.append(round(util,1))
+        self.utilization.append(round(util))
             
         self.utilization.append(self.transport_counter)

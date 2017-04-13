@@ -156,13 +156,9 @@ After a drying step the wafer is placed on the input belt of the next printer an
             string = "[" + self.params['type'] + "][" + self.params['name'] + "] WARNING: Wafer distance in firing furnace below set minimum"
             self.output_text.sig.emit(string)
 
-        self.start_time = []
-        self.first_run = []
         self.idle_times_internal = []
         for i in range(self.params['no_print_steps']):
             self.idle_times_internal.append(0)
-            self.first_run.append(True)
-            self.start_time.append(0)
 
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
@@ -189,21 +185,18 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.output.container.level
-        production_hours = (self.env.now - self.start_time[0])/3600
+        production_hours = self.env.now/3600
         
-        if (self.nominal_throughput() > 0) & (production_hours > 0):
-            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput(),1))
+        if (self.nominal_throughput() > 0):
+            self.utilization.append(round(100*(production_volume/production_hours)/self.nominal_throughput()))
         else:
             self.utilization.append(0)            
 
         self.utilization.append(self.output.container.level)
         
         for i in range(len(self.idle_times_internal)):
-            if self.first_run[i]:
-                idle_time = 0
-            elif ((self.env.now-self.start_time[i]) > 0):
-                idle_time = 100-100*self.idle_times_internal[i]/(self.env.now-self.start_time[i])
-            self.utilization.append(["Print " + str(i),round(idle_time,1)])        
+            idle_time = 100-100*self.idle_times_internal[i]/self.env.now
+            self.utilization.append(["Print " + str(i),round(idle_time)])        
 
     def prod_volume(self):
         return self.output.container.level
@@ -256,10 +249,6 @@ After a drying step the wafer is placed on the input belt of the next printer an
         while True:            
             if (self.belts[num][-1]):
                 # if last belt position contains a wafer, start printing
-                
-                if self.first_run[num]:
-                    self.start_time[num] = self.env.now
-                    self.first_run[num] = False    
             
                 # remove wafer from belt
                 self.belts[num][-1] = False
@@ -291,9 +280,7 @@ After a drying step the wafer is placed on the input belt of the next printer an
                     self.next_step = self.env.event() # make new event                 
                     
                 yield self.env.timeout(time_step) # belt movement time determined by user defined value               
-
-                if not self.first_run[num]:
-                    self.idle_times_internal[num] += time_step
+                self.idle_times_internal[num] += time_step
 
     def dry_wafer(self,num): # inline process is continuous so it requires a timeout            
     

@@ -130,11 +130,11 @@ The second loop consists of the following steps:
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.output.process_counter
-        production_hours = (self.env.now - self.start_time)/3600
+        production_hours = self.env.now/3600
         
         if (self.nominal_throughput() > 0) & (production_hours > 0):
             util = 100*(production_volume/production_hours)/self.nominal_throughput()
-            self.utilization.append(round(util,1))
+            self.utilization.append(round(util))
         else:
             self.utilization.append(0)            
 
@@ -205,8 +205,7 @@ The second loop consists of the following steps:
         cassette_size = self.params['cassette_size']
         reject_percentage = self.params['reject_percentage']
         
-        cassette = yield self.output.input.get() # receive first empty cassette
-        self.start_time = self.env.now        
+        cassette = yield self.output.input.get() # receive first empty cassette      
 
         while True:     
             if (self.belt[-1]) & (current_load < cassette_size):

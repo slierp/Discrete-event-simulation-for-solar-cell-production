@@ -160,23 +160,23 @@ During this time the wafer load-in is paused.\n
         self.utilization.append(self.params['name'])
         self.utilization.append(int(self.nominal_throughput()))
         production_volume = self.transport1.transport_counter
-        production_hours = (self.env.now - self.batchprocesses[0].start_time)/3600
-        util = round(100*(production_volume/production_hours)/self.nominal_throughput(),1)
+        production_hours = self.env.now/3600
+        util = round(100*(production_volume/production_hours)/self.nominal_throughput())
         self.utilization.append(util)
         self.utilization.append(self.transport1.transport_counter)
-
-#        for i in range(0,2):
-#            if self.batchprocesses[0].first_run:
-#                idle_time = 0
-#            else:
-#                idle_time = 100-100*self.implant_lanes[i].idle_time/(self.env.now-self.batchprocesses[0].start_time)
-#            self.utilization.append(["Lane " + str(i),round(idle_time,1)])
+        
+        lane_running_time = self.batchprocesses[0].lane_running_time + self.batchprocesses[0].lane_running_time
+        util = 100*lane_running_time/(self.env.now)
+        self.utilization.append(["Lanes ",round(util)])
 
     def prod_volume(self):
         return self.transport1.transport_counter
 
-    def nominal_throughput(self):       
-        return int(60*self.params['implant_belt_speed']/self.params['unit_distance'])
+    def nominal_throughput(self):
+        time_step = 60*self.params['unit_distance']/self.params['implant_belt_speed']
+        time_needed = time_step*2*self.params['cassette_size']
+        time_needed += time_step*int(self.params['implant_belt_length']//self.params['unit_distance'])
+        return 3600*2*self.params['cassette_size']/time_needed
         
 class loadlock(QtCore.QObject):
     
@@ -190,19 +190,14 @@ class loadlock(QtCore.QObject):
         self.name = self.params['name'] # needed for BatchTransport
         self.resource = simpy.Resource(self.env, 1) # needed for BatchTransport
         self.process_finished = 0 # needed for BatchTransport
-        self.status = 1 # needed for BatchTransport        
+        self.status = 1 # needed for BatchTransport
+        
         self.start = self.env.event()
-        self.implant_process_finished0 = self.env.event()
-        self.implant_process_finished1 = self.env.event()
-        self.store = simpy.Store(self.env,2)        
-        self.first_run = True
-        self.start_time = 0
-        self.last_downtime = 0
-
-        self.loadlock_container = simpy.Container(self.env,capacity=self.params['cassette_size'],init=self.params['cassette_size'])
+        self.store = simpy.Store(self.env,2)
+        self.lane_running_time = 0
 
         ### Array of zeroes represents lane ###
-        no_positions = int(self.params['implant_belt_length']//self.params['unit_distance'])        
+        no_positions = int(self.params['implant_belt_length']//self.params['unit_distance'])
         self.lane = collections.deque([False for rows in range(no_positions)])            
 
         ### Buffer cassette ###
@@ -217,13 +212,10 @@ class loadlock(QtCore.QObject):
         evacuation_time = int(self.params['evacuation_time'])
         repressurization_time = int(self.params['repressurization_time'])
         time_step = 60*self.params['unit_distance']/self.params['implant_belt_speed']
-        
+        cassette_size = self.params['cassette_size']
+
         while True:
             yield self.start            
-
-            if (self.first_run):
-                self.start_time = self.env.now
-                self.first_run = False
             
             if not self.process_finished:
                 with self.resource.request() as request: # reserve access to loadlock
@@ -239,42 +231,44 @@ class loadlock(QtCore.QObject):
 
                         #string = str(round(self.env.now,1)) + " [Loadlock][" + self.name + "] Start implant process "
                         #self.output_text.sig.emit(string)
+
+                        start = self.env.now
                         
-#                        if (self.first_run):
-#                            self.first_run = False
-#                        else:
-#                            self.idle_time += (self.env.now-self.prev_time)
+                        loadlock = cassette_size
+                        buffer = 0
 
                         while True: # load wafers on belt and run belt until loadlock and belt is empty
-                            if (self.loadlock_container.level > 0) & (not self.lane[0]):
-                                self.loadlock_container.get(1)
+                            if (loadlock > 0) and (not self.lane[0]):
+                                loadlock -= 1
                                 self.lane[0] = True
                             
                             if (self.lane[-1]):
                                 self.lane[-1] = False
-                                self.buffer.container.put(1)
+                                buffer += 1
                             
-                            if (self.loadlock_container.level == 0) & (not self.lane.count(True)):
+                            if buffer == cassette_size:
                                 break                
                             
                             self.lane.rotate(1)    
                             yield self.env.timeout(time_step)                
                 
                         while True: # load wafers on belt and run belt until buffer and lane is empty
-                            if (self.buffer.container.level > 0) & (not self.lane[-1]):
-                                self.buffer.container.get(1)
+                            if (buffer > 0) and (not self.lane[-1]):
+                                buffer -= 1
                                 self.lane[-1] = True
                             
                             if (self.lane[0]):
                                 self.lane[0] = False
-                                self.loadlock_container.put(1)
+                                loadlock += 1
             
-                            if (self.buffer.container.level == 0) & (not self.lane.count(True)):
+                            if loadlock == cassette_size:
                                 break  
                             
                             self.lane.rotate(-1)    
                             yield self.env.timeout(time_step)
 
+                        self.lane_running_time += self.env.now - start
+                        
                         #string = str(round(self.env.now,1)) + " [Loadlock][" + self.name + "] End implant process "
                         #self.output_text.sig.emit(string)
                     
