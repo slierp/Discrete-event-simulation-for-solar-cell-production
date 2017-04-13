@@ -20,6 +20,8 @@ class BatchTransport(QtCore.QObject):
         self.params['batch_size'] = 1
         self.params['cassette_size'] = 1
         self.params['wait_time'] = 60 # simulation runs much faster with higher values!!! 
+        self.params['random_seed'] = 42
+        self.params['random_seed_type'] = "immutable"                   
         self.params.update(_params)
 
         self.name = self.params['name'] # for backward compatibility / to be removed
@@ -30,7 +32,8 @@ class BatchTransport(QtCore.QObject):
             self.parent.technician_resource = simpy.Resource(self.env,1)
             self.parent.maintenance_needed = False
         
-        random.seed(42)
+        random.seed(self.params['random_seed'])
+        
         self.mtbf_enable = False
         if ('mtbf' in self.params) and ('mttr' in self.params):
             if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):

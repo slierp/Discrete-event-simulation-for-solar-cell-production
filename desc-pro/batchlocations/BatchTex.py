@@ -136,6 +136,8 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         self.params['mttr'] = 60
         self.params['mttr_desc'] = "Mean time to repair (minutes) (0 to disable function)"
         self.params['mttr_type'] = "downtime"
+        self.params['random_seed'] = 42
+        self.params['random_seed_type'] = "immutable"                   
         
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
@@ -221,6 +223,7 @@ If no action was possible it will wait for a set amount of time (60 seconds by d
         transport_params['cassette_size'] = self.params['cassette_size']
         transport_params['mtbf'] = self.params['mtbf']
         transport_params['mttr'] = self.params['mttr']
+        transport_params['random_seed'] = self.params['random_seed']
         self.downtime_finished = None
         self.technician_resource = None
         self.downtime_duration = 0

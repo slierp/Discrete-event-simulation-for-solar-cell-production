@@ -19,7 +19,6 @@ from batchlocations.PlasmaEtcher import PlasmaEtcher
 import simpy
 from PyQt5 import QtCore
 import pandas as pd
-#from random import shuffle
 import time
 
 class StringSignal(QtCore.QObject):
@@ -46,35 +45,65 @@ class RunSimulationThread(QtCore.QObject):
             # replace class names for real class instances in the same list
             # simpy env, message output link, settings dictionary
             if (self.batchlocations[i][0] == "WaferSource"):
-                self.batchlocations[i] = WaferSource(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i # give unique seed number for each tool
+                self.batchlocations[i] = WaferSource(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "WaferStacker"):
-                self.batchlocations[i] = WaferStacker(self.env,self.output,self.batchlocations[i][1])                
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = WaferStacker(self.env,self.output,parameters)                
             elif (self.batchlocations[i][0] == "WaferUnstacker"):
-                self.batchlocations[i] = WaferUnstacker(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = WaferUnstacker(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "BatchTex"):
-                self.batchlocations[i] = BatchTex(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = BatchTex(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "BatchClean"):
-                self.batchlocations[i] = BatchClean(self.env,self.output,self.batchlocations[i][1])                
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = BatchClean(self.env,self.output,parameters)              
             elif (self.batchlocations[i][0] == "TubeFurnace"):
-                self.batchlocations[i] = TubeFurnace(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = TubeFurnace(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "SingleSideEtch"):
-                self.batchlocations[i] = SingleSideEtch(self.env,self.output,self.batchlocations[i][1]) 
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = SingleSideEtch(self.env,self.output,parameters) 
             elif (self.batchlocations[i][0] == "TubePECVD"):
-                self.batchlocations[i] = TubePECVD(self.env,self.output,self.batchlocations[i][1]) 
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = TubePECVD(self.env,self.output,parameters) 
             elif (self.batchlocations[i][0] == "PrintLine"):
-                self.batchlocations[i] = PrintLine(self.env,self.output,self.batchlocations[i][1]) 
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = PrintLine(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "WaferBin"):
-                self.batchlocations[i] = WaferBin(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = WaferBin(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "Buffer"):
-                self.batchlocations[i] = Buffer(self.env,self.output,self.batchlocations[i][1])                 
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = Buffer(self.env,self.output,parameters)                 
             elif (self.batchlocations[i][0] == "IonImplanter"):
-                self.batchlocations[i] = IonImplanter(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = IonImplanter(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "SpatialALD"):
-                self.batchlocations[i] = SpatialALD(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = SpatialALD(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "InlinePECVD"):
-                self.batchlocations[i] = InlinePECVD(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = InlinePECVD(self.env,self.output,parameters)
             elif (self.batchlocations[i][0] == "PlasmaEtcher"):
-                self.batchlocations[i] = PlasmaEtcher(self.env,self.output,self.batchlocations[i][1])
+                parameters = self.batchlocations[i][1]
+                parameters['random_seed'] = i                
+                self.batchlocations[i] = PlasmaEtcher(self.env,self.output,parameters)
 
         for i, value in enumerate(self.locationgroups):
             # replace batchlocation number indicators for references to real class instances

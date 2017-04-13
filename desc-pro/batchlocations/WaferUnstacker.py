@@ -85,6 +85,8 @@ The second loop consists of the following steps:
         self.params['mttr'] = 60
         self.params['mttr_desc'] = "Mean time to repair (minutes) (0 to disable function)"
         self.params['mttr_type'] = "downtime"
+        self.params['random_seed'] = 42
+        self.params['random_seed_type'] = "immutable"                   
 
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
@@ -107,7 +109,7 @@ The second loop consists of the following steps:
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'])
 
         if self.params['reject_percentage'] > 0:
-            random.seed(42)
+            random.seed(self.params['random_seed'])
 
         self.start_time = self.env.now
         
@@ -116,7 +118,8 @@ The second loop consists of the following steps:
         self.downtime_duration =  0
         self.maintenance_needed = False
         
-        random.seed(42)
+        self.params['random_seed'] = 42
+                   
         self.mtbf_enable = False
         if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
             self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))

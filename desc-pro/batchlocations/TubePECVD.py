@@ -80,14 +80,7 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['downtime_runs_type'] = "downtime"
         self.params['downtime_duration'] = 60
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"
-        self.params['downtime_duration_type'] = "downtime"
-
-        self.params['mtbf'] = 1000
-        self.params['mtbf_desc'] = "Mean time between failures (hours) (0 to disable function)"
-        self.params['mtbf_type'] = "downtime"
-        self.params['mttr'] = 60
-        self.params['mttr_desc'] = "Mean time to repair (minutes)"
-        self.params['mttr_type'] = "downtime"
+        self.params['downtime_duration_type'] = "downtime"                 
         
         self.params['no_of_processes'] = 5
         self.params['no_of_processes_desc'] = "Number of process locations in the tool"
@@ -133,6 +126,15 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['loop_begin_type'] = "immutable"
         self.params['loop_end'] = False
         self.params['loop_end_type'] = "immutable"       
+
+        self.params['mtbf'] = 1000
+        self.params['mtbf_desc'] = "Mean time between failures (hours) (0 to disable function)"
+        self.params['mtbf_type'] = "downtime"
+        self.params['mttr'] = 60
+        self.params['mttr_desc'] = "Mean time to repair (minutes)"
+        self.params['mttr_type'] = "downtime"
+        self.params['random_seed'] = 42
+        self.params['random_seed_type'] = "immutable"  
         
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
@@ -243,7 +245,8 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.downtime_duration =  60*self.params['downtime_duration']
         self.maintenance_needed = False
         
-        random.seed(42)
+        random.seed(self.params['random_seed'])
+        
         self.mtbf_enable = False
         if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
             self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))

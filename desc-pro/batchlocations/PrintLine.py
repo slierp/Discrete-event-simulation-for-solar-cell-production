@@ -120,6 +120,8 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.params['mttr'] = 60
         self.params['mttr_desc'] = "Mean time to repair (minutes) (0 to disable function)"
         self.params['mttr_type'] = "downtime"
+        self.params['random_seed'] = 42   
+        self.params['random_seed_type'] = "immutable"                   
         
         self.params['cassette_size'] = -1
         self.params['cassette_size_type'] = "immutable"
@@ -167,7 +169,8 @@ After a drying step the wafer is placed on the input belt of the next printer an
         self.downtime_duration =  0
         self.maintenance_needed = False
         
-        random.seed(42)
+        random.seed(self.params['random_seed'])
+        
         self.mtbf_enable = False
         if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
             self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
