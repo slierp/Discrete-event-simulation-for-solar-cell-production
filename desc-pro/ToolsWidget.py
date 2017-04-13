@@ -62,7 +62,7 @@ class ToolsWidget(QtCore.QObject):
             self.model.appendRow(parent)
             #self.batchlocations_view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True)
             index = self.model.index(i, 0)
-            self.view.setExpanded(index, True)
+            self.view.setExpanded(index, False)
 
     def reindex_locationgroups(self):
         # change it so that all indexes are consecutive, which should always be the case

@@ -31,7 +31,7 @@ class OperatorsWidget(QtCore.QObject):
             self.model.appendRow(parent)
             #self.view.setFirstColumnSpanned(i, self.batchlocations_view.rootIndex(), True) 
             index = self.model.index(i, 0)
-            self.view.setExpanded(index, True)            
+            self.view.setExpanded(index, False)            
 
     def import_batchlocations(self):
         self.load_definition() # default operators list

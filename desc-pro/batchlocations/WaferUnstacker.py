@@ -108,8 +108,7 @@ The second loop consists of the following steps:
         self.belt = collections.deque([False] * (self.params['units_on_belt']+1))
         self.output = CassetteContainer(self.env,"output",self.params['max_cassette_no'])
 
-        if self.params['reject_percentage'] > 0:
-            random.seed(self.params['random_seed'])
+        random.seed(self.params['random_seed'])
 
         self.start_time = self.env.now
         
@@ -117,8 +116,6 @@ The second loop consists of the following steps:
         self.technician_resource = simpy.Resource(self.env,1)
         self.downtime_duration =  0
         self.maintenance_needed = False
-        
-        self.params['random_seed'] = 42
                    
         self.mtbf_enable = False
         if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):

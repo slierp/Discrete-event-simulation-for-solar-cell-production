@@ -32,7 +32,7 @@ class TechniciansWidget(QtCore.QObject):
                 parent.appendRow(child)
             self.model.appendRow(parent)
             index = self.model.index(i, 0)
-            self.view.setExpanded(index, True)            
+            self.view.setExpanded(index, False)            
 
     def import_batchlocations_tech(self):
         self.load_definition() # default technicians list

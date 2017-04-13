@@ -109,37 +109,6 @@ class LocationgroupSettingsDialog(QtWidgets.QDialog):
         self.setWindowTitle(self.tr("Tool group settings"))
         
         tabwidget = QtWidgets.QTabWidget()
-        
-        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements
-
-        ### Add diagram ###
-        tree = parser.parse_string(curr_diagram)
-        diagram = builder.ScreenNodeBuilder.build(tree)
-        draw = drawer.DiagramDraw('SVG', diagram, filename="")
-        draw.draw()
-        svg_string = draw.save()
-
-        svg_widget = QtSvg.QSvgWidget()
-        svg_widget.load(str(svg_string).encode('latin-1'))
-
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addWidget(svg_widget)
-        hbox.addStretch(1)
-        vbox_description.addLayout(hbox)
-
-        ### Add specification text ###
-        hbox = QtWidgets.QHBoxLayout()           
-        browser = QtWidgets.QTextBrowser()
-        browser.insertHtml(curr_params['specification'])
-        browser.moveCursor(QtGui.QTextCursor.Start)        
-        hbox.addWidget(browser)
-
-        vbox_description.addLayout(hbox)
-
-        generic_widget_description = QtWidgets.QWidget()
-        generic_widget_description.setLayout(vbox_description)
-        tabwidget.addTab(generic_widget_description, "Description")
 
         self.strings = []
         self.integers = []
@@ -202,12 +171,44 @@ class LocationgroupSettingsDialog(QtWidgets.QDialog):
             generic_widget = QtWidgets.QWidget()
             generic_widget.setLayout(vbox)
             tabwidget.addTab(generic_widget, setting_type_tabs[j])#QtCore.QString(setting_type_tabs[j]))
+
+        ### Description tab ###        
+        vbox_description = QtWidgets.QVBoxLayout() # vbox for description elements
+
+        # Diagram
+        tree = parser.parse_string(curr_diagram)
+        diagram = builder.ScreenNodeBuilder.build(tree)
+        draw = drawer.DiagramDraw('SVG', diagram, filename="")
+        draw.draw()
+        svg_string = draw.save()
+
+        svg_widget = QtSvg.QSvgWidget()
+        svg_widget.load(str(svg_string).encode('latin-1'))
+
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addWidget(svg_widget)
+        hbox.addStretch(1)
+        vbox_description.addLayout(hbox)
+        
+        # Text
+        hbox = QtWidgets.QHBoxLayout()           
+        browser = QtWidgets.QTextBrowser()
+        browser.insertHtml(curr_params['specification'])
+        browser.moveCursor(QtGui.QTextCursor.Start)        
+        hbox.addWidget(browser)
+
+        vbox_description.addLayout(hbox)
+
+        generic_widget_description = QtWidgets.QWidget()
+        generic_widget_description.setLayout(vbox_description)
+        tabwidget.addTab(generic_widget_description, "Description")
         
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(tabwidget) 
 
         ### Avoid shrinking all the diagrams ###
-        svg_widget.setMinimumHeight(svg_widget.height())
+        #svg_widget.setMinimumHeight(svg_widget.height())
 
         ### Buttonbox for ok or cancel ###
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
@@ -237,9 +238,10 @@ class LocationgroupSettingsDialog(QtWidgets.QDialog):
         
         self.load_definition(False)
 
-        if self.row: # expand row again after reloading definitions
-            index = self.model.index(self.row, 0)
-            self.view.setExpanded(index, True)
+        if self.row:
+            parent = self.model.index(self.row, 0)
+            self.view.setExpanded(parent, True) # expand locationgroup again            
+            self.view.setCurrentIndex(parent) # select locationgroup again
         
         self.statusbar.showMessage(self.tr("Tool group settings updated"),3000)
         self.accept()

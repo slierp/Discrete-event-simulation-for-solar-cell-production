@@ -161,7 +161,7 @@ class CassetteloopsWidget(QtCore.QObject):
 
             self.model.appendRow(parent)
             index = self.model.index(i, 0)
-            self.view.setExpanded(index, True)
+            self.view.setExpanded(index, False)
 
     def import_locationgroups(self):
         self.load_definition() # generate default loops and load it into interface
