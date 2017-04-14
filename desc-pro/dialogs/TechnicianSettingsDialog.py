@@ -81,73 +81,50 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         ### Settings tab ###
         vbox = QtWidgets.QVBoxLayout() # vbox for all settings  
          
-        self.strings = []
-        
         # Make QLineEdit for name
         hbox = QtWidgets.QHBoxLayout()
-        self.strings.append(QtWidgets.QLineEdit(curr_params['name']))
-        self.strings[-1].setObjectName('name')
-        self.strings[-1].setMaxLength(5)
+        self.lineedit0 = QtWidgets.QLineEdit(curr_params['name'])
+        self.lineedit0.setMaxLength(5)
         description = QtWidgets.QLabel('Name of the individual technician')
-        self.strings[-1].setToolTip('Name of the individual technician')
-        hbox.addWidget(self.strings[-1]) 
+        self.lineedit0.setToolTip('Name of the individual technician')
+        hbox.addWidget(self.lineedit0) 
         hbox.addWidget(description)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        self.integers = []
-        for i in curr_params:
-            if isinstance(curr_params[i], int):
-                hbox = QtWidgets.QHBoxLayout()
-                description = QtWidgets.QLabel(curr_params[i + "_desc"])
-                self.integers.append(QtWidgets.QSpinBox())
-                self.integers[-1].setAccelerated(True)
-                self.integers[-1].setMaximum(999999999)
-                self.integers[-1].setValue(curr_params[i])
-                self.integers[-1].setObjectName(i)
-                if (curr_params[i] >= 100):
-                    self.integers[-1].setSingleStep(100)
-                elif (curr_params[i] >= 10):
-                    self.integers[-1].setSingleStep(10)                     
-                if i + "_desc" in curr_params:
-                    self.integers[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(self.integers[-1])  
-                hbox.addWidget(description)
-                hbox.addStretch(1)                 
-                vbox.addLayout(hbox)
-
-        self.doubles = []
-        for i in curr_params:
-            if isinstance(curr_params[i], float):
-                hbox = QtWidgets.QHBoxLayout()
-                description = QtWidgets.QLabel(curr_params[i + "_desc"])
-                self.doubles.append(QtWidgets.QDoubleSpinBox())
-                self.doubles[-1].setAccelerated(True)
-                self.doubles[-1].setMaximum(999999999)
-                self.doubles[-1].setValue(curr_params[i])
-                self.doubles[-1].setSingleStep(0.1)
-                self.doubles[-1].setObjectName(i)
-                if i + "_desc" in curr_params:
-                    self.doubles[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(self.doubles[-1])
-                hbox.addWidget(description)
-                hbox.addStretch(1)                  
-                vbox.addLayout(hbox)
+        hbox = QtWidgets.QHBoxLayout()
+        description = QtWidgets.QLabel(curr_params["wait_time_desc"])
+        self.spinbox0 = QtWidgets.QSpinBox()
+        self.spinbox0.setAccelerated(True)
+        self.spinbox0.setMaximum(999)
+        self.spinbox0.setValue(curr_params['wait_time'])                   
+        self.spinbox0.setToolTip(curr_params["wait_time_desc"])
+        hbox.addWidget(self.spinbox0)  
+        hbox.addWidget(description)
+        hbox.addStretch(1)                 
+        vbox.addLayout(hbox)
         
-        self.booleans = []
-        for i in curr_params:
-            if isinstance(curr_params[i], bool):
-                hbox = QtWidgets.QHBoxLayout()
-                description = QtWidgets.QLabel(curr_params[i + "_desc"])
-                self.booleans.append(QtWidgets.QCheckBox())                
-                self.booleans[-1].setChecked(curr_params[i])
-                self.booleans[-1].setObjectName(i)
-                if i + "_desc" in curr_params:
-                    self.booleans[-1].setToolTip(curr_params[i + "_desc"])
-                hbox.addWidget(self.booleans[-1])
-                hbox.addWidget(description)
-                hbox.addStretch(1)                 
-                vbox.addLayout(hbox)
+        hbox = QtWidgets.QHBoxLayout()
+        description = QtWidgets.QLabel(curr_params['shuffle_tools_desc'])
+        self.boolean0 = QtWidgets.QCheckBox()
+        self.boolean0.setChecked(curr_params['shuffle_tools'])
+        self.boolean0.setToolTip(curr_params['shuffle_tools_desc'])
+        description.mouseReleaseEvent = self.switch_boolean0
+        hbox.addWidget(self.boolean0)
+        hbox.addWidget(description)
+        hbox.addStretch(1)                 
+        vbox.addLayout(hbox)
+        
+        hbox = QtWidgets.QHBoxLayout()
+        description = QtWidgets.QLabel("Apply settings to all connections (excluding name)")
+        self.boolean1 = QtWidgets.QCheckBox()
+        self.boolean1.setChecked(False)
+        self.boolean1.setToolTip("Apply settings to all connections (excluding name)")
+        description.mouseReleaseEvent = self.switch_boolean1
+        hbox.addWidget(self.boolean1)
+        hbox.addWidget(description)
+        hbox.addStretch(1)                 
+        vbox.addLayout(hbox)
 
         vbox.addStretch(1)
         generic_widget_settings = QtWidgets.QWidget()
@@ -181,7 +158,32 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         layout.addWidget(buttonbox)
         self.setMinimumWidth(800)
 
+    def switch_boolean0(self, event):
+        # function for making QLabel near checkbox clickable
+        self.boolean0.setChecked(not self.boolean0.isChecked())
+
+    def switch_boolean1(self, event):
+        # function for making QLabel near checkbox clickable
+        self.boolean1.setChecked(not self.boolean1.isChecked())
+
     def read(self):
+
+        # update settings in self.technicians[self.row] of parent
+        if not self.boolean1.isChecked():
+            new_params = {}
+            new_params['name'] = str(self.lineedit0.text())
+            new_params['wait_time'] = int(self.spinbox0.text())
+            new_params['shuffle_tools'] = self.boolean0.isChecked()        
+            self.technicians[self.row][1].update(new_params)
+        else:
+            self.technicians[self.row][1]['name'] = str(self.lineedit0.text())
+            
+            new_params = {}
+            new_params['wait_time'] = int(self.spinbox0.text())
+            new_params['shuffle_tools'] = self.boolean0.isChecked()
+            
+            for i in range(len(self.technicians)):
+                self.technicians[i][1].update(new_params)
         
         # Add tools to technician
         self.technicians[self.row][0] = []
@@ -195,21 +197,6 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         
         self.technicians[self.row][0].sort()        
         
-        # update settings in self.operators[self.row] of parent
-        new_params = {}
-        for i in self.strings:
-            new_params[str(i.objectName())] = str(i.text())
-
-        for i in self.integers:
-            new_params[str(i.objectName())] = int(i.text())
-
-        for i in self.doubles:
-            new_params[str(i.objectName())] = float(i.text())
-
-        for i in self.booleans:
-            new_params[str(i.objectName())] = i.isChecked()
-        
-        self.technicians[self.row][1].update(new_params)
         self.load_definition(False)
 
         # select row again after reloading operator definitions

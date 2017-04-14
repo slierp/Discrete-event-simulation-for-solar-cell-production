@@ -4,7 +4,7 @@ from batchlocations.CassetteContainer import CassetteContainer
 from batchlocations.BatchContainer import BatchContainer
 from batchlocations.PlasmaEtcher import PlasmaEtcher
 from batchlocations.Buffer import Buffer
-import simpy
+import simpy, random
 
 class Operator(QtCore.QObject):
     #Operator checks regularly whether he/she can perform a batch transfer action and then carries it out
@@ -41,10 +41,16 @@ If none of the tool connections allowed for a transport event, then the operator
         self.params['type'] = "Operator"        
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between transport attempts (seconds)"
+        self.params['shuffle_connections'] = False
+        self.params['shuffle_connections_desc'] = "Randomly shuffle connection list each time"
+        self.params['random_seed'] = 42 
+        self.params['random_seed_type'] = "immutable"
         self.params.update(_params)
         
         self.transport_counter = 0
         self.idle_time = 0
+
+        random.seed(self.params['random_seed'])
             
         self.env.process(self.run())        
 
@@ -97,10 +103,16 @@ If none of the tool connections allowed for a transport event, then the operator
             return
 
         no_connections = len(self.batchconnections)
+        shuffle_connections = self.params['shuffle_connections']
 
         # Main loop to find batchconnections that require action
         while True:
-            for i in range(no_connections):
+            check_list = list(range(no_connections))
+            
+            if shuffle_connections:
+                random.shuffle(check_list)
+                
+            for i in check_list:
                 transport_time = self.batchconnections[i][2]
                 time_per_unit = self.batchconnections[i][3]
                 min_units = self.batchconnections[i][4]               

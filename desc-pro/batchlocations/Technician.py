@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
+import random
 
 class Technician(QtCore.QObject):
     # Technician checks regularly whether he/she can perform maintenance on the tools it is responsible for
@@ -31,11 +32,17 @@ The first step in this loop is to go over all the tools assigned to this technic
         self.params['type'] = "Technician"
         self.params['wait_time'] = 60
         self.params['wait_time_desc'] = "Wait period between maintenance attempts (seconds)"        
+        self.params['shuffle_tools'] = False
+        self.params['shuffle_tools_desc'] = "Randomly shuffle tools list each time"
+        self.params['random_seed'] = 42 
+        self.params['random_seed_type'] = "immutable"                   
         self.params.update(_params)
         
         self.transport_counter = 0
         self.start_time = -1
         self.idle_time = 0
+
+        random.seed(self.params['random_seed'])
             
         self.env.process(self.run())      
 
@@ -55,11 +62,17 @@ The first step in this loop is to go over all the tools assigned to this technic
         continue_loop = False
 
         no_tools = len(self.tools)
+        shuffle_connections = self.params['shuffle_tools']        
 
         # Main loop to find tools that require maintenance
         while True:
+
+            check_list = list(range(no_tools))
             
-            for i in range(no_tools):
+            if shuffle_connections:
+                random.shuffle(check_list)
+            
+            for i in check_list:
                 
                 if self.tools[i].maintenance_needed:
                     
