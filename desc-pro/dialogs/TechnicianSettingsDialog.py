@@ -202,5 +202,7 @@ class TechnicianSettingsDialog(QtWidgets.QDialog):
         # select row again after reloading operator definitions
         index = self.model.index(self.row, 0)
         self.view.setCurrentIndex(index)
+        self.view.setExpanded(index, True)
+        
         self.statusbar.showMessage(self.tr("Technician settings updated"),3000)
         self.accept()

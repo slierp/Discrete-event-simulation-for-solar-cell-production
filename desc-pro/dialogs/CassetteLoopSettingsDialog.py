@@ -371,6 +371,7 @@ so it cannot serve as a begin or end position of a cassette loop.
                 self.cassette_loops[self.row][6] = min_units
                 self.cassette_loops[self.row][7] = max_units
                 message = self.tr("Cassette loop settings updated")
+                position = self.row
             else:
                 cassette_loop = []
                 cassette_loop.append(begin)
@@ -383,8 +384,12 @@ so it cannot serve as a begin or end position of a cassette loop.
                 cassette_loop.append(max_units)                
                 self.cassette_loops.append(cassette_loop)
                 message = self.tr("Cassette loop added")
+                position = len(self.cassette_loops)-1
             
             self.load_definition(False)
+
+            parent = self.model.index(position, 0)
+            self.view.setExpanded(parent, True)
             
             self.statusbar.showMessage(message,3000)                
             self.accept()
