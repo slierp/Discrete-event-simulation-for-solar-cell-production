@@ -123,7 +123,9 @@ class RunSimulationThread(QtCore.QObject):
             for j in range(len(self.operators[i][0])):
                 tmp_batchconnections[j] = self.batchconnections[self.operators[i][0][j]]
 
-            self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,self.operators[i][1])
+            parameters = self.operators[i][1]
+            parameters['random_seed'] = i  
+            self.operators[i] = Operator(self.env,tmp_batchconnections,self.output,parameters)
 
         for i, value in enumerate(self.technicians):
             # replace tool number indicators for references to real class instances
@@ -133,7 +135,9 @@ class RunSimulationThread(QtCore.QObject):
             for j in range(len(self.technicians[i][0])):
                 tmp_tools[j] = self.batchlocations[self.technicians[i][0][j]]
 
-            self.technicians[i] = Technician(self.env,tmp_tools,self.output,self.technicians[i][1])
+            parameters = self.technicians[i][1]
+            parameters['random_seed'] = i  
+            self.technicians[i] = Technician(self.env,tmp_tools,self.output,parameters)
 
         # Add all the cassettes to the source batchlocations
         source_group = len(self.locationgroups)-1
