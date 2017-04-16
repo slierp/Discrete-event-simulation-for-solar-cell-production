@@ -50,10 +50,9 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         self.params.update(_params)
         
         self.input = BatchContainer(self.env,"input",self.params['stack_size'],1)
-        self.output = self.input
+        self.output = BatchContainer(self.env,"input",self.params['stack_size'],1)
         
         self.production_volume = 0
-        self.start = self.env.event()
 
         self.downtime_finished = None
         self.technician_resource = simpy.Resource(self.env,1)
@@ -66,6 +65,8 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
         if (self.params['mtbf'] > 0) and (self.params['mttr'] > 0):
             self.next_failure = random.expovariate(1/(3600*self.params['mtbf']))
             self.mtbf_enable = True
+        
+        self.start = self.env.event() # make new event
         
         self.env.process(self.run())        
 
@@ -87,11 +88,11 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
 
     def nominal_throughput(self):
         return self.params['stack_size']*60/self.params['process_time']
-
+    
     def start_process(self):
         self.start.succeed()
-        self.start = self.env.event() # make new event
-        
+        self.start = self.env.event() # make new event        
+    
     def run(self):
         process_time = self.params['process_time']
         stack_size = self.params['stack_size']
@@ -101,24 +102,44 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
             mtbf = 1/(3600*self.params['mtbf'])
             mttr = 1/(60*self.params['mttr'])
         
+#        plasma_name = '0'
+        
         while True:
 
             if mtbf_enable and self.env.now >= self.next_failure:
                 with self.input.oper_resource.request() as request:
-                    yield request
+                    result = yield request | self.env.timeout(10)
+
+                    if not request in result:
+                        string = "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
+                        string += "Plasma etcher is unable to start MTBF downtime. Etcher will now stop functioning."
+                        self.output_text.sig.emit(string)
+                        return
+                    
                     self.downtime_duration = random.expovariate(mttr)
-                    #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
+                    
+#                    if plasma_name == self.params['name']:
+#                        print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF set failure - maintenance needed for " + str(round(self.downtime_duration/60)) + " minutes")
+                    
                     self.downtime_finished = self.env.event()
                     self.maintenance_needed = True                    
                     yield self.downtime_finished
                     self.next_failure = self.env.now + random.expovariate(mtbf)
-                    #print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")  
-            
+                    
+#                    if plasma_name == self.params['name']:
+#                        print(str(self.env.now) + "- [" + self.params['type'] + "] MTBF maintenance finished - next maintenance in " + str(round((self.next_failure - self.env.now)/3600)) + " hours")  
+                       
             yield self.start
             
-            with self.input.oper_resource.request() as request:
-                yield request
-                yield self.env.timeout(process_time*60)
-                self.production_volume += stack_size
+#            if plasma_name == self.params['name']:
+#                print(str(self.env.now) + "- [" + self.params['type'] + "][" + self.params['name'] + "] Starting process")
+
+            yield self.env.timeout(process_time*60)
+            self.input.container.get(stack_size)
+            self.output.container.put(stack_size)
+            self.production_volume += stack_size
+            
+#            if plasma_name == self.params['name']:
+#                print(str(self.env.now) + "- [" + self.params['type'] + "][" + self.params['name'] + "] End process")                
         
         

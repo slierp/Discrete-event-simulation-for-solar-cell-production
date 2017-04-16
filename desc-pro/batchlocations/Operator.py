@@ -98,12 +98,17 @@ If none of the tool connections allowed for a transport event, then the operator
                     string += "Tool connection from " + origin_name + " to " + destination_name
                     string += " has dissimilar input and output types (stack or cassette). "
                     faulty_connection = True
-                
-            if isinstance(self.batchconnections[i][0],WaferSource) and (self.batchconnections[i][4] >= 2):
+            
+            single_stack_tool = False
+            if isinstance(self.batchconnections[i][0],WaferSource) or isinstance(self.batchconnections[i][0],PlasmaEtcher) or isinstance(self.batchconnections[i][1],PlasmaEtcher):
+                single_stack_tool = True
+            
+            if single_stack_tool and (self.batchconnections[i][4] >= 2):
                 origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
+                destination_name = self.batchconnections[i][1].params['type'] + " " + self.batchconnections[i][1].params['name']
                 string += "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
-                string += "Tool connection from " + origin_name + " has a transport limit higher than 1, but"
-                string += " WaferSource only offers one stack at any time. Transport will not work."
+                string += "Tool connection from " + origin_name + " to " + destination_name + " has a transport limit higher than 1, but"
+                string += " at least one of the tools only offers one stack at any time. Transport will not work."
                 faulty_connection = True
                 
         if faulty_connection:
@@ -212,7 +217,7 @@ If none of the tool connections allowed for a transport event, then the operator
                             origin_resource.request() as request_input:
 
                     # request output resource; abort if not quickly obtained
-                    result = yield request_output | self.env.timeout(1)                    
+                    result = yield request_output | self.env.timeout(1) 
                     if not request_output in result:
                         self.idle_time += 1
                         continue
@@ -254,14 +259,15 @@ If none of the tool connections allowed for a transport event, then the operator
 #                            print(string)
                     
                         yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
-                                      
+
+                        destination_tool = self.batchconnections[i][1]
+
                         yield destination.container.put(no_batches_for_transport*batch_size)
 
-                        self.transport_counter += no_batches_for_transport
-                            
-                        destination_tool = self.batchconnections[i][1]
-                        if isinstance(destination_tool,PlasmaEtcher):
-                            destination_tool.start_process()
+                        if isinstance(destination_tool,PlasmaEtcher):                            
+                            destination_tool.start_process()                        
+
+                        self.transport_counter += no_batches_for_transport                       
                     
                     continue_loop = True
                         
