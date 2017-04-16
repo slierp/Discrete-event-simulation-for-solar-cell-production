@@ -3,6 +3,7 @@ from PyQt5 import QtCore
 from batchlocations.CassetteContainer import CassetteContainer
 from batchlocations.BatchContainer import BatchContainer
 from batchlocations.PlasmaEtcher import PlasmaEtcher
+from batchlocations.WaferSource import WaferSource
 from batchlocations.Buffer import Buffer
 import simpy, random
 
@@ -98,12 +99,24 @@ If none of the tool connections allowed for a transport event, then the operator
                     string += " has dissimilar input and output types (stack or cassette). "
                     faulty_connection = True
                 
+            if isinstance(self.batchconnections[i][0],WaferSource) and (self.batchconnections[i][4] >= 2):
+                origin_name = self.batchconnections[i][0].params['type'] + " " + self.batchconnections[i][0].params['name']
+                string += "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
+                string += "Tool connection from " + origin_name + " has a transport limit higher than 1, but"
+                string += " WaferSource only offers one stack at any time. Transport will not work."
+                faulty_connection = True
+                
         if faulty_connection:
             self.output_text.sig.emit(string)
             return
 
         no_connections = len(self.batchconnections)
         shuffle_connections = self.params['shuffle_connections']
+
+#        operator_name = '1'
+#        if self.params['name'] == operator_name:
+#            for i in range(len(self.batchconnections)):
+#                print(self.batchconnections[i])
 
         # Main loop to find batchconnections that require action
         while True:
@@ -169,7 +182,7 @@ If none of the tool connections allowed for a transport event, then the operator
                 if continue_action and (no_batches_for_transport < min_units):
                     continue_action = False
                     
-                    if (not hard_min_limit) and space_available < min_units:
+                    if (not hard_min_limit) and (space_available < min_units):
                         continue_action = True                
 
                 # go to next connection
@@ -195,19 +208,24 @@ If none of the tool connections allowed for a transport event, then the operator
                 if origin_resource.count or destination_resource.count:                  
                     continue                 
                     
-                request_time  = self.env.now
-                with origin_resource.request() as request_input, \
-                    destination_resource.request() as request_output:
-                        
-                    yield request_input
-                    yield request_output
-                
-                    current_time = self.env.now
-                    if (current_time > request_time):
-                        # if requests were not immediately granted, we cannot be sure if the source and destination
-                        # have not changed, so go to next connection
-                        self.idle_time += (current_time-request_time) 
+                with destination_resource.request() as request_output,\
+                            origin_resource.request() as request_input:
+
+                    # request output resource; abort if not quickly obtained
+                    result = yield request_output | self.env.timeout(1)                    
+                    if not request_output in result:
+                        self.idle_time += 1
                         continue
+                    
+                    # request input resource; abort if not quickly obtained
+                    result = yield request_input | self.env.timeout(1)                    
+                    if not request_input in result:
+                        self.idle_time += 1
+                        continue                    
+                    
+#                    string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Received both operator resources"
+#                    if self.params['name'] == operator_name:
+#                       print(string)
                         
                     if cassette_transport:
                         cassettes = []
@@ -215,19 +233,31 @@ If none of the tool connections allowed for a transport event, then the operator
                         for j in range(no_batches_for_transport):
                             cassette = yield origin.output.get()
                             cassettes.append(cassette)
-                            
+                        
+#                        string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Received material from origin"
+#                        if self.params['name'] == operator_name:
+#                            print(string)                       
+                    
                         yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
-                        self.transport_counter += no_batches_for_transport
 
                         for k in cassettes:
                             yield destination.input.put(k)
+                            
+                        self.transport_counter += no_batches_for_transport
+                        
                     else:
                         batch_size = origin.batch_size
-                        yield origin.container.get(no_batches_for_transport*batch_size)                                          
+                        yield origin.container.get(no_batches_for_transport*batch_size)
+
+#                        string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Received material from origin"
+#                        if self.params['name'] == operator_name:
+#                            print(string)
                     
                         yield self.env.timeout(transport_time + time_per_unit*no_batches_for_transport)
-                        self.transport_counter += no_batches_for_transport                
+                                      
                         yield destination.container.put(no_batches_for_transport*batch_size)
+
+                        self.transport_counter += no_batches_for_transport
                             
                         destination_tool = self.batchconnections[i][1]
                         if isinstance(destination_tool,PlasmaEtcher):
@@ -235,13 +265,14 @@ If none of the tool connections allowed for a transport event, then the operator
                     
                     continue_loop = True
                         
-                    string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Batches transported: "
-                    string += str(no_batches_for_transport)
-                    #self.output_text.sig.emit(string)
+#                    string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Batches transported: "
+#                    string += str(no_batches_for_transport)
+#                    if self.params['name'] == operator_name:
+#                        print(string)
 
             # if all connection have been checked but something useful was done then
             # continue checking connections
-            if (continue_loop):
+            if continue_loop:
                 continue_loop = False
                 continue            
                 

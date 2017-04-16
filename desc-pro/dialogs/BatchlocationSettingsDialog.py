@@ -236,6 +236,9 @@ class BatchlocationSettingsDialog(QtWidgets.QDialog):
         self.setMinimumWidth(800)
 
     def read(self):
+        load_definition_operators = self.parent.operators_widget.load_definition
+        load_definition_technicians = self.parent.technicians_widget.load_definition
+
         # read contents of each widget
         # update settings in self.batchlocations[self.modified_batchlocation_number] of parent
         new_params = {}
@@ -250,6 +253,10 @@ class BatchlocationSettingsDialog(QtWidgets.QDialog):
         
         self.batchlocations[self.modified_batchlocation_number][1].update(new_params)
         self.load_definition(False)
+
+        # update other widgets in case name was changed
+        load_definition_operators(False)
+        load_definition_technicians(False)
 
         if self.row:
             parent = self.model.index(self.row, 0)

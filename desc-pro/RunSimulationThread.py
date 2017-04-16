@@ -180,8 +180,11 @@ class RunSimulationThread(QtCore.QObject):
         
         first_source_batchconnection = len(self.batchconnections)
 
-#        print(self.batchlocations)
-#        print(self.locationgroups)
+#        for i in range(len(self.batchlocations)):
+#            print(self.batchlocations[i])
+            
+#        for i in range(len(self.locationgroups)):
+#            print(self.locationgroups[i])
 
         # add connections from and to sources
         for i in range(len(self.cassette_loops)):
@@ -195,32 +198,44 @@ class RunSimulationThread(QtCore.QObject):
             for j in range(len(self.locationgroups[self.cassette_loops[i][0]])):
                 self.batchconnections.append([[source_group,i],[self.cassette_loops[i][0],j],
                                               transport_time,time_per_unit,min_units,max_units,return_conn])
-
+    
             # add connections from loop endings to cassette sources
             for k in range(len(self.locationgroups[self.cassette_loops[i][1]])):
                 self.batchconnections.append([[self.cassette_loops[i][1],k],[source_group,i],
                                               transport_time,time_per_unit,min_units,max_units,return_conn])
+
+#        for i in range(len(self.batchconnections)):
+#            print(self.batchconnections[i])
         
         # add source connections to operators that are already responsible for the same tools
+        extend_list = [] # separate list to store the connections list extensions
+        for _ in range(len(self.operators)):
+            extend_list.append([])
+            
         for i in range(first_source_batchconnection,len(self.batchconnections)):
             if self.batchconnections[i][0][0] == source_group: # if it is source > tool connection
                 for j in range(len(self.operators)):
                     for k in self.operators[j][0]:
+                        # if operator connection origin is the same as the source connection destination
                         if self.batchconnections[k][0] == self.batchconnections[i][1]:
-                            self.operators[j][0].append(i) # add multiple times to increase priority
+                            extend_list[j].append(i)
+
 
             else: # if it is tool > source connection
                 for j in range(len(self.operators)):
                     for k in self.operators[j][0]:
-                        if self.batchconnections[k][1] == self.batchconnections[i][0]:
-                            self.operators[j][0].append(i)                          
-        
-        for i in range(len(self.operators)):
-            self.operators[i][0] = sorted(list(set(self.operators[i][0]))) # make connection lists unique
+                        # if operator connection destination is the same as the source connection origin
+                        if self.batchconnections[k][1] == self.batchconnections[i][0]:                        
+                            extend_list[j].append(i)
 
-#        print(self.batchconnections)
-#        print(self.operators)
-#        print(self.technicians)
+        for i in range(len(self.operators)): # extend the connection lists
+            self.operators[i][0].extend(extend_list[i])
+        
+        for i in range(len(self.operators)): # make sure that connection lists are unique
+            self.operators[i][0] = sorted(list(set(self.operators[i][0]))) 
+
+#        for i in range(len(self.operators)):
+#            print(self.operators[i])
 
     def sanity_check(self):
         
