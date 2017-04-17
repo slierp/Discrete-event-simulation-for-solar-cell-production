@@ -317,7 +317,7 @@ class MainGui(QtWidgets.QMainWindow):
             self.table_widget.clear()
              
             headerlabels = ['Type','Name','Nominal','Utilization','Volume']
-            for i in range(5,35):
+            for i in range(5,99):
                 headerlabels.append("Process " + str(i-5))
             
             self.table_widget.setHorizontalHeaderLabels(headerlabels)
@@ -418,8 +418,8 @@ class MainGui(QtWidgets.QMainWindow):
         self.table_widget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)        
 
         headerlabels = ['Type','Name','Nominal','Utilization','Volume']
-        for i in range(4,15):
-            headerlabels.append("Process " + str(i-4))
+        for i in range(5,99):
+            headerlabels.append("Process " + str(i-5))
         self.table_widget.setHorizontalHeaderLabels(headerlabels)
         self.table_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.table_widget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
@@ -484,8 +484,8 @@ class MainGui(QtWidgets.QMainWindow):
         columns = self.table_widget.columnCount()
 
         headerlabels = ['Type','Name','Nominal','Utilization','Volume']
-        for i in range(4,15):
-            headerlabels.append("Process " + str(i-4))
+        for i in range(5,99):
+            headerlabels.append("Process " + str(i-5))
     
         df1 = pd.DataFrame(columns=headerlabels,index=range(rows)) 
     
