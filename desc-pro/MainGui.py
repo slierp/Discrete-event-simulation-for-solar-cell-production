@@ -8,8 +8,9 @@ from OperatorsWidget import OperatorsWidget
 from TechniciansWidget import TechniciansWidget
 from RunSimulationThread import RunSimulationThread
 from MainPlot import MultiPlot
-import pickle
+import pickle, csv
 from copy import deepcopy
+import pandas as pd
 
 class DeselectableTreeView(QtWidgets.QTreeView):
     # de-select by right click or by clicking on white space
@@ -309,6 +310,9 @@ class MainGui(QtWidgets.QMainWindow):
             self.run_sim_button.setEnabled(False)
             self.stop_sim_button.setEnabled(True)
 
+            self.save_report_button.setEnabled(False)
+            self.plot_production_rates_button.setEnabled(False)
+
             # clear idle tab and reset headers
             self.table_widget.clear()
              
@@ -393,12 +397,11 @@ class MainGui(QtWidgets.QMainWindow):
         if self.output_signal_counter < 1000:
             # limit text output to 999 lines to prevent GUI from becoming unresponsive
             self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
-            #self.edit.insertPlainText(string + '\n')
             self.edit.insertHtml(string + '<br>')
             self.output_signal_counter += 1
         elif not self.output_overload_signal_given:
             self.edit.moveCursor(QtGui.QTextCursor.End) # make sure user cannot re-arrange the output
-            self.edit.insertPlainText('Output overload\n') 
+            self.edit.insertHtml('Output overload<br>')
             self.output_overload_signal_given = True
 
     @QtCore.pyqtSlot(list)
@@ -454,12 +457,59 @@ class MainGui(QtWidgets.QMainWindow):
                 else:
                     color = QtGui.QColor(255,255,255)                
                 item.setBackground(color)
-                self.table_widget.setItem(i, j, item)
+                self.table_widget.setItem(i, j, item)        
+
+    def save_report(self):
+
+        filename = QtWidgets.QFileDialog.getSaveFileName(self,self.tr("Save file"), self.prev_dir_path, "Excel Files (*.xlsx)")
+        filename = filename[0]
+        
+        if (not filename):
+            return
+        
+        self.prev_dir_path = ntpath.dirname(filename)
+
+        headerlabels = ['Activity']
+        text = self.edit.toPlainText()
+        rows = text.count('\n')
+
+        df0 = pd.DataFrame(columns=headerlabels,index=range(rows))
+
+        text = text.splitlines()        
+        for i in range(rows):
+            df0.ix[i, 0] = text[i]
+
+        # copy tablewidget to a pandas dataframe
+        rows = self.table_widget.rowCount()
+        columns = self.table_widget.columnCount()
+
+        headerlabels = ['Type','Name','Nominal','Utilization','Volume']
+        for i in range(4,15):
+            headerlabels.append("Process " + str(i-4))
+    
+        df1 = pd.DataFrame(columns=headerlabels,index=range(rows)) 
+    
+        for i in range(rows):
+            for j in range(columns):
+                if self.table_widget.item(i, j):
+                    df1.ix[i, j] = self.table_widget.item(i, j).text()
+
+        writer = pd.ExcelWriter(filename, engine='xlsxwriter')
+        
+        df0.to_excel(writer,self.tr('Activity'))
+        df1.to_excel(writer,self.tr('Utilization'))
+                
+        writer.save()
+            
+        self.statusBar().showMessage(self.tr("Report file saved"),3000)
 
     @QtCore.pyqtSlot(str)
     def simulation_end_signal(self):
         self.run_sim_button.setEnabled(True)
         self.stop_sim_button.setEnabled(False)
+        self.save_report_button.setEnabled(True)
+        if len(self.simulation_thread.prod_rates_df):
+            self.plot_production_rates_button.setEnabled(True)
         self.statusBar().showMessage(self.tr("Simulation has ended"),3000)
 
     def open_help_dialog(self):
@@ -706,23 +756,34 @@ class MainGui(QtWidgets.QMainWindow):
         self.stop_sim_button.setEnabled(False)
         self.stop_sim_button.setShortcut('Escape')
 
+        self.save_report_button = QtWidgets.QPushButton()
+        self.save_report_button.clicked.connect(self.save_report)
+        self.save_report_button.setIcon(QtGui.QIcon(":report.png"))
+        self.save_report_button.setToolTip(self.tr("Make simulation report"))
+        self.save_report_button.setStatusTip(self.tr("Make simulation report"))
+        self.save_report_button.setEnabled(False)        
+
         self.plot_production_rates_button = QtWidgets.QPushButton()
         self.plot_production_rates_button.clicked.connect(self.plot_production_rates)
         self.plot_production_rates_button.setIcon(QtGui.QIcon(":chart.png"))
-        self.plot_production_rates_button.setToolTip(self.tr("Plot production rate results"))
-        self.plot_production_rates_button.setStatusTip(self.tr("Plot production rate results"))
+        self.plot_production_rates_button.setToolTip(self.tr("Profiling mode results"))
+        self.plot_production_rates_button.setStatusTip(self.tr("Profiling mode results"))
+        self.plot_production_rates_button.setEnabled(False)
 
-        self.switch_profiling_mode_button = QtWidgets.QCheckBox()
+        self.switch_profiling_mode_button = QtWidgets.QPushButton()
+        self.switch_profiling_mode_button.setIcon(QtGui.QIcon(":clock.png"))
         self.switch_profiling_mode_button.clicked.connect(self.switch_profiling_mode)
+        self.switch_profiling_mode_button.setCheckable(True)
         self.switch_profiling_mode_button.setChecked(False)
-        self.switch_profiling_mode_button.setToolTip(self.tr("Turn profiling mode on or off"))
-        self.switch_profiling_mode_button.setStatusTip(self.tr("Turn profiling mode on or off"))
+        self.switch_profiling_mode_button.setToolTip(self.tr("Profiling mode on/off"))
+        self.switch_profiling_mode_button.setStatusTip(self.tr("Profiling mode on/off"))
 
         top_buttonbox = QtWidgets.QDialogButtonBox()
         top_buttonbox.addButton(open_file_button, QtWidgets.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(save_file_button, QtWidgets.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.run_sim_button, QtWidgets.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.stop_sim_button, QtWidgets.QDialogButtonBox.ActionRole)
+        top_buttonbox.addButton(self.save_report_button, QtWidgets.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.plot_production_rates_button, QtWidgets.QDialogButtonBox.ActionRole)
         top_buttonbox.addButton(self.switch_profiling_mode_button, QtWidgets.QDialogButtonBox.ActionRole)
 

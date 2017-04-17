@@ -69,14 +69,14 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['cool_time_type'] = "process"
 
         self.params['runs_before_boatclean'] = 100
-        self.params['runs_before_boatclean_desc'] = "Number of PECVD processes before boat needs to be cleaned (0 to disable function)"
+        self.params['runs_before_boatclean_desc'] = "Number of PECVD process runs before boat needs to be cleaned (0 to disable function)"
         self.params['runs_before_boatclean_type'] = "downtime"
         self.params['coating_run_duration'] = 75
         self.params['coating_run_duration_desc'] = "Time for a single PECVD coating run (minutes)"
         self.params['coating_run_duration_type'] = "downtime"
 
         self.params['downtime_runs'] = 0
-        self.params['downtime_runs_desc'] = "Number of PECVD processes before downtime of the whole tool (0 to disable function)"
+        self.params['downtime_runs_desc'] = "Number of PECVD process runs before downtime of the whole tool (0 to disable function)"
         self.params['downtime_runs_type'] = "downtime"
         self.params['downtime_duration'] = 60
         self.params['downtime_duration_desc'] = "Time for a single tool downtime cycle (minutes)"

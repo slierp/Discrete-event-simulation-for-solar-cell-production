@@ -89,8 +89,8 @@ The first step in this loop is to go over all the tools assigned to this technic
                         yield self.tools[i].downtime_finished.succeed()
                         self.transport_counter += 1
                         
-                        string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Maintenance event duration: "
-                        string += str(round(self.tools[i].downtime_duration/60)) + " minutes"
+                        #string = str(self.env.now) + " - [" + self.params['type'] + "][" + self.params['name'] + "] Maintenance event duration: "
+                        #string += str(round(self.tools[i].downtime_duration/60)) + " minutes"
                         #self.output_text.sig.emit(string)
 
             # if something useful was done then continue checking connections

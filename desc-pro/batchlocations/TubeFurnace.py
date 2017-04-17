@@ -67,10 +67,10 @@ The process batch size therefore needs to be a multiple of the automation loadsi
         self.params['cool_time_type'] = "process"
 
         self.params['runs_before_boatclean'] = 0
-        self.params['runs_before_boatclean_desc'] = "Number of furnace processes before boat needs to be cleaned (0 to disable function)"
+        self.params['runs_before_boatclean_desc'] = "Number of furnace process runs before boat needs to be cleaned (0 to disable function)"
         self.params['runs_before_boatclean_type'] = "downtime"
         self.params['coating_run_duration'] = 60
-        self.params['coating_run_duration_desc'] = "Time for a single furnace cleaning process (minutes)"
+        self.params['coating_run_duration_desc'] = "Time for a single boat cleaning process (minutes)"
         self.params['coating_run_duration_type'] = "downtime"
 
         self.params['downtime_runs'] = 1000

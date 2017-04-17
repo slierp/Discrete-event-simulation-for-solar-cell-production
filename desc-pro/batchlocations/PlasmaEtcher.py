@@ -108,13 +108,14 @@ The loop continuously checks if unprocessed wafers are available and if so, perf
 
             if mtbf_enable and self.env.now >= self.next_failure:
                 with self.input.oper_resource.request() as request:
-                    result = yield request | self.env.timeout(10)
+                    result = yield request | self.env.timeout(60)
 
                     if not request in result:
                         string = "[" + self.params['type'] + "][" + self.params['name'] + "] ERROR: "
-                        string += "Plasma etcher is unable to start MTBF downtime. Etcher will now stop functioning."
+                        string += "Unable to start MTBF downtime."
                         self.output_text.sig.emit(string)
-                        return
+                        self.next_failure = self.env.now + random.expovariate(mtbf)
+                        continue
                     
                     self.downtime_duration = random.expovariate(mttr)
                     
