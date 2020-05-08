@@ -477,7 +477,8 @@ class MainGui(QtWidgets.QMainWindow):
 
         text = text.splitlines()        
         for i in range(rows):
-            df0.ix[i, 0] = text[i]
+            #df0.ix[i, 0] = text[i]
+            df0.iloc[i, 0] = text[i]
 
         # copy tablewidget to a pandas dataframe
         rows = self.table_widget.rowCount()
@@ -492,7 +493,8 @@ class MainGui(QtWidgets.QMainWindow):
         for i in range(rows):
             for j in range(columns):
                 if self.table_widget.item(i, j):
-                    df1.ix[i, j] = self.table_widget.item(i, j).text()
+                    #df1.ix[i, j] = self.table_widget.item(i, j).text()
+                    df1.iloc[i, j] = self.table_widget.item(i, j).text()
 
         writer = pd.ExcelWriter(filename, engine='xlsxwriter')
         
